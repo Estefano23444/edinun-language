@@ -1,0 +1,11 @@
+node_modules/
+package-lock.json
+
+# QA visual — capturas y resumen se regeneran en cada corrida.
+**/.planning/qa-screenshots/
+**/.planning/qa-results.json
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
