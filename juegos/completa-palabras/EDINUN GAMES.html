@@ -1,0 +1,2009 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b0826">
+<meta name="description" content="EDINUN GAMES — Juegos de matemáticas educativos para estudiantes.">
+<title>EDINUN GAMES — Juegos de Matemáticas</title>
+
+<link rel="icon" type="image/png" href="assets/edinun-logo.png">
+<link rel="apple-touch-icon" href="assets/edinun-logo.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="styles.css">
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin></script>
+</head>
+<body>
+<div id="root"></div>
+<noscript style="position:fixed;inset:0;display:grid;place-items:center;background:#0b0826;color:#fce9a8;font-family:sans-serif;text-align:center;padding:24px;">EDINUN GAMES requiere JavaScript habilitado.</noscript>
+
+<script type="text/babel" data-presets="react">
+// logo.jsx — Logo EDINUN usando el PNG oficial dorado.
+// Nada de reconstruir en SVG: mantenemos el asset original impecable.
+
+function EdinunLogo({ size = 180, glow = true }) {
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        position: "relative",
+        filter: glow
+          ? "drop-shadow(0 0 28px rgba(242,194,96,0.45)) drop-shadow(0 6px 12px rgba(0,0,0,0.45))"
+          : "drop-shadow(0 2px 4px rgba(0,0,0,0.3))",
+      }}
+    >
+      {glow && (
+        <div
+          style={{
+            position: "absolute",
+            inset: "-6%",
+            borderRadius: "50%",
+            background:
+              "radial-gradient(circle, rgba(242,194,96,0.22) 0%, rgba(242,194,96,0.08) 45%, transparent 75%)",
+            pointerEvents: "none",
+          }}
+        />
+      )}
+      <img
+        src="assets/edinun-logo.png"
+        alt="EDINUN — Ediciones Nacionales Unidas"
+        style={{ width: "100%", height: "100%", objectFit: "contain", position: "relative", display: "block" }}
+      />
+    </div>
+  );
+}
+
+// Versión compacta (HUD) — mismo PNG, tamaño pequeño
+function EdinunLogoMini({ size = 40 }) {
+  return (
+    <img
+      src="assets/edinun-logo.png"
+      alt="EDINUN"
+      style={{
+        width: size,
+        height: size,
+        objectFit: "contain",
+        filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.35))",
+      }}
+    />
+  );
+}
+
+Object.assign(window, { EdinunLogo, EdinunLogoMini });
+
+// characters.jsx — Personajes EDINUN GAMES · Juegos de lenguaje.
+// Renderizan los PNG de assets/char-<id>.png. Misma API que la versión
+// SVG (props `size`, `floating`) para no romper a los consumidores
+// (GameScreen, CharacterScreen, ResultsScreen, CharacterAvatar).
+
+// ─────────────────────────────────────────────────────────────
+// Sparkles — chispas animadas alrededor del personaje. Refuerzan
+// la estética cósmica heredada del shell.
+// ─────────────────────────────────────────────────────────────
+function Sparkles({ color = "#fce9a8", count = 6, seed = 1 }) {
+  const pts = Array.from({ length: count }, (_, i) => {
+    const a = (i * 360) / count + seed * 37;
+    const r = 70 + (i % 3) * 8;
+    const x = 100 + Math.cos((a * Math.PI) / 180) * r;
+    const y = 100 + Math.sin((a * Math.PI) / 180) * r;
+    const s = 2 + (i % 3);
+    return { x, y, s, delay: i * 0.35 };
+  });
+  return (
+    <g>
+      {pts.map((p, i) => (
+        <g key={i} transform={`translate(${p.x} ${p.y})`}>
+          <circle r={p.s} fill={color} opacity="0.9">
+            <animate attributeName="opacity" values="0.3;1;0.3" dur="2.4s" begin={`${p.delay}s`} repeatCount="indefinite" />
+          </circle>
+        </g>
+      ))}
+    </g>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Fábrica de componentes — cada personaje es un PNG con sparkles
+// superpuestos. Identidad: escritor / explorador / poeta / narrador.
+// ─────────────────────────────────────────────────────────────
+function makeCharacter(id, sparkleColor, sparkleSeed) {
+  return function Character({ size = 200, floating = true }) {
+    return (
+      <div
+        className={floating ? "ed-float-soft" : ""}
+        style={{
+          width: size, height: size,
+          position: "relative",
+          display: "inline-block",
+          lineHeight: 0,
+        }}
+      >
+        <img
+          src={`assets/char-${id}.png`}
+          alt=""
+          draggable="false"
+          style={{
+            width: "100%", height: "100%",
+            objectFit: "contain",
+            display: "block",
+            filter: "drop-shadow(0 6px 14px rgba(0,0,0,0.35))",
+            userSelect: "none",
+            pointerEvents: "none",
+          }}
+        />
+        <svg
+          viewBox="0 0 200 200"
+          aria-hidden="true"
+          style={{
+            position: "absolute", inset: 0,
+            width: "100%", height: "100%",
+            pointerEvents: "none",
+            overflow: "visible",
+          }}
+        >
+          <Sparkles color={sparkleColor} count={6} seed={sparkleSeed} />
+        </svg>
+      </div>
+    );
+  };
+}
+
+const EscritorCharacter = makeCharacter("escritor", "#e89a4e", 1);
+const PoetaCharacter = makeCharacter("poeta", "#a78bfa", 2);
+const ExploradorCharacter = makeCharacter("explorador", "#5fb878", 3);
+const NarradorCharacter = makeCharacter("narrador", "#ef6f6f", 4);
+
+// ─────────────────────────────────────────────────────────────
+// Avatar compacto (HUD / cards). Marco circular dorado/violeta.
+// ─────────────────────────────────────────────────────────────
+function CharacterAvatar({ char, size = 56 }) {
+  const map = {
+    escritor: EscritorCharacter,
+    poeta: PoetaCharacter,
+    explorador: ExploradorCharacter,
+    narrador: NarradorCharacter,
+  };
+  const C = map[char] || EscritorCharacter;
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: "50%",
+      background: "radial-gradient(circle at 30% 30%, rgba(138,90,242,.8), rgba(18,10,55,.95))",
+      boxShadow: "inset 0 0 0 2px rgba(242,194,96,.8), 0 0 14px rgba(138,90,242,.45)",
+      display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden",
+    }}>
+      <div style={{ transform: `translateY(${size * 0.06}px) scale(1.15)` }}>
+        <C size={size} floating={false} />
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Catálogo — nombres cortos, profesiones literarias claras,
+// quotes evocadoras para 6-8 años.
+// ─────────────────────────────────────────────────────────────
+const CHARACTERS = [
+  {
+    id: "escritor",
+    name: "Rolli",
+    title: "La Escritora",
+    specialty: "Maestra de las palabras",
+    quote: "Escribir es como hacer magia con un lápiz.",
+    Component: EscritorCharacter,
+  },
+  {
+    id: "explorador",
+    name: "Verne",
+    title: "El Explorador",
+    specialty: "Buscador de palabras",
+    quote: "Cada libro es una aventura por descubrir.",
+    Component: ExploradorCharacter,
+  },
+  {
+    id: "poeta",
+    name: "Gaby",
+    title: "La Poeta",
+    specialty: "Tejedora de versos",
+    quote: "Los poemas saben bailar y hacer cosquillas.",
+    Component: PoetaCharacter,
+  },
+  {
+    id: "narrador",
+    name: "Márquez",
+    title: "El Cuentacuentos",
+    specialty: "Guardián de las historias",
+    quote: "Cierra los ojos: te cuento un cuento.",
+    Component: NarradorCharacter,
+  },
+];
+
+Object.assign(window, {
+  EscritorCharacter,
+  PoetaCharacter,
+  ExploradorCharacter,
+  NarradorCharacter,
+  CharacterAvatar,
+  CHARACTERS,
+});
+
+// screens.jsx — HomeScreen + CharacterScreen + CosmosBg adaptado al
+// juego de lenguaje "Completa la palabra". Hereda la estructura del shell
+// (logo izq + formulario der en Home, 4 personajes grid en Character).
+
+const { useState, useEffect, useRef, useMemo } = React;
+
+// ─────────────────────────────────────────────────────────────
+// Fondo cósmico + glifos de LENGUAJE (letras/símbolos de escritura).
+// La firma y posiciones son idénticas a la versión matemática del shell:
+// solo cambian los glifos para que el fondo respire "lenguaje" en vez de
+// fórmulas.
+// ─────────────────────────────────────────────────────────────
+function CosmosBg({ variant = "cosmic", glyphSize }) {
+  const glyphsStyle = glyphSize ? { fontSize: glyphSize + "px" } : undefined;
+  if (variant === "chalkboard") {
+    // Pantalla de juego (pizarra verde). 10 glifos de lenguaje.
+    return (
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "radial-gradient(ellipse at center, #3a9b7a 0%, #1d6b53 55%, #0b3a2d 100%)",
+          overflow: "hidden",
+        }}
+      >
+        <div className="ed-glyphs" style={{ color: "rgba(255,255,255,0.10)", ...glyphsStyle }}>
+          <span style={{ left: "6%", top: "12%", "--rot": "-8deg" }}>A</span>
+          <span style={{ left: "82%", top: "16%", "--rot": "6deg", fontSize: "0.62em" }}>E</span>
+          <span style={{ left: "10%", top: "78%", "--rot": "12deg", fontSize: "0.7em" }}>I</span>
+          <span style={{ left: "88%", top: "72%", "--rot": "-10deg", fontSize: "0.55em" }}>O</span>
+          <span style={{ left: "45%", top: "8%", "--rot": "4deg", fontSize: "0.5em" }}>U</span>
+          <span style={{ left: "3%", top: "45%", "--rot": "-4deg", fontSize: "0.6em" }}>?</span>
+          <span style={{ left: "92%", top: "45%", "--rot": "8deg", fontSize: "0.58em" }}>_</span>
+          <span style={{ left: "30%", top: "55%", "--rot": "-6deg", fontSize: "0.5em" }}>📖</span>
+          <span style={{ left: "70%", top: "62%", "--rot": "8deg", fontSize: "0.52em" }}>✏</span>
+          <span style={{ left: "55%", top: "30%", "--rot": "-4deg", fontSize: "0.46em" }}>✎</span>
+        </div>
+      </div>
+    );
+  }
+  // Pantallas de marco cósmico (home/character/results). 15 letras.
+  return (
+    <>
+      <div className="ed-cosmos" />
+      <div className="ed-glyphs" style={glyphsStyle}>
+        <span style={{ left: "5%", top: "10%", "--rot": "-8deg" }}>A</span>
+        <span style={{ left: "84%", top: "6%", "--rot": "6deg", fontSize: "0.78em" }}>E</span>
+        <span style={{ left: "92%", top: "72%", "--rot": "-12deg", fontSize: "0.74em" }}>I</span>
+        <span style={{ left: "3%", top: "82%", "--rot": "12deg", fontSize: "0.91em" }}>O</span>
+        <span style={{ left: "46%", top: "4%", "--rot": "-4deg", fontSize: "0.59em" }}>U</span>
+        <span style={{ left: "7%", top: "46%", "--rot": "-4deg", fontSize: "0.67em" }}>M</span>
+        <span style={{ left: "88%", top: "40%", "--rot": "8deg", fontSize: "0.65em" }}>N</span>
+        <span style={{ left: "22%", top: "22%", "--rot": "10deg", fontSize: "0.52em" }}>P</span>
+        <span style={{ left: "70%", top: "24%", "--rot": "-6deg", fontSize: "0.57em" }}>R</span>
+        <span style={{ left: "32%", top: "70%", "--rot": "8deg", fontSize: "0.61em" }}>S</span>
+        <span style={{ left: "62%", top: "78%", "--rot": "-10deg", fontSize: "0.63em" }}>T</span>
+        <span style={{ left: "18%", top: "58%", "--rot": "14deg", fontSize: "0.48em" }}>L</span>
+        <span style={{ left: "78%", top: "56%", "--rot": "-8deg", fontSize: "0.52em" }}>B</span>
+        <span style={{ left: "50%", top: "88%", "--rot": "4deg", fontSize: "0.5em" }}>C</span>
+        <span style={{ left: "40%", top: "38%", "--rot": "-6deg", fontSize: "0.54em" }}>D</span>
+      </div>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Contador de visitantes (compartido entre juegos del repo via
+// localStorage). Mismo contrato que el shell matemático.
+// ─────────────────────────────────────────────────────────────
+function useVisitorCount() {
+  const KEY = "edinun_visitors_v1";
+  const [n, setN] = useState(() => {
+    const raw = localStorage.getItem(KEY);
+    const v = raw ? parseInt(raw, 10) : 0;
+    return isNaN(v) ? 0 : v;
+  });
+  useEffect(() => {
+    function onUpdate() {
+      const raw = localStorage.getItem(KEY);
+      const v = raw ? parseInt(raw, 10) : 0;
+      if (!isNaN(v)) setN(v);
+    }
+    window.addEventListener("edinun:visitors-updated", onUpdate);
+    return () => window.removeEventListener("edinun:visitors-updated", onUpdate);
+  }, []);
+  return n;
+}
+
+function markFirstAttempt() {
+  const KEY = "edinun_visitors_v1";
+  const SESSION_FLAG = "edinun_visit_counted_v1";
+  if (sessionStorage.getItem(SESSION_FLAG) === "1") return;
+  const raw = localStorage.getItem(KEY);
+  const current = raw ? parseInt(raw, 10) : 0;
+  const next = (isNaN(current) ? 0 : current) + 1;
+  localStorage.setItem(KEY, String(next));
+  sessionStorage.setItem(SESSION_FLAG, "1");
+  window.dispatchEvent(new Event("edinun:visitors-updated"));
+}
+
+function incrementGamesCompleted() {
+  const KEY = "edinun_games_completed_v1";
+  const raw = localStorage.getItem(KEY);
+  const next = (raw ? parseInt(raw, 10) : 0) + 1;
+  localStorage.setItem(KEY, String(next));
+  window.dispatchEvent(new Event("edinun:games-updated"));
+  return next;
+}
+
+function PeopleIcon({ size = 18, color = "#fce9a8" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="8" cy="7" r="3" fill={color} />
+      <circle cx="16" cy="7" r="3" fill={color} opacity="0.85" />
+      <path d="M2 20c0-3.3 2.7-6 6-6s6 2.7 6 6v1H2v-1z" fill={color} />
+      <path d="M14 20c0-2 -.7-3.8-1.8-5.2 1-.5 2.1-.8 3.3-.8 3.3 0 6 2.7 6 6v1H14v-1z" fill={color} opacity="0.85" />
+    </svg>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// 1. HOME — nombre + ENTRAR. Sin chips de nivel (juego de un solo nivel).
+// Conserva el layout 2 columnas (logo izq, formulario der) del shell.
+// ─────────────────────────────────────────────────────────────
+function HomeScreen({ app, setApp, go }) {
+  const visitors = useVisitorCount();
+  const [name, setName] = useState(app.studentName || "");
+
+  function start() {
+    if (!name.trim()) return;
+    setApp((s) => ({
+      ...s,
+      studentName: name.trim(),
+      level: "unico",
+      sessionStart: Date.now(),
+    }));
+    go("character");
+  }
+
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+      {/* Contador de visitantes (abajo derecha) */}
+      <div style={{
+        position: "absolute", bottom: 18, right: 22,
+        display: "flex", alignItems: "center", gap: 8,
+        background: "rgba(10,6,35,0.55)",
+        border: "1px solid rgba(242,194,96,0.3)",
+        borderRadius: 999, padding: "6px 12px",
+        backdropFilter: "blur(8px)",
+      }}>
+        <PeopleIcon size={16} color="#fce9a8" />
+        <div style={{ fontFamily: "var(--ed-font-mono)", fontSize: 11, color: "#f2c260", letterSpacing: "0.06em" }}>
+          {visitors.toLocaleString("es-CO")}
+          <span style={{ color: "rgba(246,241,255,0.55)", marginLeft: 6 }}>visitas</span>
+        </div>
+      </div>
+
+      {/* Contenido principal — 2 columnas */}
+      <div style={{
+        position: "absolute", inset: 0,
+        display: "grid",
+        gridTemplateColumns: "1fr 1.15fr",
+        alignItems: "center",
+        padding: "40px 56px",
+        gap: 40,
+      }}>
+        {/* Izquierda — logo protagonista */}
+        <div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+          <EdinunLogo size={300} />
+        </div>
+
+        {/* Derecha — saludo + input + botón. Sin botones de nivel. */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 22, maxWidth: 520 }}>
+          <div>
+            <div className="ed-label" style={{ color: "#4fd8ff", marginBottom: 8 }}>
+              El país de las palabras de tierra
+            </div>
+            <h1 className="ed-h1" style={{ fontSize: 44, lineHeight: 1.05 }}>
+              ¡Bienvenido/a,{" "}
+              <span style={{
+                background: "linear-gradient(180deg,#fce9a8,#d9a441)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                fontWeight: 600,
+              }}>
+                Estudiante!
+              </span>
+            </h1>
+          </div>
+
+          {/* Descripción del juego — equivalente al "bloque de descripción de
+              nivel" de la versión matemática, pero ahora fija (un solo nivel). */}
+          <div style={{
+            padding: "14px 18px",
+            borderRadius: 14,
+            background: "rgba(10,6,35,0.55)",
+            border: "1px solid rgba(148,120,255,0.3)",
+            fontFamily: "var(--ed-font-display)", fontWeight: 600,
+            fontSize: 16, lineHeight: 1.35,
+            color: "#fce9a8",
+            textAlign: "center",
+          }}>
+            Mira la imagen y completa con las vocales.
+          </div>
+
+          {/* Nombre + ENTRAR */}
+          <div>
+            <div className="ed-label" style={{ marginBottom: 10 }}>
+              Escribe tu nombre y entra
+            </div>
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <div style={{ flex: 1, position: "relative" }}>
+                <input
+                  className="ed-input"
+                  placeholder="Escribe tu nombre"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && start()}
+                />
+              </div>
+              <button className="ed-btn ed-btn-primary" onClick={start} disabled={!name.trim()}
+                style={{ height: 52, padding: "0 28px", fontSize: 16, opacity: name.trim() ? 1 : 0.5 }}>
+                ENTRAR →
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// 2. SELECCIÓN DE PERSONAJE — idéntico al shell, default Rolli.
+// Mapeo de nivel→categoría: un solo catLabel "Completa la palabra".
+// ─────────────────────────────────────────────────────────────
+function CharacterScreen({ app, setApp, go }) {
+  const [sel, setSel] = useState(app.character || "escritor");
+  const current = CHARACTERS.find((c) => c.id === sel) || CHARACTERS[0];
+
+  function choose() {
+    setApp((s) => ({
+      ...s,
+      character: sel,
+      currentCategory: "palabra",
+      currentCatLabel: "Completa la palabra",
+    }));
+    go("game");
+  }
+
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+      {/* Header */}
+      <div style={{ position: "absolute", top: 18, left: 24, right: 24, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <button className="ed-btn ed-btn-ghost" onClick={() => go("home")} style={{ padding: "8px 14px" }}>
+          ← VOLVER
+        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 700, color: "#fce9a8", fontSize: 20, textShadow: "0 2px 6px rgba(0,0,0,0.45)" }}>
+            Hola, {app.studentName || "Estudiante"} 👋
+          </div>
+          <EdinunLogoMini size={64} />
+        </div>
+      </div>
+
+      {/* Contenido */}
+      <div style={{
+        position: "absolute", inset: "92px 32px 24px 32px",
+        display: "grid", gridTemplateColumns: "1fr 1.05fr", gap: 24, alignItems: "center",
+      }}>
+        {/* Izquierda — personaje seleccionado grande */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, minWidth: 0 }}>
+          <div style={{ position: "relative" }}>
+            <div style={{
+              position: "absolute", bottom: 4, left: "50%", transform: "translateX(-50%)",
+              width: 220, height: 28, borderRadius: "50%",
+              background: "radial-gradient(ellipse, rgba(242,194,96,0.45), transparent 70%)",
+              filter: "blur(5px)",
+            }} />
+            <current.Component size={280} floating />
+          </div>
+          <div style={{ textAlign: "center", marginTop: 4 }}>
+            <h2 className="ed-h1" style={{ fontSize: 28, lineHeight: 1 }}>{current.name}</h2>
+            <div className="ed-label" style={{ color: "#fce9a8", marginTop: 2, fontSize: 10 }}>{current.title}</div>
+            <div className="ed-body" style={{ marginTop: 6, maxWidth: 320, fontStyle: "italic", fontSize: 13, lineHeight: 1.35 }}>
+              "{current.quote}"
+            </div>
+          </div>
+        </div>
+
+        {/* Derecha — grid 2x2 */}
+        <div>
+          <div className="ed-label" style={{ marginBottom: 10 }}>Elige tu guía de palabras</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            {CHARACTERS.map((c) => {
+              const active = sel === c.id;
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => setSel(c.id)}
+                  className="ed-card"
+                  style={{
+                    padding: 12,
+                    textAlign: "left",
+                    cursor: "pointer",
+                    transform: active ? "translateY(-2px)" : "none",
+                    boxShadow: active
+                      ? "var(--ed-shadow-card), 0 0 0 2px rgba(79,216,255,0.7), 0 0 30px rgba(79,216,255,0.35)"
+                      : "var(--ed-shadow-card)",
+                    transition: "all 0.18s ease",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 68, height: 68, flexShrink: 0 }}>
+                      <c.Component size={68} floating={false} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 18 }}>
+                        {c.name}
+                      </div>
+                      <div className="ed-label" style={{ fontSize: 10, color: "#4fd8ff" }}>
+                        {c.specialty}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <button
+            onClick={choose}
+            className="ed-btn ed-btn-primary"
+            style={{ marginTop: 20, width: "100%", height: 52, fontSize: 17 }}
+          >
+            ¡VAMOS, {current.name.toUpperCase()}! →
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { HomeScreen, CharacterScreen, CosmosBg, incrementGamesCompleted, useVisitorCount, markFirstAttempt });
+
+// game-screens.jsx — GameScreen + ResultsScreen para el juego
+// "Completa la palabra". Hereda HUD, modales, scoring y ResultsScreen
+// del shell matemático; reescribe la zona central con un emoji grande +
+// casillas de palabra y la bandeja con fichas de letras.
+
+const { useState: useStateG, useEffect: useEffectG, useRef: useRefG, useMemo: useMemoG } = React;
+
+function PortalToBody({ children }) {
+  return ReactDOM.createPortal(children, document.body);
+}
+
+// ─────────────────────────────────────────────────────────────
+// Banco de palabras. Todas en MINÚSCULAS y SIN TILDES en la forma
+// correcta del español (NO se incluyen palabras como sandía, limón,
+// maíz, brócoli, león, árbol — su grafía correcta lleva tilde y no
+// podemos enseñar la versión sin tilde). La Ñ puede aparecer pero
+// nunca se oculta — solo vocales se ocultan, y se ocultan TODAS.
+// ─────────────────────────────────────────────────────────────
+const WORD_BANK = [
+  // Frutas (sin tilde natural)
+  { emoji: "🍎", word: "manzana" },
+  { emoji: "🍌", word: "banana" },
+  { emoji: "🍓", word: "fresa" },
+  { emoji: "🍇", word: "uva" },
+  { emoji: "🍐", word: "pera" },
+  { emoji: "🍍", word: "piña" },
+  { emoji: "🍊", word: "naranja" },
+  { emoji: "🍒", word: "cereza" },
+  // Verduras (sin tilde natural)
+  { emoji: "🥕", word: "zanahoria" },
+  { emoji: "🍅", word: "tomate" },
+  { emoji: "🥔", word: "papa" },
+  { emoji: "🥬", word: "lechuga" },
+  { emoji: "🥒", word: "pepino" },
+  // Animales (sin tilde natural)
+  { emoji: "🐱", word: "gato" },
+  { emoji: "🐶", word: "perro" },
+  { emoji: "🐻", word: "oso" },
+  { emoji: "🐰", word: "conejo" },
+  { emoji: "🐸", word: "rana" },
+  { emoji: "🐮", word: "vaca" },
+  { emoji: "🐟", word: "pez" },
+  { emoji: "🦋", word: "mariposa" },
+  { emoji: "🐯", word: "tigre" },
+  { emoji: "🐵", word: "mono" },
+  { emoji: "🦒", word: "jirafa" },
+  { emoji: "🐔", word: "pollo" },
+  { emoji: "🐝", word: "abeja" },
+  { emoji: "🦆", word: "pato" },
+  // Objetos y cosas (sin tilde natural)
+  { emoji: "🏠", word: "casa" },
+  { emoji: "📚", word: "libro" },
+  { emoji: "⭐", word: "estrella" },
+  { emoji: "🌙", word: "luna" },
+  { emoji: "☀️", word: "sol" },
+  { emoji: "🌸", word: "flor" },
+  { emoji: "☁️", word: "nube" },
+  { emoji: "🍞", word: "pan" },
+  { emoji: "🧀", word: "queso" },
+  { emoji: "🥛", word: "leche" },
+  { emoji: "🪑", word: "silla" },
+  { emoji: "🛏️", word: "cama" },
+  { emoji: "🍰", word: "torta" },
+];
+
+// Bandeja fija: SIEMPRE las cinco vocales en minúsculas. Cada ficha es
+// reutilizable infinitas veces (sin estado "consumida"). Decisión
+// pedagógica: el niño elige solo entre vocales y la misma vocal puede
+// servir para varias casillas.
+const VOWEL_TRAY = ["a", "e", "i", "o", "u"];
+
+function isVowel(ch) {
+  return "aeiou".includes(ch);
+}
+
+// ─────────────────────────────────────────────────────────────
+// Generador de problemas. Toma una palabra del banco y oculta SOLO sus
+// vocales (la cantidad depende del largo). La bandeja siempre es la
+// misma: las cinco vocales (a, e, i, o, u), reutilizables.
+// ─────────────────────────────────────────────────────────────
+function makeProblem(usedKeys) {
+  // Filtrar palabras que no se hayan usado en esta sesión.
+  const pool = WORD_BANK.filter((w) => !usedKeys.has(w.word));
+  const pickFrom = pool.length > 0 ? pool : WORD_BANK;
+  const pick = pickFrom[Math.floor(Math.random() * pickFrom.length)];
+  const word = pick.word;
+  const letters = word.split("");
+  const n = letters.length;
+
+  // Se ocultan TODAS las vocales de la palabra. El niño debe completar
+  // cada vocal en su lugar correspondiente.
+  const hiddenIdxArr = [];
+  for (let i = 0; i < n; i++) {
+    if (isVowel(letters[i])) hiddenIdxArr.push(i);
+  }
+  const correctLetters = hiddenIdxArr.map((i) => letters[i]);
+
+  return {
+    emoji: pick.emoji,
+    word,                    // string en minúsculas (incl. Ñ si tiene)
+    letters,                 // array de chars
+    hiddenIdx: hiddenIdxArr, // índices que el usuario debe completar
+    correctLetters,          // vocales objetivo (en orden de hiddenIdx)
+    tray: VOWEL_TRAY,        // SIEMPRE las 5 vocales, reutilizables
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Frases motivadoras para feedback de error. Adaptadas a lenguaje.
+// ─────────────────────────────────────────────────────────────
+const ENCOURAGEMENTS = [
+  "¡Casi! Sigue intentándolo.",
+  "Las palabras no muerden 📖",
+  "¡La próxima es tuya!",
+  "Equivocarse también es aprender.",
+  "Las letras son una aventura.",
+  "¡Vamos a la siguiente!",
+  "Cada error te acerca al acierto.",
+];
+
+function GameScreen({ app, setApp, go }) {
+  const char = CHARACTERS.find((c) => c.id === app.character) || CHARACTERS[0];
+  const catLabel = app.currentCatLabel || "Completa la palabra";
+
+  // Llevar registro de palabras ya usadas en la sesión actual para no repetir.
+  const usedRef = useRefG(new Set());
+  const [problem, setProblem] = useStateG(() => {
+    const p = makeProblem(usedRef.current);
+    usedRef.current.add(p.word);
+    return p;
+  });
+  // `filled` es paralelo a `problem.hiddenIdx`: la letra que el usuario puso
+  // en cada posición oculta (undefined = vacía). Las fichas de la bandeja
+  // son reutilizables — la misma vocal puede colocarse varias veces.
+  const [filled, setFilled] = useStateG([]);
+
+  const [elapsed, setElapsed] = useStateG(0);
+  const [stars, setStars] = useStateG(0);
+  const [solved, setSolved] = useStateG(0);
+  const [attempted, setAttempted] = useStateG(0);
+  const [starsSession, setStarsSession] = useStateG(0);
+  const [feedback, setFeedback] = useStateG(null);
+  const [feedbackMsg, setFeedbackMsg] = useStateG("");
+  const [confirmingExit, setConfirmingExit] = useStateG(false);
+  const [log, setLog] = useStateG([]);
+
+  const started = useRefG(Date.now());
+  const exerciseStart = useRefG(Date.now());
+
+  useEffectG(() => {
+    const id = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - started.current) / 1000));
+    }, 500);
+    return () => clearInterval(id);
+  }, []);
+
+  function pressLetter(letter) {
+    // Calcular el siguiente slot vacío DENTRO del setter para que el state
+    // sea consistente cuando el usuario toca varias vocales seguidas muy
+    // rápido (palabras con 2-3 vocales ocultas). Antes había bug: dos
+    // pressLetter consecutivos veían el mismo `filled` viejo y escribían
+    // al mismo slot.
+    setFilled((prev) => {
+      const len = problem.hiddenIdx.length;
+      const next = [...prev];
+      while (next.length < len) next.push(undefined);
+      for (let i = 0; i < len; i++) {
+        if (next[i] === undefined) { next[i] = letter; return next; }
+      }
+      return prev; // todas llenas, no hacer nada
+    });
+  }
+
+  function eraseSlot(slotIdx) {
+    setFilled((prev) => {
+      const next = [...prev];
+      while (next.length < problem.hiddenIdx.length) next.push(undefined);
+      next[slotIdx] = undefined;
+      return next;
+    });
+  }
+
+  function erase() {
+    // Borra la última letra colocada (el primer slot lleno empezando por la derecha).
+    for (let i = problem.hiddenIdx.length - 1; i >= 0; i--) {
+      if (filled[i] !== undefined) {
+        eraseSlot(i);
+        return;
+      }
+    }
+  }
+
+  function verify() {
+    const allFilled = problem.hiddenIdx.every((_, i) => filled[i] !== undefined);
+    if (!allFilled) {
+      setFeedback("err");
+      setFeedbackMsg("Completa todas las letras");
+      setTimeout(() => { setFeedback(null); setFeedbackMsg(""); }, 700);
+      return;
+    }
+    if (typeof window.markFirstAttempt === "function") window.markFirstAttempt();
+
+    // Reconstruir la palabra del usuario.
+    const userLetters = problem.letters.slice();
+    problem.hiddenIdx.forEach((wordPos, i) => {
+      userLetters[wordPos] = filled[i];
+    });
+    const userWord = userLetters.join("");
+    const isCorrect = userWord === problem.word;
+    const exerciseSec = Math.max(0, Math.floor((Date.now() - exerciseStart.current) / 1000));
+    const earned = isCorrect ? Math.max(1, 10 - Math.floor(exerciseSec / 3)) : 0;
+
+    const newAttempted = attempted + 1;
+    const newSolved = solved + (isCorrect ? 1 : 0);
+    const newStarsSession = starsSession + earned;
+    const newStarsTotal = stars + earned;
+
+    const entry = {
+      idx: newAttempted,
+      a: problem.word,           // palabra correcta
+      b: userWord,               // palabra del estudiante
+      op: "📝",                  // marcador para el reporte
+      correctAnswer: problem.word,
+      userAnswer: userWord,
+      isCorrect,
+      time: exerciseSec,
+      earned,
+      emoji: problem.emoji,
+    };
+    const newLog = [...log, entry];
+
+    setFeedback(isCorrect ? "ok" : "err");
+    setFeedbackMsg(isCorrect
+      ? `+${earned} ⭐`
+      : ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)]
+    );
+    setAttempted(newAttempted);
+    setSolved(newSolved);
+    setStars(newStarsTotal);
+    setStarsSession(newStarsSession);
+    setLog(newLog);
+
+    const wait = isCorrect ? 950 : 1200;
+    setTimeout(() => {
+      setFeedback(null);
+      setFeedbackMsg("");
+      setFilled([]);
+      if (newAttempted >= 3) {
+        setApp((s) => ({
+          ...s,
+          stars: newStarsTotal,
+          lastResult: {
+            category: catLabel,
+            solved: newSolved,
+            total: 3,
+            time: elapsed,
+            starsEarned: newStarsSession,
+            log: newLog,
+          },
+        }));
+        window.incrementGamesCompleted && window.incrementGamesCompleted();
+        go("results");
+      } else {
+        const p = makeProblem(usedRef.current);
+        usedRef.current.add(p.word);
+        setProblem(p);
+        exerciseStart.current = Date.now();
+      }
+    }, wait);
+  }
+
+  function formatTime(s) {
+    const m = Math.floor(s / 60);
+    const ss = s % 60;
+    return `${String(m).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
+  }
+
+  // Tamaño dinámico de las casillas según el largo de la palabra. Cabe en
+  // ~430 px de ancho (zona-central interior). Tamaños generosos para tap.
+  const wordLen = problem.letters.length;
+  const SLOT_W = wordLen <= 4 ? 64 : wordLen <= 6 ? 56 : wordLen <= 8 ? 46 : 40;
+  const SLOT_H = wordLen <= 4 ? 72 : wordLen <= 6 ? 66 : 58;
+  const SLOT_GAP = wordLen <= 6 ? 8 : 6;
+
+  // Mapeo letra-en-slot → índice del slot oculto.
+  const slotOfHidden = (wordPos) => problem.hiddenIdx.indexOf(wordPos);
+
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+      {/* HUD superior — logo izq, contador central (sin tabs de nivel,
+          juego de 1 solo nivel), tiempo+estrellas der. */}
+      <div data-qa="hud" style={{ position: "absolute", top: 10, left: 16, right: 16, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <EdinunLogoMini size={64} />
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 6,
+            background: "rgba(0,0,0,0.35)", borderRadius: 999, padding: "6px 12px",
+            border: "1px solid rgba(242,194,96,0.4)", fontFamily: "var(--ed-font-mono)", fontSize: 13, color: "#fce9a8",
+          }}>
+            ⏱ {formatTime(elapsed)}
+          </div>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 6,
+            background: "rgba(0,0,0,0.35)", borderRadius: 999, padding: "6px 12px",
+            border: "1px solid rgba(242,194,96,0.4)", fontFamily: "var(--ed-font-display)", fontWeight: 600, color: "#fce9a8",
+          }}>
+            ⭐ {stars}
+          </div>
+        </div>
+      </div>
+
+      {/* Indicador de ronda (3 dots) — debajo del HUD */}
+      <div style={{
+        position: "absolute", top: 60, left: "50%", transform: "translateX(-50%)",
+        display: "flex", alignItems: "center", gap: 8,
+      }}>
+        <span className="ed-label" style={{ color: "rgba(255,255,255,0.7)" }}>Ronda</span>
+        {[0,1,2].map((i) => (
+          <div key={i} style={{
+            width: 10, height: 10, borderRadius: "50%",
+            background: i < attempted ? (i < solved ? "#fce9a8" : "#ff6b6b") : "rgba(255,255,255,0.2)",
+            boxShadow: i < attempted ? "0 0 10px currentColor" : "none",
+            color: i < solved ? "#fce9a8" : "#ff6b6b",
+          }} />
+        ))}
+      </div>
+
+      {/* Personaje compañero — columna izquierda, centrado verticalmente
+          (no pegado al fondo). PNG 190 grande para destacar al personaje
+          como guía pedagógico. El bocadillo se ancla aquí mismo (relativo)
+          para que la cola del globo apunte directo a la cabeza. */}
+      <div data-qa="personaje" style={{
+        position: "absolute", left: 8, bottom: 90, width: 220,
+        pointerEvents: "none", textAlign: "center",
+      }}>
+        {/* Bocadillo de pista — sale de la cabeza del personaje. Posicionado
+            absoluto dentro del wrapper para que cuelgue justo arriba del PNG
+            con la cola apuntando hacia abajo a la cabeza. */}
+        <div data-qa="bocadillo" style={{
+          position: "absolute", left: 6, top: -80, width: 208,
+          pointerEvents: "none",
+        }}>
+          <div style={{
+            position: "relative",
+            background: "linear-gradient(180deg, rgba(20,12,55,0.95), rgba(10,6,35,0.95))",
+            border: "1.5px solid rgba(242,194,96,0.65)",
+            borderRadius: 16,
+            padding: "10px 14px",
+            fontFamily: "var(--ed-font-display)",
+            fontWeight: 700, fontSize: 14, lineHeight: 1.25,
+            color: "#fce9a8", textAlign: "center",
+            boxShadow: "0 10px 24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08)",
+          }}>
+            Toca cada vocal en su lugar.
+            {/* Cola del bocadillo — apunta hacia abajo a la cabeza del PNG. */}
+            <div style={{
+              position: "absolute", bottom: -10, left: 70,
+              width: 0, height: 0,
+              borderLeft: "9px solid transparent",
+              borderRight: "9px solid transparent",
+              borderTop: "10px solid rgba(20,12,55,0.95)",
+              filter: "drop-shadow(0 1px 0 rgba(242,194,96,0.55))",
+            }} />
+          </div>
+        </div>
+
+        <div style={{ position: "relative", display: "flex", justifyContent: "center" }}>
+          <div style={{
+            position: "absolute", bottom: 14, left: "50%", transform: "translateX(-50%)",
+            width: 140, height: 16, borderRadius: "50%",
+            background: "radial-gradient(ellipse, rgba(242,194,96,0.45), transparent 70%)",
+            filter: "blur(5px)",
+          }} />
+          <char.Component size={190} floating />
+        </div>
+        <div style={{
+          marginTop: -2,
+          fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 14,
+          color: "#fce9a8", letterSpacing: "0.04em",
+          textShadow: "0 2px 6px rgba(0,0,0,0.6)",
+        }}>{char.name}</div>
+      </div>
+
+      {/* Enunciado principal del ejercicio — texto blanco grande encima de
+          la pizarra/cartel. Sigue el patrón del juego de valor posicional
+          ("Completa el número usando decenas y unidades."): instrucción
+          accionable, una sola línea, 6-8 años. */}
+      <div style={{
+        position: "absolute", top: 76, left: 250, right: 250,
+        textAlign: "center",
+        fontFamily: "var(--ed-font-display)", fontWeight: 700,
+        fontSize: 22, lineHeight: 1.15,
+        color: "#fff",
+        textShadow: "0 2px 6px rgba(0,0,0,0.55)",
+        pointerEvents: "none",
+      }}>
+        Completa la palabra usando las vocales.
+      </div>
+
+      {/* ══════ ZONA CENTRAL: emoji + casillas de palabra ══════
+          Distribución proporcional: gap enunciado↔cartel ≈ 32, gap interno
+          cartel↔casillas ≈ 28, gap casillas↔bandeja ≈ 28 (la bandeja sube
+          a bottom:30). El espacio vertical se reparte parejo. */}
+      <div data-qa="zona-central" style={{
+        position: "absolute", top: 136, left: "50%", transform: "translateX(-50%)",
+        width: 460, textAlign: "center",
+        display: "flex", flexDirection: "column", alignItems: "center",
+        gap: 28,
+      }}>
+        {/* Cartel del emoji con marco dorado — protagonista visual del
+            centro. Crecido para que la pizarra no quede flotando. */}
+        <div style={{
+          width: 195, height: 180,
+          borderRadius: 22,
+          background: "linear-gradient(180deg, rgba(255,255,255,0.95), rgba(240,235,225,0.9))",
+          border: "3px solid #f2c260",
+          boxShadow: "0 12px 28px rgba(0,0,0,0.45), 0 0 0 1px rgba(242,194,96,0.35), inset 0 -4px 0 rgba(0,0,0,0.08)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 128, lineHeight: 1,
+        }}>
+          {problem.emoji}
+        </div>
+
+        {/* Palabra con casillas — letras visibles en blanco, casillas a llenar
+            como slots vacíos con borde dorado. */}
+        <div style={{
+          display: "flex", justifyContent: "center", alignItems: "center",
+          gap: SLOT_GAP,
+          padding: "4px 6px",
+        }}>
+          {problem.letters.map((ch, wordPos) => {
+            const hiddenSlot = slotOfHidden(wordPos);
+            const isHidden = hiddenSlot >= 0;
+            if (!isHidden) {
+              // Letra visible (fija, en blanco).
+              return (
+                <div key={wordPos} style={{
+                  width: SLOT_W, height: SLOT_H,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontFamily: "var(--ed-font-display)", fontWeight: 700,
+                  fontSize: SLOT_H * 0.55,
+                  color: "#fff",
+                  textShadow: "0 2px 6px rgba(0,0,0,0.5)",
+                  borderBottom: "3px solid rgba(255,255,255,0.35)",
+                }}>
+                  {ch}
+                </div>
+              );
+            }
+            // Casilla por llenar.
+            const f = filled[hiddenSlot];
+            const isFilled = f !== undefined;
+            // El slot "activo" = primer slot vacío empezando por la izquierda.
+            let activeIdx = -1;
+            for (let k = 0; k < problem.hiddenIdx.length; k++) {
+              if (filled[k] === undefined) { activeIdx = k; break; }
+            }
+            const isActive = hiddenSlot === activeIdx;
+            return (
+              <button
+                key={wordPos}
+                onClick={() => { if (isFilled) eraseSlot(hiddenSlot); }}
+                style={{
+                  width: SLOT_W, height: SLOT_H,
+                  borderRadius: 12,
+                  border: `2.5px solid ${
+                    feedback === "ok" ? "#2ecc8f" :
+                    feedback === "err" ? "#ff6b6b" :
+                    isActive ? "#fce9a8" : "rgba(242,194,96,0.55)"
+                  }`,
+                  background: isFilled
+                    ? "linear-gradient(180deg, rgba(252,233,168,0.95), rgba(217,164,65,0.85))"
+                    : "rgba(10,6,35,0.55)",
+                  color: isFilled ? "#3a2608" : "rgba(252,233,168,0.5)",
+                  fontFamily: "var(--ed-font-display)", fontWeight: 800,
+                  fontSize: SLOT_H * 0.55,
+                  cursor: isFilled ? "pointer" : "default",
+                  boxShadow: isActive
+                    ? "0 0 14px rgba(252,233,168,0.5), inset 0 1px 0 rgba(255,255,255,0.15)"
+                    : isFilled
+                      ? "0 4px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.4)"
+                      : "inset 0 1px 0 rgba(255,255,255,0.08)",
+                  transition: "all 0.15s ease",
+                }}
+                title={isFilled ? "Toca para borrar" : "Toca una letra de abajo"}
+              >
+                {isFilled ? f : "_"}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Bandeja de vocales — fila inferior centrada. 5 fichas fijas
+          (a, e, i, o, u) en minúsculas, todas REUTILIZABLES (sin estado
+          "consumida"). Subida a bottom:30 para que el espacio entre
+          casillas y bandeja sea proporcional al espacio enunciado↔cartel. */}
+      <div data-qa="bandeja" style={{
+        position: "absolute", bottom: 30, left: "50%", transform: "translateX(-50%)",
+        display: "flex", gap: 12, flexWrap: "nowrap",
+        maxWidth: 760, justifyContent: "center",
+      }}>
+        {problem.tray.map((letter, trayIdx) => {
+          const color = ["#ef5a5a","#f5a623","#f5d84b","#4fa0ff","#2ecc8f"][trayIdx % 5];
+          return (
+            <button
+              key={trayIdx}
+              className="ed-numpad-key"
+              onClick={() => pressLetter(letter)}
+              style={{
+                width: 64, height: 68, fontSize: 30,
+                borderColor: color,
+                borderWidth: 2, borderStyle: "solid",
+                cursor: "pointer",
+              }}
+              title="Toca para colocar (puedes usarla varias veces)"
+            >
+              {letter}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Acciones derecha — VERIFICAR, BORRAR, SALIR. */}
+      <div data-qa="acciones" style={{
+        position: "absolute", right: 18, top: "50%", transform: "translateY(-50%)",
+        display: "flex", flexDirection: "column", gap: 12, width: 150,
+      }}>
+        <button
+          className="ed-btn ed-btn-verify"
+          onClick={verify}
+          style={{ fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}
+        >
+          ¡VERIFICAR!
+        </button>
+        <button
+          className="ed-btn ed-btn-erase"
+          onClick={erase}
+          style={{ fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}
+        >
+          BORRAR
+        </button>
+        <button
+          className="ed-btn ed-btn-ghost"
+          onClick={() => setConfirmingExit(true)}
+          title="Salir al inicio"
+          style={{ fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}
+        >
+          SALIR
+        </button>
+      </div>
+
+      {/* Feedback overlay */}
+      {feedback && (
+        <PortalToBody>
+          <div style={{
+            position: "fixed", inset: 0, zIndex: 1000,
+            pointerEvents: "none",
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            gap: 14,
+            background: "rgba(0,0,0,0.62)",
+            backdropFilter: "blur(3px)",
+            animation: "ed-pop-in 0.3s",
+          }}>
+            <div style={{
+              fontFamily: "'Fredoka','Baloo 2',system-ui,sans-serif",
+              fontWeight: 700, fontSize: "clamp(60px, 11vmin, 120px)",
+              color: feedback === "ok" ? "#2ecc8f" : "#ff6b6b",
+              textShadow: "0 4px 0 rgba(0,0,0,0.45), 0 0 60px currentColor",
+            }}>
+              {feedback === "ok" ? "¡EXCELENTE!" : "¡UPS!"}
+            </div>
+            {feedbackMsg && (
+              <div style={{
+                fontFamily: "'Fredoka','Baloo 2',system-ui,sans-serif",
+                fontWeight: 700, fontSize: "clamp(18px, 2.6vmin, 30px)",
+                color: feedback === "ok" ? "#fce9a8" : "#fff",
+                background: "rgba(0,0,0,0.55)",
+                padding: "8px 26px", borderRadius: 999,
+                textShadow: "0 2px 6px rgba(0,0,0,0.6)",
+                textAlign: "center", maxWidth: "80vw",
+              }}>
+                {feedback === "ok" ? feedbackMsg : `${feedbackMsg} — ${char.name}`}
+              </div>
+            )}
+          </div>
+        </PortalToBody>
+      )}
+
+      {/* Modal de salir */}
+      {confirmingExit && (
+        <PortalToBody>
+          <div
+            onClick={() => setConfirmingExit(false)}
+            style={{
+              position: "fixed", inset: 0, zIndex: 1000,
+              background: "rgba(0,0,0,0.62)",
+              backdropFilter: "blur(4px)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              animation: "ed-pop-in 0.18s",
+              padding: 16,
+            }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="ed-card"
+              style={{ padding: 24, maxWidth: 440, textAlign: "center", boxShadow: "var(--ed-shadow-card), 0 0 40px rgba(255,107,107,0.3)" }}
+            >
+              <div className="ed-label" style={{ color: "#ff8b8b", marginBottom: 6 }}>
+                Salir del juego
+              </div>
+              <h2 className="ed-h1" style={{ fontSize: 22, lineHeight: 1.15, marginBottom: 8 }}>
+                ¿Volver al inicio?
+              </h2>
+              <p className="ed-body" style={{ marginBottom: 16, fontSize: 14 }}>
+                Vas a perder el progreso de esta ronda ({attempted}/3 palabras). No habrá reporte de esta sesión.
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingExit(false)} style={{ height: 44, fontWeight: 800, letterSpacing: "0.04em" }}>
+                  SEGUIR JUGANDO
+                </button>
+                <button className="ed-btn ed-btn-primary" onClick={() => { setConfirmingExit(false); go("home"); }} style={{ height: 44, fontWeight: 800, letterSpacing: "0.04em" }}>
+                  SÍ, SALIR
+                </button>
+              </div>
+            </div>
+          </div>
+        </PortalToBody>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// RESULTS — Reporte académico imprimible. Misma estructura que el
+// shell matemático. Solo cambia el contenido de `lastResult` y la
+// columna "Operación" del reporte (acá: la palabra con emoji).
+// ─────────────────────────────────────────────────────────────
+function formatOp(e) {
+  return `${e.emoji || "📝"}  ${e.a}`;
+}
+
+const printStyles = {
+  doc: { padding: 0, margin: 0, color: "#111", background: "#fff" },
+  head: {
+    display: "flex", alignItems: "center", gap: 14,
+    borderBottom: "2px solid #d9a441",
+    paddingBottom: 10, marginBottom: 14,
+  },
+  logo: { width: 56, height: 56, objectFit: "contain" },
+  title: { flex: 1, minWidth: 0 },
+  org: { fontFamily: "'Fredoka','Baloo 2','Nunito',sans-serif", fontWeight: 700, fontSize: "16pt", letterSpacing: "0.03em", lineHeight: 1.1, margin: 0 },
+  sub: { fontSize: "9pt", color: "#555", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 4 },
+  date: { fontFamily: "ui-monospace,Consolas,monospace", fontSize: "10pt", color: "#555", textAlign: "right", whiteSpace: "nowrap" },
+  fields: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 14 },
+  field: { padding: "8px 10px", borderRadius: 6, border: "1px solid #ddd" },
+  fieldL: { fontSize: "8pt", textTransform: "uppercase", letterSpacing: "0.08em", color: "#666" },
+  fieldV: { fontSize: "12pt", fontWeight: 700, marginTop: 2 },
+  table: { width: "100%", borderCollapse: "collapse", fontSize: "11pt" },
+  thHead: { borderBottom: "2px solid #111" },
+  th: { padding: 8, textAlign: "left", fontSize: "9pt", textTransform: "uppercase", letterSpacing: "0.08em", color: "#555", fontWeight: 700 },
+  thR: { textAlign: "right" },
+  thC: { textAlign: "center" },
+  tr: { borderBottom: "1px solid #ccc" },
+  td: { padding: "9px 8px", fontFamily: "ui-monospace,Consolas,monospace" },
+  tdNum: { color: "#888", width: 36 },
+  tdOp: { fontWeight: 700 },
+  tdR: { textAlign: "right" },
+  tdC: { textAlign: "center", fontFamily: "'Nunito',sans-serif", fontWeight: 700 },
+  tdDim: { color: "#888" },
+  tdOk: { color: "#1e8a5d" },
+  tdErr: { color: "#c33b3b" },
+  tdEmpty: { padding: 24, textAlign: "center", color: "#888", fontStyle: "italic" },
+  summary: { marginTop: 16, borderTop: "2px solid #d9a441", paddingTop: 12,
+    display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 },
+  cell: { padding: 10, borderRadius: 6, border: "1px solid #ddd", textAlign: "center" },
+  cellEmp: { background: "#faf3df", borderColor: "#d9a441" },
+  cellL: { fontSize: "8pt", textTransform: "uppercase", letterSpacing: "0.08em", color: "#666" },
+  cellV: { fontSize: "18pt", fontWeight: 800, marginTop: 4 },
+  foot: { marginTop: 16, fontSize: "9pt", color: "#888", textAlign: "center" },
+};
+
+function PrintableReport({ studentName, res, dateStr, m, s, attemptedCount, totalEx, accuracy }) {
+  const log = res.log || [];
+  return (
+    <PortalToBody>
+      <div className="ed-print-doc" style={printStyles.doc} aria-hidden="true">
+        <div style={printStyles.head}>
+          <img src="assets/edinun-logo.png" alt="" style={printStyles.logo} />
+          <div style={printStyles.title}>
+            <h1 style={printStyles.org}>EDINUN — Ediciones Nacionales Unidas</h1>
+            <div style={printStyles.sub}>Reporte académico · Juegos de Lenguaje</div>
+          </div>
+          <div style={printStyles.date}>{dateStr}</div>
+        </div>
+
+        <div style={printStyles.fields}>
+          <div style={printStyles.field}>
+            <div style={printStyles.fieldL}>Estudiante</div>
+            <div style={printStyles.fieldV}>{studentName || "—"}</div>
+          </div>
+          <div style={printStyles.field}>
+            <div style={printStyles.fieldL}>Categoría</div>
+            <div style={printStyles.fieldV}>{res.category || "—"}</div>
+          </div>
+          <div style={printStyles.field}>
+            <div style={printStyles.fieldL}>Tiempo total</div>
+            <div style={printStyles.fieldV}>{String(m).padStart(2,"0")}:{String(s).padStart(2,"0")}</div>
+          </div>
+        </div>
+
+        <table style={printStyles.table}>
+          <thead>
+            <tr style={printStyles.thHead}>
+              <th style={printStyles.th}>#</th>
+              <th style={printStyles.th}>Palabra</th>
+              <th style={{ ...printStyles.th, ...printStyles.thR }}>Respuesta del estudiante</th>
+              <th style={{ ...printStyles.th, ...printStyles.thR }}>Palabra correcta</th>
+              <th style={{ ...printStyles.th, ...printStyles.thC }}>Estado</th>
+              <th style={{ ...printStyles.th, ...printStyles.thR }}>Tiempo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {log.map((e) => (
+              <tr key={e.idx} style={printStyles.tr}>
+                <td style={{ ...printStyles.td, ...printStyles.tdNum }}>{e.idx}</td>
+                <td style={{ ...printStyles.td, ...printStyles.tdOp }}>{e.emoji || ""} {e.a}</td>
+                <td style={{ ...printStyles.td, ...printStyles.tdR }}>{e.userAnswer}</td>
+                <td style={{ ...printStyles.td, ...printStyles.tdR }}>{e.correctAnswer}</td>
+                <td style={{ ...printStyles.td, ...printStyles.tdC, ...(e.isCorrect ? printStyles.tdOk : printStyles.tdErr) }}>
+                  {e.isCorrect ? "Correcto" : "Incorrecto"}
+                </td>
+                <td style={{ ...printStyles.td, ...printStyles.tdR, ...printStyles.tdDim }}>{e.time}s</td>
+              </tr>
+            ))}
+            {log.length === 0 && (
+              <tr><td colSpan={6} style={printStyles.tdEmpty}>No se registraron ejercicios en esta sesión.</td></tr>
+            )}
+          </tbody>
+        </table>
+
+        <div style={printStyles.summary}>
+          <div style={printStyles.cell}>
+            <div style={printStyles.cellL}>Ejercicios</div>
+            <div style={printStyles.cellV}>{attemptedCount} / {totalEx}</div>
+          </div>
+          <div style={printStyles.cell}>
+            <div style={printStyles.cellL}>Correctos</div>
+            <div style={printStyles.cellV}>{res.solved}</div>
+          </div>
+          <div style={printStyles.cell}>
+            <div style={printStyles.cellL}>Estrellas</div>
+            <div style={printStyles.cellV}>{res.starsEarned}</div>
+          </div>
+          <div style={{ ...printStyles.cell, ...printStyles.cellEmp }}>
+            <div style={printStyles.cellL}>Precisión total</div>
+            <div style={printStyles.cellV}>{accuracy}%</div>
+          </div>
+        </div>
+
+        <div style={printStyles.foot}>EDINUN GAMES · Reporte generado automáticamente</div>
+      </div>
+    </PortalToBody>
+  );
+}
+
+function ResultsScreen({ app, setApp, go }) {
+  const char = CHARACTERS.find((c) => c.id === app.character) || CHARACTERS[0];
+  const res = app.lastResult || { category: "Completa la palabra", solved: 0, total: 3, time: 0, starsEarned: 0, log: [] };
+  const m = Math.floor(res.time / 60), s = res.time % 60;
+  const totalEx = res.total || 3;
+  const attemptedCount = (res.log || []).length;
+  const accuracy = attemptedCount > 0 ? Math.round((res.solved / attemptedCount) * 100) : 0;
+  const dateStr = new Date().toLocaleDateString("es-EC", { year: "numeric", month: "long", day: "numeric" });
+
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+      <div style={{ position: "absolute", top: 14, left: 24, right: 24, display: "flex", justifyContent: "flex-start", alignItems: "center" }}>
+        <button className="ed-btn ed-btn-ghost" onClick={() => go("home")} style={{ padding: "8px 14px", fontWeight: 800, letterSpacing: "0.04em" }}>← VOLVER AL INICIO</button>
+      </div>
+
+      <div style={{
+        position: "absolute", inset: "70px 32px 20px 32px",
+        display: "grid", gridTemplateColumns: "0.85fr 1.4fr", gap: 24, alignItems: "stretch",
+      }}>
+        {/* Izq: personaje + saludo */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
+          <div style={{
+            fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 36,
+            background: "linear-gradient(180deg, #fce9a8, #d9a441)",
+            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+            lineHeight: 1, marginBottom: 4,
+          }}>
+            {res.surrendered ? "Sesión terminada" : "¡Ronda completa!"}
+          </div>
+          <char.Component size={180} />
+          <div className="ed-body" style={{ fontStyle: "italic", textAlign: "center", maxWidth: 240, fontSize: 13 }}>
+            "{app.studentName}, completaste {res.solved} de {totalEx} palabras."
+            <div style={{ marginTop: 4, color: "var(--ed-ink-soft)", fontSize: 12 }}>— {char.name}</div>
+          </div>
+        </div>
+
+        {/* Der: reporte académico */}
+        <div className="ed-card" style={{ padding: 16, overflow: "hidden", display: "flex", flexDirection: "column", minHeight: 0 }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 14,
+            borderBottom: "2px solid rgba(242,194,96,0.45)",
+            paddingBottom: 10, marginBottom: 12,
+          }}>
+            <EdinunLogoMini size={56} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 18, letterSpacing: "0.04em", lineHeight: 1.1 }}>
+                EDINUN — Ediciones Nacionales Unidas
+              </div>
+              <div style={{ fontFamily: "var(--ed-font-ui)", fontSize: 11, color: "var(--ed-ink-soft)", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>
+                Reporte académico · Juegos de Lenguaje
+              </div>
+            </div>
+            <div style={{ fontFamily: "var(--ed-font-mono)", fontSize: 11, color: "var(--ed-ink-dim)", textAlign: "right" }}>
+              {dateStr}
+            </div>
+          </div>
+
+          <div style={{
+            display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8,
+            fontFamily: "var(--ed-font-ui)", fontSize: 12, marginBottom: 10,
+          }}>
+            <ReportField label="Estudiante" value={app.studentName || "—"} />
+            <ReportField label="Categoría" value={res.category} />
+            <ReportField label="Tiempo total" value={`${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`} />
+          </div>
+
+          <div style={{ flex: 1, minHeight: 0, overflow: "auto", marginBottom: 10 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "var(--ed-font-ui)", fontSize: 12 }}>
+              <thead>
+                <tr style={{
+                  fontFamily: "var(--ed-font-ui)", fontWeight: 700, fontSize: 10,
+                  letterSpacing: "0.08em", textTransform: "uppercase",
+                  color: "var(--ed-ink-dim)",
+                  borderBottom: "1px solid rgba(148,120,255,0.3)",
+                }}>
+                  <th style={{ textAlign: "left", padding: "6px 8px", width: 36 }}>#</th>
+                  <th style={{ textAlign: "left", padding: "6px 8px" }}>Palabra</th>
+                  <th style={{ textAlign: "right", padding: "6px 8px" }}>Respuesta del estudiante</th>
+                  <th style={{ textAlign: "right", padding: "6px 8px" }}>Palabra correcta</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px" }}>Estado</th>
+                  <th style={{ textAlign: "right", padding: "6px 8px" }}>Tiempo</th>
+                </tr>
+              </thead>
+              <tbody style={{ fontFamily: "var(--ed-font-mono)" }}>
+                {(res.log || []).map((e) => (
+                  <tr key={e.idx} style={{ borderBottom: "1px solid rgba(148,120,255,0.18)" }}>
+                    <td style={{ padding: "8px 8px", color: "var(--ed-ink-soft)" }}>{e.idx}</td>
+                    <td style={{ padding: "8px 8px", fontWeight: 600 }}>{formatOp(e)}</td>
+                    <td style={{ padding: "8px 8px", textAlign: "right" }}>{e.userAnswer}</td>
+                    <td style={{ padding: "8px 8px", textAlign: "right" }}>{e.correctAnswer}</td>
+                    <td style={{
+                      padding: "8px 8px", textAlign: "center", fontFamily: "var(--ed-font-display)",
+                      fontWeight: 700, color: e.isCorrect ? "#2ecc8f" : "#ff6b6b",
+                    }}>
+                      {e.isCorrect ? "Correcto" : "Incorrecto"}
+                    </td>
+                    <td style={{ padding: "8px 8px", textAlign: "right", color: "var(--ed-ink-dim)" }}>{e.time}s</td>
+                  </tr>
+                ))}
+                {(res.log || []).length === 0 && (
+                  <tr>
+                    <td colSpan={6} style={{ padding: "16px 8px", textAlign: "center", color: "var(--ed-ink-soft)", fontStyle: "italic" }}>
+                      No se registraron ejercicios en esta sesión.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div style={{
+            borderTop: "2px solid rgba(242,194,96,0.45)",
+            paddingTop: 10,
+            display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10,
+            fontFamily: "var(--ed-font-ui)", fontSize: 11,
+          }}>
+            <SummaryCell label="Ejercicios" value={`${attemptedCount} / ${totalEx}`} />
+            <SummaryCell label="Correctos" value={`${res.solved}`} tone="#2ecc8f" />
+            <SummaryCell label="Estrellas" value={`${res.starsEarned}`} tone="#fce9a8" />
+            <SummaryCell label="Precisión total" value={`${accuracy}%`} tone="#fce9a8" emphasis />
+          </div>
+
+          <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            <button
+              className="ed-btn ed-btn-ghost"
+              onClick={() => window.print()}
+              style={{ padding: "0 10px", fontSize: 13, height: 44, fontWeight: 800, letterSpacing: "0.04em" }}
+            >
+              IMPRIMIR REPORTE
+            </button>
+            <button className="ed-btn ed-btn-primary" onClick={() => go("game")} style={{ padding: "0 10px", fontSize: 13, height: 44, fontWeight: 800, letterSpacing: "0.04em" }}>
+              JUGAR OTRA RONDA
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <PrintableReport
+        studentName={app.studentName}
+        res={res}
+        dateStr={dateStr}
+        m={m} s={s}
+        attemptedCount={attemptedCount}
+        totalEx={totalEx}
+        accuracy={accuracy}
+      />
+    </div>
+  );
+}
+
+function ReportField({ label, value }) {
+  return (
+    <div style={{
+      padding: "8px 10px", borderRadius: 10,
+      background: "rgba(10,6,35,0.45)",
+      border: "1px solid rgba(148,120,255,0.25)",
+    }}>
+      <div className="ed-label" style={{ fontSize: 9, color: "var(--ed-ink-soft)", marginBottom: 2 }}>{label}</div>
+      <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 14, color: "var(--ed-ink)" }}>{value}</div>
+    </div>
+  );
+}
+
+function SummaryCell({ label, value, tone = "var(--ed-ink)", emphasis = false }) {
+  return (
+    <div style={{
+      padding: "8px 10px", borderRadius: 10,
+      background: emphasis ? "rgba(242,194,96,0.12)" : "rgba(10,6,35,0.4)",
+      border: `1px solid ${emphasis ? "rgba(242,194,96,0.5)" : "rgba(148,120,255,0.25)"}`,
+      textAlign: "center",
+    }}>
+      <div className="ed-label" style={{ fontSize: 9, color: "var(--ed-ink-soft)", marginBottom: 2 }}>{label}</div>
+      <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: emphasis ? 22 : 18, color: tone, lineHeight: 1 }}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { GameScreen, ResultsScreen });
+
+// app.jsx — Shell de producción EDINUN GAMES.
+// Enrutador por estado y device stage adaptativo (desktop / tablet / mobile).
+// Móvil portrait: el contenido NUNCA rota; un overlay BLOQUEANTE obliga
+// al usuario a girar físicamente el teléfono antes de poder usar la app.
+
+const { useState: useStateA, useEffect: useEffectA, useRef: useRefA } = React;
+
+// ─────────────────────────────────────────────────────────────
+// useViewportSize — devuelve el tamaño REAL visible del viewport.
+//
+// En iOS Safari (y otros mobile browsers), `window.innerHeight` y `100vh`
+// reportan la altura de la ventana INCLUYENDO la URL bar, así que el
+// contenido escalado a esa altura termina parcialmente fuera de pantalla
+// (ej: el numpad del juego queda debajo del fondo visible). La Visual
+// Viewport API reporta el área verdaderamente visible y se actualiza
+// cuando la URL bar se muestra/oculta.
+// ─────────────────────────────────────────────────────────────
+// Detección de "resize REAL" vs "zoom del navegador".
+//
+// Idea: el tamaño FÍSICO de la zona visible en píxeles del display es
+// invariante al ctrl+rueda. Cuando subes el zoom de 100 % a 500 %:
+//   · innerWidth en CSS-px se divide entre 5
+//   · devicePixelRatio se multiplica por 5
+//   · innerWidth × devicePixelRatio queda igual ⇒ NO hubo resize real.
+//
+// Cuando arrastras la esquina de la ventana o rotas el dispositivo:
+//   · innerWidth en CSS-px cambia
+//   · devicePixelRatio NO cambia
+//   · innerWidth × devicePixelRatio cambia ⇒ SÍ hubo resize real.
+//
+// Por eso comparamos contra `innerWidth × devicePixelRatio` y solo
+// actualizamos el state cuando ese producto cambia. Así el lienzo se
+// queda con su tamaño CSS previo durante el zoom y el navegador lo
+// amplifica visualmente — junto con los glifos, que ya leen `glyphSize`
+// del mismo state defendido (ver DeviceStage).
+//
+// La defensa anterior (tracker de _lastDPR) era frágil: se actualizaba
+// en CADA evento, así que si el navegador disparaba dos resize seguidos
+// para la misma acción de zoom, el segundo veía el dpr ya guardado y
+// recalculaba el tamaño con el viewport pequeño. Esto causaba que los
+// glifos quedaran enormes mientras el lienzo se recomprimía.
+function physicalSize() {
+  if (typeof window === "undefined") return { w: 0, h: 0 };
+  const dpr = window.devicePixelRatio || 1;
+  return { w: window.innerWidth * dpr, h: window.innerHeight * dpr };
+}
+let _lastPhysical = physicalSize();
+
+function useViewportSize() {
+  const [size, setSize] = useStateA(() => readSize());
+  useEffectA(() => {
+    function onChange() {
+      const phys = physicalSize();
+      // Tolerancia de 4 px reales para absorber redondeos del navegador.
+      if (Math.abs(phys.w - _lastPhysical.w) < 4 && Math.abs(phys.h - _lastPhysical.h) < 4) {
+        // Mismo display, distinto zoom — no actualizamos el state.
+        return;
+      }
+      _lastPhysical = phys;
+      setSize(readSize());
+    }
+    window.addEventListener("resize", onChange);
+    window.addEventListener("orientationchange", onChange);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", onChange);
+    }
+    return () => {
+      window.removeEventListener("resize", onChange);
+      window.removeEventListener("orientationchange", onChange);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener("resize", onChange);
+      }
+    };
+  }, []);
+  return size;
+}
+function readSize() {
+  if (typeof window === "undefined") return { vw: 0, vh: 0 };
+  const vv = window.visualViewport;
+  // Cuando el usuario hace pinch-zoom, vv.scale > 1 y vv.width/height
+  // reflejan la región visible (más pequeña). Usar esos valores haría
+  // que la escala del lienzo se reduzca al hacer zoom — exactamente lo
+  // contrario de lo que el usuario quiere. Solo confiamos en vv cuando
+  // scale ≈ 1 (sin zoom) — ahí da una lectura más fiel que innerWidth/
+  // Height en iOS Safari (descuenta correctamente la URL bar visible).
+  if (vv && Math.abs(vv.scale - 1) < 0.05) {
+    return { vw: vv.width, vh: vv.height };
+  }
+  return { vw: window.innerWidth, vh: window.innerHeight };
+}
+
+// ─────────────────────────────────────────────────────────────
+// DeviceStage — escala el lienzo lógico 900×540 (paisaje) al viewport.
+//
+// Reglas:
+//   · Desktop / tablet: sin marco, sin notch, fondo cósmico edge-to-edge.
+//   · Mobile portrait: lienzo letterboxed Y overlay BLOQUEANTE "Gira el
+//     teléfono". El contenido del juego no es accesible hasta que rote.
+//   · Mobile landscape: lienzo escalado al viewport visible (visualViewport,
+//     no innerHeight, para no clippearse debajo de la URL bar de iOS).
+// ─────────────────────────────────────────────────────────────
+function DeviceStage({ children, variant = "cosmic" }) {
+  const W = 900, H = 540;
+  const { vw, vh } = useViewportSize();
+  const minSide = Math.min(vw, vh);
+  const maxSide = Math.max(vw, vh);
+  let mode = "desktop";
+  if (maxSide < 820) mode = "mobile";
+  else if (minSide < 820) mode = "tablet";
+  const portrait = vh > vw;
+  const baseScale = Math.max(Math.min(vw / W, vh / H), 0.15);
+
+  // Detección de teléfono independiente del modo: cualquier dispositivo con
+  // lado menor ≤ 600 CSS-px es un teléfono. Cubre todos los teléfonos
+  // actuales (iPhone SE 320 → S25 Ultra/Pro Max ~432) con margen para
+  // modelos futuros más anchos. La menor tablet (iPad mini 744) queda
+  // bien por encima, así que no se rompe el caso "tablet portrait usable
+  // letterboxed". Solo bloqueamos cuando teléfono Y portrait — el lienzo
+  // paisaje queda demasiado pequeño para jugar.
+  const isPhone = minSide <= 600;
+  const lockPortrait = isPhone && portrait;
+
+  // Tamaño de los glifos del fondo: equivalente al `clamp(48px, 7vmin, 110px)`
+  // que tenía el CSS, pero calculado a partir del vw/vh DEFENDIDO contra
+  // cambios de DPR. Esto evita que con ctrl+rueda del mouse los glifos
+  // crezcan más rápido que el lienzo (el lienzo se congela vía la defensa
+  // del DPR; si CSS lee el vmin actual, los glifos no se congelan y desync).
+  const glyphSize = Math.max(48, Math.min(minSide * 0.07, 110));
+
+  const debug = typeof window !== "undefined" && /(?:^|[#&])debug(?:&|$)/.test(window.location.hash || "");
+
+  // ─── Pinch-zoom y pan custom ─────────────────────────────────
+  // Reemplaza el zoom nativo del browser. Razón: con el lienzo letterboxed
+  // dentro de un wrapper viewport-sized, el visual viewport del browser
+  // puede panear hasta dejar al usuario mirando solo el cosmos vacío de los
+  // bordes — el "rebote" reportado en iPhone (ver .planning/ios-zoom.md).
+  // Aquí los gestos operan sobre el transform del lienzo, así que el zoom
+  // siempre gravita alrededor del contenido y no deriva a un borde
+  // decorativo.
+  const wrapperRef = useRefA(null);
+  const gestureRef = useRefA(null);
+  const stateRef = useRefA({ userZoom: 1, pan: { x: 0, y: 0 } });
+  const [userZoom, setUserZoom] = useStateA(1);
+  const [pan, setPan] = useStateA({ x: 0, y: 0 });
+  const [duringGesture, setDuringGesture] = useStateA(false);
+
+  useEffectA(() => {
+    stateRef.current = { userZoom, pan };
+  }, [userZoom, pan]);
+
+  // Reset al cambiar viewport (rotación, resize). Si no, el pan queda
+  // referenciado a un viewport que ya no existe.
+  useEffectA(() => {
+    setUserZoom(1);
+    setPan({ x: 0, y: 0 });
+    setDuringGesture(false);
+  }, [vw, vh]);
+
+  useEffectA(() => {
+    if (lockPortrait) return;
+    const el = wrapperRef.current;
+    if (!el) return;
+
+    const Z_MIN = 1;
+    const Z_MAX = 4;
+
+    const dist = (a, b) => Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+    const mid = (a, b) => ({ x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 });
+
+    function clampPan(zoom, px, py) {
+      // Pan máximo: la mitad del exceso del lienzo escalado sobre el viewport.
+      // En zoom=1 el max es 0 (lienzo cabe en viewport, no hay donde panear).
+      // En zoom=N el lienzo mide N veces el lado contain, así que el usuario
+      // puede mover ±(sw - vw)/2 antes de que la orilla del lienzo cruce la
+      // orilla del viewport. Esto evita perder el contenido fuera de pantalla.
+      const sw = baseScale * zoom * W;
+      const sh = baseScale * zoom * H;
+      const maxX = Math.max(0, (sw - vw) / 2);
+      const maxY = Math.max(0, (sh - vh) / 2);
+      return {
+        x: Math.max(-maxX, Math.min(maxX, px)),
+        y: Math.max(-maxY, Math.min(maxY, py)),
+      };
+    }
+
+    function applyState(z, px, py) {
+      stateRef.current = { userZoom: z, pan: { x: px, y: py } };
+      setUserZoom(z);
+      setPan({ x: px, y: py });
+    }
+
+    function onTouchStart(e) {
+      const { userZoom: z0, pan: p0 } = stateRef.current;
+      if (e.touches.length >= 2) {
+        const [t0, t1] = e.touches;
+        gestureRef.current = {
+          mode: "pinch",
+          d0: dist(t0, t1),
+          m0: mid(t0, t1),
+          z0, p0: { ...p0 },
+        };
+        setDuringGesture(true);
+        e.preventDefault();
+      } else if (e.touches.length === 1) {
+        const t = e.touches[0];
+        gestureRef.current = {
+          mode: "pan-armed",
+          startX: t.clientX,
+          startY: t.clientY,
+          z0, p0: { ...p0 },
+        };
+        // No preventDefault — un tap simple debe seguir generando click.
+      }
+    }
+
+    function onTouchMove(e) {
+      const g = gestureRef.current;
+      if (!g) return;
+
+      // Si en medio de un gesto entra un segundo dedo, transición a pinch
+      // tomando el estado actual como punto de partida.
+      if (e.touches.length >= 2 && g.mode !== "pinch") {
+        const [t0, t1] = e.touches;
+        const { userZoom: zNow, pan: pNow } = stateRef.current;
+        gestureRef.current = {
+          mode: "pinch",
+          d0: dist(t0, t1),
+          m0: mid(t0, t1),
+          z0: zNow, p0: { ...pNow },
+        };
+        setDuringGesture(true);
+        e.preventDefault();
+        return;
+      }
+
+      if (e.touches.length >= 2 && g.mode === "pinch") {
+        const [t0, t1] = e.touches;
+        const d = dist(t0, t1);
+        const m = mid(t0, t1);
+        const ratio = d / g.d0;
+        // Permitimos pasar transitoriamente bajo Z_MIN para sensación elástica
+        // durante el gesto; en touchend hacemos snap-back al rango válido.
+        const newZoom = Math.max(Z_MIN * 0.7, Math.min(Z_MAX * 1.05, g.z0 * ratio));
+        const r = newZoom / g.z0;
+        const ux = g.m0.x - vw / 2;
+        const uy = g.m0.y - vh / 2;
+        // Fórmula que mantiene el punto medio de la pinza anclado al mismo
+        // píxel del lienzo durante todo el gesto. Derivación:
+        //   panX_new = (mx0 - vw/2) + (newZoom/z0) * (panX0 - (mx0 - vw/2))
+        //              + (mx_now - mx0)   ← desplazamiento del propio gesto
+        const newPanX = ux + r * (g.p0.x - ux) + (m.x - g.m0.x);
+        const newPanY = uy + r * (g.p0.y - uy) + (m.y - g.m0.y);
+        applyState(newZoom, newPanX, newPanY);
+        e.preventDefault();
+      } else if (e.touches.length === 1 && g.mode === "pan-armed") {
+        if (g.z0 <= 1.001) return; // sin zoom no panea — dejamos pasar el tap
+        const t = e.touches[0];
+        const dx = t.clientX - g.startX;
+        const dy = t.clientY - g.startY;
+        if (Math.hypot(dx, dy) > 8) {
+          gestureRef.current = { ...g, mode: "pan" };
+          setDuringGesture(true);
+          e.preventDefault();
+        }
+      } else if (e.touches.length === 1 && g.mode === "pan") {
+        const t = e.touches[0];
+        const dx = t.clientX - g.startX;
+        const dy = t.clientY - g.startY;
+        applyState(g.z0, g.p0.x + dx, g.p0.y + dy);
+        e.preventDefault();
+      }
+    }
+
+    function onTouchEnd(e) {
+      const g = gestureRef.current;
+      if (!g) return;
+      if (e.touches.length === 0) {
+        const { userZoom: z, pan: p } = stateRef.current;
+        const clampedZ = Math.max(Z_MIN, Math.min(Z_MAX, z));
+        let cp;
+        if (clampedZ <= 1.001) {
+          cp = { x: 0, y: 0 };
+        } else {
+          cp = clampPan(clampedZ, p.x, p.y);
+        }
+        applyState(clampedZ, cp.x, cp.y);
+        setDuringGesture(false);
+        gestureRef.current = null;
+      }
+    }
+
+    el.addEventListener("touchstart", onTouchStart, { passive: false });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd, { passive: false });
+    el.addEventListener("touchcancel", onTouchEnd, { passive: false });
+
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+      el.removeEventListener("touchcancel", onTouchEnd);
+    };
+  }, [vw, vh, baseScale, lockPortrait]);
+
+  const totalScale = baseScale * userZoom;
+
+  return (
+    <div ref={wrapperRef} style={{
+      width: "100vw", height: "100dvh",
+      minHeight: "-webkit-fill-available",
+      overflow: "hidden",
+      position: "relative",
+      background: variant === "chalkboard" ? "#0b3a2d" : "#050214",
+      // `touch-action: none` desactiva todos los gestos que el browser
+      // interpretaría por su cuenta (pinch, pan, doble-tap-zoom). Los
+      // implementamos en JS sobre el transform del lienzo para que el
+      // zoom siempre quede anclado al contenido y nunca derive a los
+      // bordes letterbox del wrapper. Los click/tap en botones siguen
+      // funcionando — esto solo bloquea gestos del browser, no eventos.
+      touchAction: "none",
+    }}>
+      <CosmosBg variant={variant} glyphSize={glyphSize} />
+
+      {/* Lienzo lógico 900×540 centrado y escalado.
+          El transform combina el escalado base (contain del viewport),
+          el zoom del usuario y el pan acumulado. El orden CSS es
+          right-to-left: scale → translate(pan) → translate(-50%,-50%). */}
+      <div style={{
+        width: W, height: H,
+        position: "absolute",
+        left: "50%", top: "50%",
+        transform: `translate(-50%, -50%) translate(${pan.x}px, ${pan.y}px) scale(${totalScale})`,
+        transformOrigin: "center center",
+        overflow: "hidden",
+        // Sin transición durante el gesto activo (el lienzo sigue la pinza
+        // al instante); con transición elástica al soltar, para que el
+        // snap-back de zoom/pan a los límites válidos no sea abrupto.
+        transition: duringGesture ? "none" : "transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1)",
+        willChange: "transform",
+      }}>
+        {children}
+      </div>
+
+      {lockPortrait && <RotateLockOverlay />}
+      {debug && (
+        <div style={{
+          position: "fixed", top: 6, left: 6, zIndex: 999999,
+          background: "rgba(0,0,0,0.85)", color: "#0f0",
+          font: "11px ui-monospace,Menlo,monospace",
+          padding: "6px 8px", borderRadius: 6,
+          maxWidth: "90vw", whiteSpace: "pre",
+          pointerEvents: "none",
+        }}>
+{`vw=${vw} vh=${vh}
+min=${minSide} max=${maxSide}
+mode=${mode} portrait=${portrait}
+isPhone=${isPhone} LOCK=${lockPortrait}
+zoom=${userZoom.toFixed(2)} pan=${pan.x.toFixed(0)},${pan.y.toFixed(0)}
+vv=${typeof window!=="undefined" && window.visualViewport ? "yes" : "no"}
+ua=${(typeof navigator!=="undefined" ? navigator.userAgent : "?").slice(0,60)}`}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Overlay bloqueante de rotación. En mobile portrait cubre toda la pantalla
+// con un mensaje claro y un ícono animado. NO se puede descartar — el usuario
+// DEBE girar el dispositivo para acceder al juego. Se desmonta solo cuando
+// el viewport pasa a landscape.
+function RotateLockOverlay() {
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Gira tu teléfono para jugar"
+      style={{
+        position: "fixed", inset: 0, zIndex: 99999,
+        background: "linear-gradient(180deg,#050214 0%,#0a0628 100%)",
+        display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center",
+        textAlign: "center", padding: "32px 24px",
+        color: "#fce9a8",
+        fontFamily: "var(--ed-font-display, system-ui)",
+      }}
+    >
+      <div
+        style={{
+          width: 132, height: 132, marginBottom: 28,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          animation: "ed-rotate-lock 2.4s ease-in-out infinite",
+        }}
+        aria-hidden="true"
+      >
+        {/* Ícono de teléfono que rota */}
+        <svg viewBox="0 0 100 100" width="120" height="120" fill="none">
+          <rect x="36" y="14" width="28" height="72" rx="6"
+                stroke="#f2c260" strokeWidth="3" fill="rgba(242,194,96,0.08)" />
+          <rect x="42" y="22" width="16" height="48" rx="2" fill="rgba(242,194,96,0.18)" />
+          <circle cx="50" cy="78" r="2.5" fill="#f2c260" />
+        </svg>
+      </div>
+      <div style={{
+        fontWeight: 800,
+        fontSize: "clamp(18px, 5.2vw, 26px)",
+        lineHeight: 1.15,
+        textTransform: "uppercase", letterSpacing: "0.02em",
+        marginBottom: 12,
+      }}>
+        Gira tu teléfono
+      </div>
+      <div style={{
+        fontWeight: 500,
+        fontSize: "clamp(13px, 4vw, 16px)",
+        lineHeight: 1.4,
+        color: "rgba(252,233,168,0.78)",
+        maxWidth: "min(320px, 80vw)",
+      }}>
+        Pon tu teléfono de lado para jugar.
+      </div>
+      <style>{`
+        @keyframes ed-rotate-lock {
+          0%   { transform: rotate(0deg); }
+          45%  { transform: rotate(0deg); }
+          70%  { transform: rotate(-90deg); }
+          100% { transform: rotate(-90deg); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// App principal
+// ─────────────────────────────────────────────────────────────
+function App() {
+  const [route, setRoute] = useStateA("home");
+  const [app, setApp] = useStateA({
+    studentName: "",
+    character: "escritor",
+    level: "unico",
+    stars: 0,
+    sessionStart: Date.now(),
+    gameSeed: 0,
+  });
+
+  function go(r) {
+    // Al (re)entrar al juego, regeneramos la seed para que GameScreen se remonte
+    // y reinicie ronda, tiempo, racha, etc. También reseteamos las estrellas:
+    // cada partida empieza desde 0, no acumula entre rondas.
+    if (r === "game") {
+      setApp((s) => ({ ...s, gameSeed: (s.gameSeed || 0) + 1, stars: 0 }));
+    }
+    setRoute(r);
+  }
+
+  const screenProps = { app, setApp, go };
+
+  let Screen = window.HomeScreen;
+  if (route === "character") Screen = window.CharacterScreen;
+  else if (route === "game") Screen = window.GameScreen;
+  else if (route === "results") Screen = window.ResultsScreen;
+
+  const variant = route === "game" ? "chalkboard" : "cosmic";
+
+  return (
+    <DeviceStage variant={variant}>
+      <Screen key={route === "game" ? `game-${app.gameSeed}` : route} {...screenProps} />
+    </DeviceStage>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+
+</script>
+</body>
+</html>

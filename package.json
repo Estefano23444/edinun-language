@@ -4,7 +4,9 @@
   "private": true,
   "description": "EDINUN GAMES — Juegos de lenguaje y literatura",
   "scripts": {
-    "qa": "node juegos/JUEGO-1-completa-vocales/.planning/qa-checks.js"
+    "qa": "node juegos/completa-palabras/.planning/qa-checks.js",
+    "build:landing": "node .scripts/build-landing.js",
+    "build:game": "node juegos/completa-palabras/.planning/bundle.js"
   },
   "devDependencies": {
     "playwright": "^1.59.1"

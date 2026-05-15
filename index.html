@@ -63,15 +63,14 @@ Object.assign(window, { EdinunLogo, EdinunLogoMini });
                         (los logos son idénticos entre juegos; tomar de
                         cualquiera con preferencia el primero por orden
                         alfabético del slug)
-    // characters.jsx — Personajes EDINUN GAMES.
-// Renderizan los PNG de assets/char-<id>.png generados con Nano Banana.
-// El componente expone la misma API que la versión SVG anterior
-// (props `size`, `floating`) para no romper a los consumidores
-// (GameScreen, CharacterScreen, ResultsScreen, ProfileScreen, CharacterAvatar).
+    // characters.jsx — Personajes EDINUN GAMES · Juegos de lenguaje.
+// Renderizan los PNG de assets/char-<id>.png. Misma API que la versión
+// SVG (props `size`, `floating`) para no romper a los consumidores
+// (GameScreen, CharacterScreen, ResultsScreen, CharacterAvatar).
 
 // ─────────────────────────────────────────────────────────────
-// Sparkles — chispas animadas alrededor del personaje. Sobreviven de
-// la versión SVG porque dan vida y refuerzan la estética cósmica.
+// Sparkles — chispas animadas alrededor del personaje. Refuerzan
+// la estética cósmica heredada del shell.
 // ─────────────────────────────────────────────────────────────
 function Sparkles({ color = "#fce9a8", count = 6, seed = 1 }) {
   const pts = Array.from({ length: count }, (_, i) => {
@@ -97,9 +96,7 @@ function Sparkles({ color = "#fce9a8", count = 6, seed = 1 }) {
 
 // ─────────────────────────────────────────────────────────────
 // Fábrica de componentes — cada personaje es un PNG con sparkles
-// superpuestos. Se exportan con los nombres que consume el resto
-// de la app: EscritorCharacter, PoetaCharacter, ExploradorCharacter,
-// NarradorCharacter.
+// superpuestos. Identidad: escritor / explorador / poeta / narrador.
 // ─────────────────────────────────────────────────────────────
 function makeCharacter(id, sparkleColor, sparkleSeed) {
   return function Character({ size = 200, floating = true }) {
@@ -126,8 +123,6 @@ function makeCharacter(id, sparkleColor, sparkleSeed) {
             pointerEvents: "none",
           }}
         />
-        {/* Sparkles overlay — viewBox 200×200 para mantener las posiciones
-            relativas idénticas a la versión SVG previa. */}
         <svg
           viewBox="0 0 200 200"
           aria-hidden="true"
@@ -151,8 +146,7 @@ const ExploradorCharacter = makeCharacter("explorador", "#5fb878", 3);
 const NarradorCharacter = makeCharacter("narrador", "#ef6f6f", 4);
 
 // ─────────────────────────────────────────────────────────────
-// Avatar compacto (HUD / perfil / cards). Mantiene el marco circular
-// dorado/violeta original y encuadra el PNG dentro.
+// Avatar compacto (HUD / cards). Marco circular dorado/violeta.
 // ─────────────────────────────────────────────────────────────
 function CharacterAvatar({ char, size = 56 }) {
   const map = {
@@ -177,41 +171,40 @@ function CharacterAvatar({ char, size = 56 }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Catálogo de personajes (id, nombre, frase, componente).
-// Audiencia 6-8 años: nombres cortos, profesiones literarias claras,
-// quotes evocadoras pero accesibles.
+// Catálogo — nombres cortos, profesiones literarias claras,
+// quotes evocadoras para 6-8 años.
 // ─────────────────────────────────────────────────────────────
 const CHARACTERS = [
   {
     id: "escritor",
-    name: "Lupe",
+    name: "Rolli",
     title: "La Escritora",
     specialty: "Maestra de las palabras",
-    quote: "Cada palabra es un tesoro listo para usarse.",
+    quote: "Escribir es como hacer magia con un lapiz.",
     Component: EscritorCharacter,
   },
   {
-    id: "poeta",
-    name: "Río",
-    title: "El Poeta",
-    specialty: "Tejedor de versos",
-    quote: "Las palabras pueden volar como pájaros si las dejas cantar.",
-    Component: PoetaCharacter,
-  },
-  {
     id: "explorador",
-    name: "Sami",
-    title: "La Exploradora",
-    specialty: "Buscadora de palabras",
-    quote: "¡Vamos a descubrir nuevas palabras juntos!",
+    name: "Verne",
+    title: "El Explorador",
+    specialty: "Buscador de palabras",
+    quote: "Cada libro es una aventura por descubrir.",
     Component: ExploradorCharacter,
   },
   {
+    id: "poeta",
+    name: "Gaby",
+    title: "La Poeta",
+    specialty: "Tejedora de versos",
+    quote: "Los poemas saben bailar y hacer cosquillas.",
+    Component: PoetaCharacter,
+  },
+  {
     id: "narrador",
-    name: "Teo",
+    name: "Marquez",
     title: "El Cuentacuentos",
-    specialty: "Guardián de las historias",
-    quote: "Toda historia empieza con una palabra mágica.",
+    specialty: "Guardian de las historias",
+    quote: "Cierra los ojos: te cuento un cuento.",
     Component: NarradorCharacter,
   },
 ];
@@ -227,8 +220,8 @@ Object.assign(window, {
   contenido tal cual de characters.jsx (idem)
     [
   {
-    "slug": "JUEGO-1-completa-vocales",
-    "title": "Completa con vocales",
+    "slug": "completa-palabras",
+    "title": "Completa la palabra",
     "charId": "escritor"
   }
 ]      array literal: [{ slug, title, charId }, ...]
@@ -312,15 +305,14 @@ function EdinunLogoMini({ size = 40 }) {
 Object.assign(window, { EdinunLogo, EdinunLogoMini });
 
 
-// characters.jsx — Personajes EDINUN GAMES.
-// Renderizan los PNG de assets/char-<id>.png generados con Nano Banana.
-// El componente expone la misma API que la versión SVG anterior
-// (props `size`, `floating`) para no romper a los consumidores
-// (GameScreen, CharacterScreen, ResultsScreen, ProfileScreen, CharacterAvatar).
+// characters.jsx — Personajes EDINUN GAMES · Juegos de lenguaje.
+// Renderizan los PNG de assets/char-<id>.png. Misma API que la versión
+// SVG (props `size`, `floating`) para no romper a los consumidores
+// (GameScreen, CharacterScreen, ResultsScreen, CharacterAvatar).
 
 // ─────────────────────────────────────────────────────────────
-// Sparkles — chispas animadas alrededor del personaje. Sobreviven de
-// la versión SVG porque dan vida y refuerzan la estética cósmica.
+// Sparkles — chispas animadas alrededor del personaje. Refuerzan
+// la estética cósmica heredada del shell.
 // ─────────────────────────────────────────────────────────────
 function Sparkles({ color = "#fce9a8", count = 6, seed = 1 }) {
   const pts = Array.from({ length: count }, (_, i) => {
@@ -346,9 +338,7 @@ function Sparkles({ color = "#fce9a8", count = 6, seed = 1 }) {
 
 // ─────────────────────────────────────────────────────────────
 // Fábrica de componentes — cada personaje es un PNG con sparkles
-// superpuestos. Se exportan con los nombres que consume el resto
-// de la app: EscritorCharacter, PoetaCharacter, ExploradorCharacter,
-// NarradorCharacter.
+// superpuestos. Identidad: escritor / explorador / poeta / narrador.
 // ─────────────────────────────────────────────────────────────
 function makeCharacter(id, sparkleColor, sparkleSeed) {
   return function Character({ size = 200, floating = true }) {
@@ -375,8 +365,6 @@ function makeCharacter(id, sparkleColor, sparkleSeed) {
             pointerEvents: "none",
           }}
         />
-        {/* Sparkles overlay — viewBox 200×200 para mantener las posiciones
-            relativas idénticas a la versión SVG previa. */}
         <svg
           viewBox="0 0 200 200"
           aria-hidden="true"
@@ -400,8 +388,7 @@ const ExploradorCharacter = makeCharacter("explorador", "#5fb878", 3);
 const NarradorCharacter = makeCharacter("narrador", "#ef6f6f", 4);
 
 // ─────────────────────────────────────────────────────────────
-// Avatar compacto (HUD / perfil / cards). Mantiene el marco circular
-// dorado/violeta original y encuadra el PNG dentro.
+// Avatar compacto (HUD / cards). Marco circular dorado/violeta.
 // ─────────────────────────────────────────────────────────────
 function CharacterAvatar({ char, size = 56 }) {
   const map = {
@@ -426,41 +413,40 @@ function CharacterAvatar({ char, size = 56 }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Catálogo de personajes (id, nombre, frase, componente).
-// Audiencia 6-8 años: nombres cortos, profesiones literarias claras,
-// quotes evocadoras pero accesibles.
+// Catálogo — nombres cortos, profesiones literarias claras,
+// quotes evocadoras para 6-8 años.
 // ─────────────────────────────────────────────────────────────
 const CHARACTERS = [
   {
     id: "escritor",
-    name: "Lupe",
+    name: "Rolli",
     title: "La Escritora",
     specialty: "Maestra de las palabras",
-    quote: "Cada palabra es un tesoro listo para usarse.",
+    quote: "Escribir es como hacer magia con un lapiz.",
     Component: EscritorCharacter,
   },
   {
-    id: "poeta",
-    name: "Río",
-    title: "El Poeta",
-    specialty: "Tejedor de versos",
-    quote: "Las palabras pueden volar como pájaros si las dejas cantar.",
-    Component: PoetaCharacter,
-  },
-  {
     id: "explorador",
-    name: "Sami",
-    title: "La Exploradora",
-    specialty: "Buscadora de palabras",
-    quote: "¡Vamos a descubrir nuevas palabras juntos!",
+    name: "Verne",
+    title: "El Explorador",
+    specialty: "Buscador de palabras",
+    quote: "Cada libro es una aventura por descubrir.",
     Component: ExploradorCharacter,
   },
   {
+    id: "poeta",
+    name: "Gaby",
+    title: "La Poeta",
+    specialty: "Tejedora de versos",
+    quote: "Los poemas saben bailar y hacer cosquillas.",
+    Component: PoetaCharacter,
+  },
+  {
     id: "narrador",
-    name: "Teo",
+    name: "Marquez",
     title: "El Cuentacuentos",
-    specialty: "Guardián de las historias",
-    quote: "Toda historia empieza con una palabra mágica.",
+    specialty: "Guardian de las historias",
+    quote: "Cierra los ojos: te cuento un cuento.",
     Component: NarradorCharacter,
   },
 ];
@@ -477,13 +463,8 @@ Object.assign(window, {
 
 const GAMES = [
   {
-    "slug": "JUEGO-1-completa-vocales",
-    "title": "Completa con vocales",
-    "charId": "escritor"
-  },
-  {
-    "slug": "JUEGO-2-letra-r-rr",
-    "title": "Letra r y rr",
+    "slug": "completa-palabras",
+    "title": "Completa la palabra",
     "charId": "escritor"
   }
 ];
@@ -498,7 +479,7 @@ function Landing() {
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 48 }}>
           <EdinunLogo size={220} />
           <p className="ed-body" style={{ marginTop: 16, fontSize: 16, textAlign: "center", maxWidth: 520 }}>
-            Elige un juego para empezar a aprender lenguaje y literatura con Lupe, Río, Sami y Teo.
+            Elige un juego para empezar a aprender matemáticas con Merlín, Nova, Cifra y Pita.
           </p>
         </div>
 

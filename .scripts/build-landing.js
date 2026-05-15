@@ -12,13 +12,12 @@ const fs = require("fs");
 const path = require("path");
 
 const REPO = path.resolve(__dirname, "..");
+// La skill vive dentro de este mismo repo en .claude/skills/edinun-language-builder/.
 const SKILL_TEMPLATE = path.resolve(
   REPO,
-  "..",
-  "edinun-games",
   ".claude",
   "skills",
-  "edinun-language-builder",
+  "edinun-game-builder",
   "assets"
 );
 
