@@ -15,17 +15,25 @@ function PortalToBody({ children }) {
 // maíz, brócoli, león, árbol — su grafía correcta lleva tilde y no
 // podemos enseñar la versión sin tilde). La Ñ puede aparecer pero
 // nunca se oculta — solo vocales se ocultan, y se ocultan TODAS.
+//
+// Campo opcional `alts`: lista de variantes aceptadas como respuesta
+// válida (misma cantidad de letras y consonantes en las mismas
+// posiciones — solo cambian las vocales). Se usa cuando un animal/
+// fruta tiene masculino+femenino o variantes regionales naturales:
+//   - banana / banano (regional)
+//   - gato / gata, pato / pata, oso / osa, mono / mona, conejo / coneja
+// Las palabras SIN `alts` solo aceptan la grafía exacta.
 // ─────────────────────────────────────────────────────────────
 const WORD_BANK = [
   // Frutas (sin tilde natural)
   { emoji: "🍎", word: "manzana" },
-  { emoji: "🍌", word: "banana" },
+  { emoji: "🍌", word: "banana", alts: ["banano"] },
   { emoji: "🍓", word: "fresa" },
-  { emoji: "🍇", word: "uva" },
+  { emoji: "🍇", word: "uvas" },
   { emoji: "🍐", word: "pera" },
   { emoji: "🍍", word: "piña" },
   { emoji: "🍊", word: "naranja" },
-  { emoji: "🍒", word: "cereza" },
+  { emoji: "🍒", word: "cerezas" },
   // Verduras (sin tilde natural)
   { emoji: "🥕", word: "zanahoria" },
   { emoji: "🍅", word: "tomate" },
@@ -33,23 +41,23 @@ const WORD_BANK = [
   { emoji: "🥬", word: "lechuga" },
   { emoji: "🥒", word: "pepino" },
   // Animales (sin tilde natural)
-  { emoji: "🐱", word: "gato" },
+  { emoji: "🐱", word: "gato", alts: ["gata"] },
   { emoji: "🐶", word: "perro" },
-  { emoji: "🐻", word: "oso" },
-  { emoji: "🐰", word: "conejo" },
+  { emoji: "🐻", word: "oso", alts: ["osa"] },
+  { emoji: "🐰", word: "conejo", alts: ["coneja"] },
   { emoji: "🐸", word: "rana" },
   { emoji: "🐮", word: "vaca" },
   { emoji: "🐟", word: "pez" },
   { emoji: "🦋", word: "mariposa" },
   { emoji: "🐯", word: "tigre" },
-  { emoji: "🐵", word: "mono" },
+  { emoji: "🐵", word: "mono", alts: ["mona"] },
   { emoji: "🦒", word: "jirafa" },
   { emoji: "🐔", word: "pollo" },
   { emoji: "🐝", word: "abeja" },
-  { emoji: "🦆", word: "pato" },
+  { emoji: "🦆", word: "pato", alts: ["pata"] },
   // Objetos y cosas (sin tilde natural)
   { emoji: "🏠", word: "casa" },
-  { emoji: "📚", word: "libro" },
+  { emoji: "📚", word: "libros" },
   { emoji: "⭐", word: "estrella" },
   { emoji: "🌙", word: "luna" },
   { emoji: "☀️", word: "sol" },
@@ -74,15 +82,51 @@ function isVowel(ch) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Memoria de palabras vistas recientemente — persistida en localStorage
+// para que las rondas consecutivas no repitan palabras (antes el set se
+// reiniciaba cada vez que GameScreen se remontaba). Mantiene una cola
+// FIFO de las últimas RECENT_LIMIT palabras. Con 40 palabras en el
+// banco y 15 en memoria siempre quedan ≥25 frescas disponibles.
+// ─────────────────────────────────────────────────────────────
+const RECENT_KEY = "edinun_completa_palabras_recientes_v1";
+const RECENT_LIMIT = 15;
+
+function getRecentlySeen() {
+  try {
+    const raw = localStorage.getItem(RECENT_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch { return []; }
+}
+
+function pushRecentlySeen(word) {
+  const arr = getRecentlySeen().filter((w) => w !== word);
+  arr.unshift(word);
+  const trimmed = arr.slice(0, RECENT_LIMIT);
+  try { localStorage.setItem(RECENT_KEY, JSON.stringify(trimmed)); } catch {}
+}
+
+// ─────────────────────────────────────────────────────────────
 // Generador de problemas. Toma una palabra del banco y oculta SOLO sus
 // vocales (la cantidad depende del largo). La bandeja siempre es la
 // misma: las cinco vocales (a, e, i, o, u), reutilizables.
 // ─────────────────────────────────────────────────────────────
 function makeProblem(usedKeys) {
-  // Filtrar palabras que no se hayan usado en esta sesión.
-  const pool = WORD_BANK.filter((w) => !usedKeys.has(w.word));
-  const pickFrom = pool.length > 0 ? pool : WORD_BANK;
-  const pick = pickFrom[Math.floor(Math.random() * pickFrom.length)];
+  // Doble filtro: palabras usadas EN ESTA RONDA (usedKeys, in-memory) +
+  // las RECENT_LIMIT vistas recientemente entre rondas (localStorage).
+  // Así se evita la repetición tanto dentro como entre rondas/sesiones.
+  const recent = new Set(getRecentlySeen());
+  const exclude = new Set([...usedKeys, ...recent]);
+  let pool = WORD_BANK.filter((w) => !exclude.has(w.word));
+  // Si la exclusión deja poco margen (ej. tras varias rondas seguidas
+  // sin recargar), relajar las recientes y conservar solo las de la
+  // ronda actual.
+  if (pool.length < 3) {
+    pool = WORD_BANK.filter((w) => !usedKeys.has(w.word));
+  }
+  if (pool.length === 0) pool = WORD_BANK;
+  const pick = pool[Math.floor(Math.random() * pool.length)];
   const word = pick.word;
   const letters = word.split("");
   const n = letters.length;
@@ -95,12 +139,20 @@ function makeProblem(usedKeys) {
   }
   const correctLetters = hiddenIdxArr.map((i) => letters[i]);
 
+  // Respuestas aceptadas: la palabra principal + sus alternativas
+  // (masculino/femenino o regional). Todas comparten el mismo
+  // esqueleto consonántico, así que las casillas mostradas son
+  // idénticas — solo varía qué vocal cuenta como correcta en cada
+  // posición.
+  const acceptedWords = [word, ...(pick.alts || [])];
+
   return {
     emoji: pick.emoji,
-    word,                    // string en minúsculas (incl. Ñ si tiene)
+    word,                    // string base (la que se muestra)
     letters,                 // array de chars
     hiddenIdx: hiddenIdxArr, // índices que el usuario debe completar
     correctLetters,          // vocales objetivo (en orden de hiddenIdx)
+    acceptedWords,           // todas las grafías válidas
     tray: VOWEL_TRAY,        // SIEMPRE las 5 vocales, reutilizables
   };
 }
@@ -127,6 +179,7 @@ function GameScreen({ app, setApp, go }) {
   const [problem, setProblem] = useStateG(() => {
     const p = makeProblem(usedRef.current);
     usedRef.current.add(p.word);
+    pushRecentlySeen(p.word);
     return p;
   });
   // `filled` es paralelo a `problem.hiddenIdx`: la letra que el usuario puso
@@ -206,7 +259,11 @@ function GameScreen({ app, setApp, go }) {
       userLetters[wordPos] = filled[i];
     });
     const userWord = userLetters.join("");
-    const isCorrect = userWord === problem.word;
+    // Aceptar la palabra base O cualquiera de sus alternativas
+    // (masculino/femenino, regionalismo). Ej: "pato" o "pata"; "banana"
+    // o "banano".
+    const accepted = problem.acceptedWords || [problem.word];
+    const isCorrect = accepted.includes(userWord);
     const exerciseSec = Math.max(0, Math.floor((Date.now() - exerciseStart.current) / 1000));
     const earned = isCorrect ? Math.max(1, 10 - Math.floor(exerciseSec / 3)) : 0;
 
@@ -215,12 +272,16 @@ function GameScreen({ app, setApp, go }) {
     const newStarsSession = starsSession + earned;
     const newStarsTotal = stars + earned;
 
+    // Para el reporte: si la palabra acepta variantes, mostrar todas
+    // separadas por " o " (ej. "banana o banano", "gato o gata"). Si solo
+    // hay una grafía válida, mostrar esa.
+    const displayCorrect = accepted.length > 1 ? accepted.join(" o ") : problem.word;
     const entry = {
       idx: newAttempted,
-      a: problem.word,           // palabra correcta
+      a: displayCorrect,         // palabra(s) correcta(s) para el reporte
       b: userWord,               // palabra del estudiante
-      op: "📝",                  // marcador para el reporte
-      correctAnswer: problem.word,
+      op: "📝",
+      correctAnswer: displayCorrect,
       userAnswer: userWord,
       isCorrect,
       time: exerciseSec,
@@ -263,6 +324,7 @@ function GameScreen({ app, setApp, go }) {
       } else {
         const p = makeProblem(usedRef.current);
         usedRef.current.add(p.word);
+        pushRecentlySeen(p.word);
         setProblem(p);
         exerciseStart.current = Date.now();
       }
