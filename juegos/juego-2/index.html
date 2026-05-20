@@ -449,7 +449,7 @@ function HomeScreen({ app, setApp, go }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 18, maxWidth: 520 }}>
           <div>
             <div className="ed-label" style={{ color: "#4fd8ff", marginBottom: 8 }}>
-              Descubre el lenguaje
+              Palabras, noticias y blogs
             </div>
             <h1 className="ed-h1" style={{ fontSize: 40, lineHeight: 1.05 }}>
               ¡Bienvenido/a,{" "}
@@ -1108,6 +1108,40 @@ function RestartModal({ confirmingExit, setConfirmingExit, attempted, total, onR
   );
 }
 
+// Modal de confirmación para SALIR al Home: descarta la sesión sin generar
+// reporte. Patrón visual idéntico a RestartModal pero con copy "salida".
+function ExitToHomeModal({ confirmingHome, setConfirmingHome, attempted, total, go }) {
+  if (!confirmingHome) return null;
+  return (
+    <PortalToBody>
+      <div onClick={() => setConfirmingHome(false)} style={{
+        position: "fixed", inset: 0, zIndex: 1000,
+        background: "rgba(0,0,0,0.62)", backdropFilter: "blur(4px)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        animation: "ed-pop-in 0.18s", padding: 16,
+      }}>
+        <div onClick={(e) => e.stopPropagation()} className="ed-card"
+          style={{ padding: 24, maxWidth: 440, textAlign: "center", boxShadow: "var(--ed-shadow-card), 0 0 40px rgba(255,107,107,0.3)" }}
+        >
+          <div className="ed-label" style={{ color: "#ff8b8b", marginBottom: 6 }}>Salir al inicio</div>
+          <h2 className="ed-h1" style={{ fontSize: 22, lineHeight: 1.15, marginBottom: 8 }}>¿Salir del juego?</h2>
+          <p className="ed-body" style={{ marginBottom: 16, fontSize: 14 }}>
+            Vas a perder el progreso de esta ronda ({attempted}/{total}) y volverás al inicio. No habrá reporte de esta sesión.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingHome(false)} style={{ height: 44, fontWeight: 800, letterSpacing: "0.04em" }}>
+              SEGUIR JUGANDO
+            </button>
+            <button className="ed-btn ed-btn-primary" onClick={() => { setConfirmingHome(false); go && go("home"); }} style={{ height: 44, fontWeight: 800, letterSpacing: "0.04em" }}>
+              SÍ, SALIR
+            </button>
+          </div>
+        </div>
+      </div>
+    </PortalToBody>
+  );
+}
+
 function FeedbackOverlay({ feedback, feedbackMsg, charName }) {
   if (!feedback) return null;
   return (
@@ -1531,6 +1565,10 @@ function NoticiaGame({ app, setApp, go, onRestart }) {
   const [feedback, setFeedback] = useStateG(null);
   const [feedbackMsg, setFeedbackMsg] = useStateG("");
   const [confirmingExit, setConfirmingExit] = useStateG(false);
+  const [confirmingHome, setConfirmingHome] = useStateG(false);
+  // Selección actual del estudiante (chip / opción) — se confirma con VERIFICAR.
+  // String para rondas 0 y 2 (concepto), objeto {text,isCorrect} para ronda 1.
+  const [selected, setSelected] = useStateG(null);
   const [log, setLog] = useStateG([]);
   const started = useRefG(Date.now());
   const exerciseStart = useRefG(Date.now());
@@ -1539,6 +1577,9 @@ function NoticiaGame({ app, setApp, go, onRestart }) {
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - started.current) / 1000)), 500);
     return () => clearInterval(id);
   }, []);
+
+  // Limpia la selección al cambiar de ronda — cada ronda arranca sin chip elegido.
+  useEffectG(() => { setSelected(null); }, [ronda]);
 
   // Glifos del fondo (chalkboard) para nivel 2
   useEffectG(() => {
@@ -1608,13 +1649,29 @@ function NoticiaGame({ app, setApp, go, onRestart }) {
     }, wait);
   }
 
+  // Confirma la selección actual. Cada ronda evalúa contra su respuesta correcta:
+  //   ronda 0 → parte resaltada · ronda 1 → resumen correcto · ronda 2 → concepto.
+  function verify() {
+    if (selected === null || feedback !== null) return;
+    if (ronda === 0) {
+      answer(selected === r0Highlight, selected, r0Highlight);
+    } else if (ronda === 1) {
+      answer(selected.isCorrect, selected.text, noticia.resumen_correcto);
+    } else {
+      answer(selected === r2Pick.concepto, selected, r2Pick.concepto);
+    }
+  }
+
+  const canVerify = selected !== null && feedback === null;
+
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
       <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} app={app} setApp={setApp} />
 
-      {/* Enunciado dinámico según ronda */}
+      {/* Enunciado dinámico según ronda. Se recorta a la derecha (right:178)
+          para no invadir el rail de acciones (VERIFICAR/REINICIAR/SALIR). */}
       <div style={{
-        position: "absolute", top: 100, left: 240, right: 18,
+        position: "absolute", top: 100, left: 240, right: 178,
         textAlign: "center",
         fontFamily: "var(--ed-font-display)", fontWeight: 700,
         fontSize: 19, lineHeight: 1.15,
@@ -1674,40 +1731,60 @@ function NoticiaGame({ app, setApp, go, onRestart }) {
         }}>{char.name}</div>
       </div>
 
-      {/* Zona central — varía por ronda */}
+      {/* Zona central — varía por ronda. Se recorta a la derecha (right:178)
+          para dejar 160px de hueco al rail de acciones. */}
       <div data-qa="zona-central" style={{
-        position: "absolute", top: 132, left: 240, right: 18, bottom: 18,
+        position: "absolute", top: 132, left: 240, right: 178, bottom: 18,
       }}>
         {ronda === 0 && (
           <NoticiaCard noticia={noticia} highlight={r0Highlight}
             chips={partes}
-            onAnswer={(picked) => answer(picked === r0Highlight, picked, r0Highlight)} />
+            selected={selected} onSelect={setSelected}
+            disabled={feedback !== null} />
         )}
         {ronda === 1 && (
           <NoticiaResumenCard noticia={noticia} options={r1Options}
-            onAnswer={(opt) => answer(opt.isCorrect, opt.text, noticia.resumen_correcto)} />
+            selected={selected} onSelect={setSelected}
+            disabled={feedback !== null} />
         )}
         {ronda === 2 && (
           <ConceptoCard def={r2Pick.def} chips={r2Chips.map((c) => c.concepto)} correct={r2Pick.concepto}
-            onAnswer={(picked) => answer(picked === r2Pick.concepto, picked, r2Pick.concepto)} />
+            selected={selected} onSelect={setSelected}
+            disabled={feedback !== null} />
         )}
       </div>
 
-      {/* Botón reiniciar, debajo del personaje en la columna izquierda */}
-      <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingExit(true)}
-        style={{
-          position: "absolute", left: 60, bottom: 24, width: 116,
-          fontSize: 12, padding: "6px 12px", height: 36, fontWeight: 800, letterSpacing: "0.04em",
-        }}>REINICIAR</button>
+      {/* Rail derecho — mismo patrón que letraR: VERIFICAR · REINICIAR · SALIR.
+          Centrado verticalmente respecto al canvas para alinearse con el centro
+          de la tarjeta. */}
+      <div data-qa="acciones" style={{
+        position: "absolute", right: 18, top: "50%", transform: "translateY(-50%)",
+        display: "flex", flexDirection: "column", gap: 12, width: 150,
+      }}>
+        <button className="ed-btn ed-btn-verify" onClick={verify} disabled={!canVerify}
+          title={!canVerify ? "Selecciona una opción primero" : ""}
+          style={{
+            fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em",
+            opacity: canVerify ? 1 : 0.5,
+            cursor: canVerify ? "pointer" : "not-allowed",
+          }}>¡VERIFICAR!</button>
+        <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingExit(true)}
+          style={{ fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}>REINICIAR</button>
+        <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingHome(true)}
+          style={{ fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}>SALIR</button>
+      </div>
 
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />
       <RestartModal confirmingExit={confirmingExit} setConfirmingExit={setConfirmingExit} attempted={attempted} total={3} onRestart={onRestart} />
+      <ExitToHomeModal confirmingHome={confirmingHome} setConfirmingHome={setConfirmingHome} attempted={attempted} total={3} go={go} />
     </div>
   );
 }
 
 // Tarjeta de noticia con una parte resaltada + chips de respuesta.
-function NoticiaCard({ noticia, highlight, chips, onAnswer }) {
+// `selected`/`onSelect` activan el flujo "elegir → VERIFICAR" (un solo chip
+// queda elevado con anillo blanco hasta que el rail derecho lo confirme).
+function NoticiaCard({ noticia, highlight, chips, selected, onSelect, disabled }) {
   const highlightBg = "linear-gradient(180deg, rgba(252,233,168,0.45), rgba(252,233,168,0.25))";
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: 12 }}>
@@ -1753,25 +1830,34 @@ function NoticiaCard({ noticia, highlight, chips, onAnswer }) {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10 }}>
-        {chips.map((c) => (
-          <button key={c} onClick={() => onAnswer(c)}
-            style={{
-              padding: "14px 8px", borderRadius: 12,
-              background: "linear-gradient(180deg, #ffe97a, #d7b12a)",
-              color: "#3a2608",
-              fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13,
-              border: "none",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.18), 0 4px 10px -2px rgba(0,0,0,0.45)",
-              cursor: "pointer", letterSpacing: "0.02em",
-            }}>{c}</button>
-        ))}
+        {chips.map((c) => {
+          const isSel = selected === c;
+          return (
+            <button key={c} onClick={() => !disabled && onSelect(c)} disabled={!!disabled}
+              style={{
+                padding: "14px 8px", borderRadius: 12,
+                background: "linear-gradient(180deg, #ffe97a, #d7b12a)",
+                color: "#3a2608",
+                fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13,
+                border: "none",
+                boxShadow: isSel
+                  ? "inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -3px 0 rgba(0,0,0,0.2), 0 0 0 3px rgba(255,255,255,0.9), 0 0 22px rgba(255,255,255,0.4)"
+                  : "inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.18), 0 4px 10px -2px rgba(0,0,0,0.45)",
+                transform: isSel ? "translateY(-2px)" : "none",
+                transition: "all 0.16s ease",
+                cursor: disabled ? "not-allowed" : "pointer",
+                letterSpacing: "0.02em",
+                opacity: disabled ? 0.85 : 1,
+              }}>{c}</button>
+          );
+        })}
       </div>
     </div>
   );
 }
 
 // Tarjeta de noticia con 3 frases de resumen.
-function NoticiaResumenCard({ noticia, options, onAnswer }) {
+function NoticiaResumenCard({ noticia, options, selected, onSelect, disabled }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: 10 }}>
       <div style={{
@@ -1791,28 +1877,42 @@ function NoticiaResumenCard({ noticia, options, onAnswer }) {
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1, minHeight: 0 }}>
-        {options.map((opt, i) => (
-          <button key={i} onClick={() => onAnswer(opt)}
-            style={{
-              padding: "12px 16px", borderRadius: 14,
-              background: "rgba(255,233,122,0.92)",
-              color: "#1a1a1a",
-              fontFamily: "var(--ed-font-ui)", fontWeight: 600, fontSize: 14,
-              border: "2px solid rgba(242,194,96,0.7)",
-              textAlign: "left",
-              boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
-              cursor: "pointer",
-              lineHeight: 1.35,
-              flex: 1, minHeight: 0,
-            }}>{opt.text}</button>
-        ))}
+        {options.map((opt, i) => {
+          const isSel = selected && selected.text === opt.text;
+          return (
+            <button key={i} onClick={() => !disabled && onSelect(opt)} disabled={!!disabled}
+              style={{
+                padding: "12px 16px", borderRadius: 14,
+                background: "rgba(255,233,122,0.92)",
+                color: "#1a1a1a",
+                fontFamily: "var(--ed-font-ui)", fontWeight: 600, fontSize: 14,
+                border: "2px solid " + (isSel ? "#fff" : "rgba(242,194,96,0.7)"),
+                textAlign: "left",
+                boxShadow: isSel
+                  ? "0 0 0 3px rgba(255,255,255,0.85), 0 6px 14px rgba(0,0,0,0.4)"
+                  : "0 4px 10px rgba(0,0,0,0.3)",
+                transform: isSel ? "translateY(-2px)" : "none",
+                transition: "all 0.16s ease",
+                cursor: disabled ? "not-allowed" : "pointer",
+                lineHeight: 1.35,
+                flex: 1, minHeight: 0,
+                opacity: disabled ? 0.85 : 1,
+              }}>{opt.text}</button>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-// Tarjeta de concepto: definición + 4 chips
-function ConceptoCard({ def, chips, correct, onAnswer }) {
+// Tarjeta de concepto: definición + 4 chips.
+// Acepta dos modos:
+//   1. Modo "respuesta directa" (legacy, usado por El blog): `onAnswer(chip)`.
+//   2. Modo "elegir → VERIFICAR" (usado por La noticia): `selected` + `onSelect`.
+// Si se pasa onSelect, el chip clickeado se eleva con anillo blanco y NO confirma
+// — el rail derecho dispara la verificación.
+function ConceptoCard({ def, chips, correct, onAnswer, selected, onSelect, disabled }) {
+  const useSelect = typeof onSelect === "function";
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-evenly", gap: 0 }}>
       <div style={{
@@ -1828,18 +1928,33 @@ function ConceptoCard({ def, chips, correct, onAnswer }) {
         "{def}"
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-        {chips.map((c, i) => (
-          <button key={i} onClick={() => onAnswer(c)}
-            style={{
-              padding: "22px 12px", borderRadius: 14,
-              background: "linear-gradient(180deg, #ffe97a, #d7b12a)",
-              color: "#3a2608",
-              fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 16,
-              border: "none",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.18), 0 4px 12px -2px rgba(0,0,0,0.45)",
-              cursor: "pointer", letterSpacing: "0.02em",
-            }}>{c}</button>
-        ))}
+        {chips.map((c, i) => {
+          const isSel = useSelect && selected === c;
+          return (
+            <button key={i}
+              onClick={() => {
+                if (disabled) return;
+                if (useSelect) onSelect(c);
+                else if (typeof onAnswer === "function") onAnswer(c);
+              }}
+              disabled={!!disabled}
+              style={{
+                padding: "22px 12px", borderRadius: 14,
+                background: "linear-gradient(180deg, #ffe97a, #d7b12a)",
+                color: "#3a2608",
+                fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 16,
+                border: "none",
+                boxShadow: isSel
+                  ? "inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -3px 0 rgba(0,0,0,0.2), 0 0 0 3px rgba(255,255,255,0.9), 0 0 22px rgba(255,255,255,0.4)"
+                  : "inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.18), 0 4px 12px -2px rgba(0,0,0,0.45)",
+                transform: isSel ? "translateY(-2px)" : "none",
+                transition: "all 0.16s ease",
+                cursor: disabled ? "not-allowed" : "pointer",
+                letterSpacing: "0.02em",
+                opacity: disabled ? 0.85 : 1,
+              }}>{c}</button>
+          );
+        })}
       </div>
     </div>
   );
@@ -1889,6 +2004,10 @@ function BlogGame({ app, setApp, go, onRestart }) {
   const [feedback, setFeedback] = useStateG(null);
   const [feedbackMsg, setFeedbackMsg] = useStateG("");
   const [confirmingExit, setConfirmingExit] = useStateG(false);
+  const [confirmingHome, setConfirmingHome] = useStateG(false);
+  // Selección actual para rondas con chips (0 y 2). La ronda 1 es shooter
+  // y se autoevalúa al terminar — no usa este estado.
+  const [selected, setSelected] = useStateG(null);
   const [log, setLog] = useStateG([]);
   const started = useRefG(Date.now());
   const exerciseStart = useRefG(Date.now());
@@ -1897,6 +2016,9 @@ function BlogGame({ app, setApp, go, onRestart }) {
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - started.current) / 1000)), 500);
     return () => clearInterval(id);
   }, []);
+
+  // Cada ronda arranca sin chip elegido.
+  useEffectG(() => { setSelected(null); }, [ronda]);
 
   useEffectG(() => {
     window.__currentChalkGlyphs = [
@@ -1957,12 +2079,28 @@ function BlogGame({ app, setApp, go, onRestart }) {
     }, wait);
   }
 
+  // Confirma la selección actual en rondas 0 y 2 (la 1 es shooter autónomo).
+  function verify() {
+    if (selected === null || feedback !== null) return;
+    if (ronda === 0) {
+      recordRound(selected === r0Highlight, selected, r0Highlight, "🎯", "💻");
+    } else if (ronda === 2) {
+      recordRound(selected === r2Pick.concepto, selected, r2Pick.concepto, "💡", "💻");
+    }
+  }
+
+  // El rail muestra VERIFICAR solo en rondas con chips (0 y 2). En ronda 1
+  // (shooter) no hay nada que "verificar" — se autoevalúa al expirar el timer.
+  const showVerify = ronda === 0 || ronda === 2;
+  const canVerify = showVerify && selected !== null && feedback === null;
+
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
       <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} app={app} setApp={setApp} />
 
+      {/* Enunciado dinámico — recortado a right:178 para no invadir el rail. */}
       <div style={{
-        position: "absolute", top: 100, left: 240, right: 18,
+        position: "absolute", top: 100, left: 240, right: 178,
         textAlign: "center",
         fontFamily: "var(--ed-font-display)", fontWeight: 700,
         fontSize: 19, lineHeight: 1.15,
@@ -2022,12 +2160,14 @@ function BlogGame({ app, setApp, go, onRestart }) {
         }}>{char.name}</div>
       </div>
 
+      {/* Zona central — recortada a right:178 para abrir hueco al rail derecho. */}
       <div data-qa="zona-central" style={{
-        position: "absolute", top: 132, left: 240, right: 18, bottom: 18,
+        position: "absolute", top: 132, left: 240, right: 178, bottom: 18,
       }}>
         {ronda === 0 && (
           <BlogMockupCard mockup={mockup} highlight={r0Highlight} chips={r0Chips}
-            onAnswer={(picked) => recordRound(picked === r0Highlight, picked, r0Highlight, "🎯", "💻")} />
+            selected={selected} onSelect={setSelected}
+            disabled={feedback !== null} />
         )}
         {ronda === 1 && (
           <BlogShooterCard onFinish={(stats) => {
@@ -2041,24 +2181,44 @@ function BlogGame({ app, setApp, go, onRestart }) {
           <ConceptoCard def={r2Pick.def}
             chips={r2Chips.map((c) => c.concepto)}
             correct={r2Pick.concepto}
-            onAnswer={(picked) => recordRound(picked === r2Pick.concepto, picked, r2Pick.concepto, "💡", "💻")} />
+            selected={selected} onSelect={setSelected}
+            disabled={feedback !== null} />
         )}
       </div>
 
-      <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingExit(true)}
-        style={{
-          position: "absolute", left: 60, bottom: 24, width: 116,
-          fontSize: 12, padding: "6px 12px", height: 36, fontWeight: 800, letterSpacing: "0.04em",
-        }}>REINICIAR</button>
+      {/* Rail derecho — dinámico según ronda.
+          • Rondas 0 y 2: VERIFICAR · REINICIAR · SALIR (3 botones).
+          • Ronda 1 (shooter): solo REINICIAR · SALIR (2 botones, no hay nada
+            que "verificar" porque el shooter se autoevalúa al expirar el timer). */}
+      <div data-qa="acciones" style={{
+        position: "absolute", right: 18, top: "50%", transform: "translateY(-50%)",
+        display: "flex", flexDirection: "column", gap: 12, width: 150,
+      }}>
+        {showVerify && (
+          <button className="ed-btn ed-btn-verify" onClick={verify} disabled={!canVerify}
+            title={!canVerify ? "Selecciona una opción primero" : ""}
+            style={{
+              fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em",
+              opacity: canVerify ? 1 : 0.5,
+              cursor: canVerify ? "pointer" : "not-allowed",
+            }}>¡VERIFICAR!</button>
+        )}
+        <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingExit(true)}
+          style={{ fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}>REINICIAR</button>
+        <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingHome(true)}
+          style={{ fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}>SALIR</button>
+      </div>
 
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />
       <RestartModal confirmingExit={confirmingExit} setConfirmingExit={setConfirmingExit} attempted={attempted} total={3} onRestart={onRestart} />
+      <ExitToHomeModal confirmingHome={confirmingHome} setConfirmingHome={setConfirmingHome} attempted={attempted} total={3} go={go} />
     </div>
   );
 }
 
-// Mockup visual del blog para ronda 0
-function BlogMockupCard({ mockup, highlight, chips, onAnswer }) {
+// Mockup visual del blog para ronda 0. Modo "elegir → VERIFICAR":
+// el chip clickeado se eleva con anillo blanco hasta que el rail derecho confirma.
+function BlogMockupCard({ mockup, highlight, chips, selected, onSelect, disabled }) {
   const highlightBg = "linear-gradient(180deg, rgba(123,184,255,0.45), rgba(123,184,255,0.25))";
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: 12 }}>
@@ -2090,18 +2250,27 @@ function BlogMockupCard({ mockup, highlight, chips, onAnswer }) {
         </div>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10 }}>
-        {chips.map((c) => (
-          <button key={c} onClick={() => onAnswer(c)}
-            style={{
-              padding: "14px 4px", borderRadius: 12,
-              background: "linear-gradient(180deg, #7ab8ff, #2773d8)",
-              color: "#fff",
-              fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12,
-              border: "none",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -3px 0 rgba(0,0,0,0.25), 0 4px 10px -2px rgba(0,0,0,0.45)",
-              cursor: "pointer", letterSpacing: "0.02em",
-            }}>{c}</button>
-        ))}
+        {chips.map((c) => {
+          const isSel = selected === c;
+          return (
+            <button key={c} onClick={() => !disabled && onSelect(c)} disabled={!!disabled}
+              style={{
+                padding: "14px 4px", borderRadius: 12,
+                background: "linear-gradient(180deg, #7ab8ff, #2773d8)",
+                color: "#fff",
+                fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12,
+                border: "none",
+                boxShadow: isSel
+                  ? "inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.25), 0 0 0 3px rgba(255,255,255,0.9), 0 0 22px rgba(255,255,255,0.4)"
+                  : "inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -3px 0 rgba(0,0,0,0.25), 0 4px 10px -2px rgba(0,0,0,0.45)",
+                transform: isSel ? "translateY(-2px)" : "none",
+                transition: "all 0.16s ease",
+                cursor: disabled ? "not-allowed" : "pointer",
+                letterSpacing: "0.02em",
+                opacity: disabled ? 0.85 : 1,
+              }}>{c}</button>
+          );
+        })}
       </div>
     </div>
   );
