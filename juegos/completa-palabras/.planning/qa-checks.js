@@ -232,6 +232,14 @@ async function runForViewport(browser, vp, baseUrl, screenshotsDir) {
     const nameInput = page.locator('input[placeholder*="nombre" i]').first();
     if (await nameInput.count() > 0) {
       await nameInput.fill("QABot");
+      // Hay que seleccionar un chip de tema antes de poder ENTRAR. Usamos
+      // el nuevo nivel "Letra V" para que el QA también ejerza la nueva
+      // mecánica/banco/bandeja.
+      const letraVChip = page.locator('button:has-text("Letra V")').first();
+      if (await letraVChip.count() > 0) {
+        await letraVChip.click();
+        await page.waitForTimeout(200);
+      }
       await page.locator('button:has-text("ENTRAR")').first().click();
       await page.waitForTimeout(450);
     }

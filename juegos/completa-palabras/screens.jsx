@@ -120,19 +120,51 @@ function PeopleIcon({ size = 18, color = "#fce9a8" }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 1. HOME — nombre + ENTRAR. Sin chips de nivel (juego de un solo nivel).
+// Configuración de los 2 niveles. Cada uno define su glifo (letras
+// grandes estilo libro escolar), gradiente del chip, descripción y
+// catLabel que GameScreen lee para elegir banco/bandeja/copy.
+// ─────────────────────────────────────────────────────────────
+const LEVELS_CFG = [
+  {
+    id: "vocales",
+    label: "Vocales",
+    grad: "linear-gradient(180deg, #ffe97a, #d7b12a)",
+    ink: "#3a2608",
+    description: "Mira la imagen y completa con las vocales.",
+    catLabel: "Completa la palabra con vocales",
+  },
+  {
+    id: "letraV",
+    label: "Letra V",
+    grad: "linear-gradient(180deg, #ffc06e, #e4881a)",
+    ink: "#3a2608",
+    description: "Completa cada palabra con la letra V.",
+    catLabel: "Letra V",
+  },
+];
+
+// ─────────────────────────────────────────────────────────────
+// 1. HOME — selección de tema + nombre + ENTRAR.
+// El usuario debe elegir uno de los 2 niveles ANTES de poder ingresar.
 // Conserva el layout 2 columnas (logo izq, formulario der) del shell.
 // ─────────────────────────────────────────────────────────────
 function HomeScreen({ app, setApp, go }) {
   const visitors = useVisitorCount();
   const [name, setName] = useState(app.studentName || "");
+  // El tema arranca sin selección — se exige clic explícito.
+  const [level, setLevel] = useState(
+    app.level && LEVELS_CFG.some((l) => l.id === app.level) ? app.level : null
+  );
+
+  const canStart = !!name.trim() && !!level;
+  const currentCfg = LEVELS_CFG.find((l) => l.id === level) || null;
 
   function start() {
-    if (!name.trim()) return;
+    if (!canStart) return;
     setApp((s) => ({
       ...s,
       studentName: name.trim(),
-      level: "unico",
+      level,
       sessionStart: Date.now(),
     }));
     go("character");
@@ -162,21 +194,21 @@ function HomeScreen({ app, setApp, go }) {
         display: "grid",
         gridTemplateColumns: "1fr 1.15fr",
         alignItems: "center",
-        padding: "40px 56px",
-        gap: 40,
+        padding: "32px 48px",
+        gap: 32,
       }}>
         {/* Izquierda — logo protagonista */}
         <div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-          <EdinunLogo size={300} />
+          <EdinunLogo size={280} />
         </div>
 
-        {/* Derecha — saludo + input + botón. Sin botones de nivel. */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 22, maxWidth: 520 }}>
+        {/* Derecha — saludo + chips de tema + descripción + nombre + ENTRAR */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 520 }}>
           <div>
-            <div className="ed-label" style={{ color: "#4fd8ff", marginBottom: 8 }}>
+            <div className="ed-label" style={{ color: "#4fd8ff", marginBottom: 6 }}>
               El país de las palabras de tierra
             </div>
-            <h1 className="ed-h1" style={{ fontSize: 44, lineHeight: 1.05 }}>
+            <h1 className="ed-h1" style={{ fontSize: 36, lineHeight: 1.05 }}>
               ¡Bienvenido/a,{" "}
               <span style={{
                 background: "linear-gradient(180deg,#fce9a8,#d9a441)",
@@ -189,24 +221,63 @@ function HomeScreen({ app, setApp, go }) {
             </h1>
           </div>
 
-          {/* Descripción del juego — equivalente al "bloque de descripción de
-              nivel" de la versión matemática, pero ahora fija (un solo nivel). */}
-          <div style={{
-            padding: "14px 18px",
-            borderRadius: 14,
-            background: "rgba(10,6,35,0.55)",
-            border: "1px solid rgba(148,120,255,0.3)",
-            fontFamily: "var(--ed-font-display)", fontWeight: 600,
-            fontSize: 16, lineHeight: 1.35,
-            color: "#fce9a8",
-            textAlign: "center",
-          }}>
-            Mira la imagen y completa con las vocales.
+          {/* Chips de tema — 2 columnas. Cada chip muestra el glifo de letras
+              grande arriba (estilo "tarjeta de letra" del libro escolar) y la
+              etiqueta abajo. Selección visible con borde blanco y elevación. */}
+          <div>
+            <div className="ed-label" style={{ marginBottom: 8 }}>
+              Selecciona un tema para jugar
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              {LEVELS_CFG.map((lv) => {
+                const active = level === lv.id;
+                return (
+                  <button
+                    key={lv.id}
+                    onClick={() => setLevel(lv.id)}
+                    style={{
+                      padding: "20px 12px",
+                      borderRadius: 16,
+                      background: lv.grad,
+                      color: lv.ink,
+                      fontFamily: "var(--ed-font-display)", fontWeight: 800,
+                      fontSize: 22, letterSpacing: "0.02em",
+                      lineHeight: 1.1,
+                      textShadow: "0 1px 0 rgba(255,255,255,0.35)",
+                      border: "none",
+                      boxShadow: active
+                        ? "inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -3px 0 rgba(0,0,0,0.2), 0 0 0 3px rgba(255,255,255,0.85), 0 0 26px rgba(255,255,255,0.35)"
+                        : "inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.18), 0 6px 14px -4px rgba(0,0,0,0.45)",
+                      transform: active ? "translateY(-2px)" : "none",
+                      transition: "all 0.18s ease",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {lv.label}
+                  </button>
+                );
+              })}
+            </div>
+            {/* Descripción del tema seleccionado (placeholder si no hay) */}
+            <div style={{
+              marginTop: 10,
+              padding: "10px 14px",
+              borderRadius: 12,
+              background: "rgba(10,6,35,0.55)",
+              border: `1px solid ${currentCfg ? "rgba(148,120,255,0.3)" : "rgba(148,120,255,0.18)"}`,
+              fontFamily: "var(--ed-font-display)", fontWeight: 600,
+              fontSize: 14, lineHeight: 1.3,
+              color: currentCfg ? "#fce9a8" : "rgba(252,233,168,0.5)",
+              textAlign: "center",
+              fontStyle: currentCfg ? "normal" : "italic",
+            }}>
+              {currentCfg ? currentCfg.description : "Elige un tema para empezar."}
+            </div>
           </div>
 
           {/* Nombre + ENTRAR */}
           <div>
-            <div className="ed-label" style={{ marginBottom: 10 }}>
+            <div className="ed-label" style={{ marginBottom: 8 }}>
               Escribe tu nombre y entra
             </div>
             <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
@@ -219,8 +290,9 @@ function HomeScreen({ app, setApp, go }) {
                   onKeyDown={(e) => e.key === "Enter" && start()}
                 />
               </div>
-              <button className="ed-btn ed-btn-primary" onClick={start} disabled={!name.trim()}
-                style={{ height: 52, padding: "0 28px", fontSize: 16, opacity: name.trim() ? 1 : 0.5 }}>
+              <button className="ed-btn ed-btn-primary" onClick={start} disabled={!canStart}
+                title={!name.trim() ? "Escribe tu nombre" : !level ? "Selecciona un tema" : ""}
+                style={{ height: 50, padding: "0 24px", fontSize: 15, opacity: canStart ? 1 : 0.5, cursor: canStart ? "pointer" : "not-allowed" }}>
                 ENTRAR →
               </button>
             </div>
@@ -233,18 +305,20 @@ function HomeScreen({ app, setApp, go }) {
 
 // ─────────────────────────────────────────────────────────────
 // 2. SELECCIÓN DE PERSONAJE — idéntico al shell, default Rolli.
-// Mapeo de nivel→categoría: un solo catLabel "Completa la palabra".
+// Mapea el nivel elegido en Home al catId/catLabel que GameScreen
+// usa para seleccionar banco de palabras, bandeja y copy.
 // ─────────────────────────────────────────────────────────────
 function CharacterScreen({ app, setApp, go }) {
   const [sel, setSel] = useState(app.character || "escritor");
   const current = CHARACTERS.find((c) => c.id === sel) || CHARACTERS[0];
 
   function choose() {
+    const lvCfg = LEVELS_CFG.find((l) => l.id === app.level) || LEVELS_CFG[0];
     setApp((s) => ({
       ...s,
       character: sel,
-      currentCategory: "palabra",
-      currentCatLabel: "Completa la palabra",
+      currentCategory: lvCfg.id,
+      currentCatLabel: lvCfg.catLabel,
     }));
     go("game");
   }
@@ -341,4 +415,4 @@ function CharacterScreen({ app, setApp, go }) {
   );
 }
 
-Object.assign(window, { HomeScreen, CharacterScreen, CosmosBg, incrementGamesCompleted, useVisitorCount, markFirstAttempt });
+Object.assign(window, { HomeScreen, CharacterScreen, CosmosBg, incrementGamesCompleted, useVisitorCount, markFirstAttempt, LEVELS_CFG });

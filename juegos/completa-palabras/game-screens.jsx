@@ -10,11 +10,12 @@ function PortalToBody({ children }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Banco de palabras. Todas en MINÚSCULAS y SIN TILDES en la forma
-// correcta del español (NO se incluyen palabras como sandía, limón,
-// maíz, brócoli, león, árbol — su grafía correcta lleva tilde y no
-// podemos enseñar la versión sin tilde). La Ñ puede aparecer pero
-// nunca se oculta — solo vocales se ocultan, y se ocultan TODAS.
+// Banco de palabras del nivel VOCALES. Todas en MINÚSCULAS y SIN
+// TILDES en la forma correcta del español (NO se incluyen palabras
+// como sandía, limón, maíz, brócoli, león, árbol — su grafía
+// correcta lleva tilde y no podemos enseñar la versión sin tilde).
+// La Ñ puede aparecer pero nunca se oculta — solo vocales se ocultan,
+// y se ocultan TODAS.
 //
 // Campo opcional `alts`: lista de variantes aceptadas como respuesta
 // válida (misma cantidad de letras y consonantes en las mismas
@@ -24,7 +25,7 @@ function PortalToBody({ children }) {
 //   - gato / gata, pato / pata, oso / osa, mono / mona, conejo / coneja
 // Las palabras SIN `alts` solo aceptan la grafía exacta.
 // ─────────────────────────────────────────────────────────────
-const WORD_BANK = [
+const WORD_BANK_VOCALES = [
   // Frutas (sin tilde natural)
   { emoji: "🍎", word: "manzana" },
   { emoji: "🍌", word: "banana", alts: ["banano"] },
@@ -71,7 +72,7 @@ const WORD_BANK = [
   { emoji: "🍰", word: "torta" },
 ];
 
-// Bandeja fija: SIEMPRE las cinco vocales en minúsculas. Cada ficha es
+// Bandeja del nivel VOCALES: las 5 vocales en minúsculas. Cada ficha es
 // reutilizable infinitas veces (sin estado "consumida"). Decisión
 // pedagógica: el niño elige solo entre vocales y la misma vocal puede
 // servir para varias casillas.
@@ -82,67 +83,138 @@ function isVowel(ch) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Banco de palabras del nivel LETRA V. Todas las palabras contienen
+// al menos una "v" minúscula (puede haber 2, como en "vivienda").
+// Las tildes y la Ñ permanecen visibles — solo las V's son slot.
+// Selección guiada por el libro escolar de 6 años (ejercicio 3 y
+// tabla de sílabas de la letra V) + palabras frecuentes con V interior.
+// ─────────────────────────────────────────────────────────────
+const WORD_BANK_LETRA_V = [
+  // V inicial — palabras del libro
+  { emoji: "🐄", word: "vaca" },
+  { emoji: "🕯️", word: "vela" },
+  { emoji: "🥛", word: "vaso" },
+  { emoji: "🪟", word: "ventana" },
+  { emoji: "🌋", word: "volcán" },
+  { emoji: "👗", word: "vestido" },
+  { emoji: "💨", word: "viento" },
+  { emoji: "⛵", word: "velero" },
+  // V interior — palabras del libro
+  { emoji: "🍇", word: "uva" },
+  { emoji: "✈️", word: "avión" },
+  { emoji: "❄️", word: "nieve" },
+  { emoji: "🌴", word: "selva" },
+  // V interior — palabras frecuentes para 6 años
+  { emoji: "🥚", word: "huevo" },
+  { emoji: "🐦", word: "ave" },
+  { emoji: "🚀", word: "nave" },
+  { emoji: "🦃", word: "pavo" },
+  // V doble — reto extra (palabra del libro)
+  { emoji: "🏠", word: "vivienda" },
+];
+
+// Bandeja del nivel LETRA V: V (correcta) + 4 distractores fijos.
+// B suena parecido (/b/ ≡ /v/ en español); F, N, U son confundibles
+// visualmente para un niño de 6 años. La V está reutilizable porque
+// algunas palabras (vivienda) tienen 2 slots.
+const LETTER_V_TRAY = ["v", "b", "f", "n", "u"];
+
+function isLetterV(ch) {
+  return ch === "v";
+}
+
+// ─────────────────────────────────────────────────────────────
+// Configuración por categoría. Cada nivel define su banco, bandeja,
+// función que decide qué letras son slot, clave de localStorage para
+// la memoria de palabras recientes, y los textos (instrucción y pista)
+// que se muestran en GameScreen.
+// El catId viene de `app.currentCategory`, seteado por CharacterScreen
+// desde el LEVELS_CFG de screens.jsx.
+// ─────────────────────────────────────────────────────────────
+const CATEGORIES = {
+  vocales: {
+    bank: WORD_BANK_VOCALES,
+    tray: VOWEL_TRAY,
+    isSlot: isVowel,
+    recentKey: "edinun_completa_palabras_vocales_recientes_v1",
+    instruction: "Completa la palabra usando las vocales.",
+    hint: "Toca cada vocal en su lugar.",
+  },
+  letraV: {
+    bank: WORD_BANK_LETRA_V,
+    tray: LETTER_V_TRAY,
+    isSlot: isLetterV,
+    recentKey: "edinun_completa_palabras_letra_v_recientes_v1",
+    instruction: "Completa la palabra con la letra V.",
+    hint: "Toca la V donde corresponde.",
+  },
+};
+
+// ─────────────────────────────────────────────────────────────
 // Memoria de palabras vistas recientemente — persistida en localStorage
 // para que las rondas consecutivas no repitan palabras (antes el set se
 // reiniciaba cada vez que GameScreen se remontaba). Mantiene una cola
-// FIFO de las últimas RECENT_LIMIT palabras. Con 40 palabras en el
-// banco y 15 en memoria siempre quedan ≥25 frescas disponibles.
+// FIFO de las últimas RECENT_LIMIT palabras POR CATEGORÍA (clave en
+// cfg.recentKey). Vocales y Letra V tienen buffers independientes.
 // ─────────────────────────────────────────────────────────────
-const RECENT_KEY = "edinun_completa_palabras_recientes_v1";
-const RECENT_LIMIT = 15;
+const RECENT_LIMIT = 10;
 
-function getRecentlySeen() {
+function getRecentlySeen(recentKey) {
   try {
-    const raw = localStorage.getItem(RECENT_KEY);
+    const raw = localStorage.getItem(recentKey);
     if (!raw) return [];
     const arr = JSON.parse(raw);
     return Array.isArray(arr) ? arr : [];
   } catch { return []; }
 }
 
-function pushRecentlySeen(word) {
-  const arr = getRecentlySeen().filter((w) => w !== word);
+function pushRecentlySeen(recentKey, word) {
+  const arr = getRecentlySeen(recentKey).filter((w) => w !== word);
   arr.unshift(word);
   const trimmed = arr.slice(0, RECENT_LIMIT);
-  try { localStorage.setItem(RECENT_KEY, JSON.stringify(trimmed)); } catch {}
+  try { localStorage.setItem(recentKey, JSON.stringify(trimmed)); } catch {}
 }
 
 // ─────────────────────────────────────────────────────────────
-// Generador de problemas. Toma una palabra del banco y oculta SOLO sus
-// vocales (la cantidad depende del largo). La bandeja siempre es la
-// misma: las cinco vocales (a, e, i, o, u), reutilizables.
+// Generador de problemas. Recibe el id de categoría (vocales o letraV)
+// y un set de palabras ya usadas en la ronda. Aplica el filtro de
+// recientes (de localStorage) sobre el banco de esa categoría y oculta
+// solo las letras que cumplan `cfg.isSlot` (vocales o V según el caso).
 // ─────────────────────────────────────────────────────────────
-function makeProblem(usedKeys) {
+function makeProblem(catId, usedKeys) {
+  const cfg = CATEGORIES[catId] || CATEGORIES.vocales;
+
   // Doble filtro: palabras usadas EN ESTA RONDA (usedKeys, in-memory) +
-  // las RECENT_LIMIT vistas recientemente entre rondas (localStorage).
-  // Así se evita la repetición tanto dentro como entre rondas/sesiones.
-  const recent = new Set(getRecentlySeen());
+  // las RECENT_LIMIT vistas recientemente entre rondas (localStorage,
+  // namespaced por categoría). Así se evita repetición intra-ronda y
+  // entre rondas/sesiones dentro del mismo nivel.
+  const recent = new Set(getRecentlySeen(cfg.recentKey));
   const exclude = new Set([...usedKeys, ...recent]);
-  let pool = WORD_BANK.filter((w) => !exclude.has(w.word));
+  let pool = cfg.bank.filter((w) => !exclude.has(w.word));
   // Si la exclusión deja poco margen (ej. tras varias rondas seguidas
   // sin recargar), relajar las recientes y conservar solo las de la
   // ronda actual.
   if (pool.length < 3) {
-    pool = WORD_BANK.filter((w) => !usedKeys.has(w.word));
+    pool = cfg.bank.filter((w) => !usedKeys.has(w.word));
   }
-  if (pool.length === 0) pool = WORD_BANK;
+  if (pool.length === 0) pool = cfg.bank;
   const pick = pool[Math.floor(Math.random() * pool.length)];
   const word = pick.word;
   const letters = word.split("");
   const n = letters.length;
 
-  // Se ocultan TODAS las vocales de la palabra. El niño debe completar
-  // cada vocal en su lugar correspondiente.
+  // Se ocultan TODAS las letras que cumplan `cfg.isSlot`. En vocales =
+  // todas las vocales; en letraV = todas las V's (1 o 2 por palabra).
   const hiddenIdxArr = [];
   for (let i = 0; i < n; i++) {
-    if (isVowel(letters[i])) hiddenIdxArr.push(i);
+    if (cfg.isSlot(letters[i])) hiddenIdxArr.push(i);
   }
   const correctLetters = hiddenIdxArr.map((i) => letters[i]);
 
   // Respuestas aceptadas: la palabra principal + sus alternativas
   // (masculino/femenino o regional). Todas comparten el mismo
   // esqueleto consonántico, así que las casillas mostradas son
-  // idénticas — solo varía qué vocal cuenta como correcta en cada
+  // idénticas — solo varía qué letra cuenta como correcta en cada
   // posición.
   const acceptedWords = [word, ...(pick.alts || [])];
 
@@ -151,9 +223,9 @@ function makeProblem(usedKeys) {
     word,                    // string base (la que se muestra)
     letters,                 // array de chars
     hiddenIdx: hiddenIdxArr, // índices que el usuario debe completar
-    correctLetters,          // vocales objetivo (en orden de hiddenIdx)
+    correctLetters,          // letras objetivo (en orden de hiddenIdx)
     acceptedWords,           // todas las grafías válidas
-    tray: VOWEL_TRAY,        // SIEMPRE las 5 vocales, reutilizables
+    tray: cfg.tray,          // bandeja específica de la categoría
   };
 }
 
@@ -172,14 +244,18 @@ const ENCOURAGEMENTS = [
 
 function GameScreen({ app, setApp, go }) {
   const char = CHARACTERS.find((c) => c.id === app.character) || CHARACTERS[0];
-  const catLabel = app.currentCatLabel || "Completa la palabra";
+  // catId define banco/bandeja/copy. Si por alguna razón no llegó desde
+  // CharacterScreen, asumimos vocales (juego original, retrocompatible).
+  const catId = CATEGORIES[app.currentCategory] ? app.currentCategory : "vocales";
+  const catCfg = CATEGORIES[catId];
+  const catLabel = app.currentCatLabel || (catId === "letraV" ? "Letra V" : "Completa la palabra con vocales");
 
   // Llevar registro de palabras ya usadas en la sesión actual para no repetir.
   const usedRef = useRefG(new Set());
   const [problem, setProblem] = useStateG(() => {
-    const p = makeProblem(usedRef.current);
+    const p = makeProblem(catId, usedRef.current);
     usedRef.current.add(p.word);
-    pushRecentlySeen(p.word);
+    pushRecentlySeen(catCfg.recentKey, p.word);
     return p;
   });
   // `filled` es paralelo a `problem.hiddenIdx`: la letra que el usuario puso
@@ -195,7 +271,38 @@ function GameScreen({ app, setApp, go }) {
   const [feedback, setFeedback] = useStateG(null);
   const [feedbackMsg, setFeedbackMsg] = useStateG("");
   const [confirmingExit, setConfirmingExit] = useStateG(false);
+  // pendingLevel: id del nivel al que se quiere cambiar desde los chips
+  // del HUD. Null = no hay cambio pendiente. La acción es destructiva
+  // (pierde la ronda), por eso pasa por modal de confirmación.
+  const [pendingLevel, setPendingLevel] = useStateG(null);
   const [log, setLog] = useStateG([]);
+
+  // LEVELS_CFG vive en screens.jsx y se expone vía window. Lo leemos aquí
+  // para renderizar los chips del HUD y mapear el cambio de nivel.
+  const levels = (typeof LEVELS_CFG !== "undefined" && LEVELS_CFG) || (window.LEVELS_CFG || []);
+
+  function requestSwitchLevel(lvId) {
+    if (lvId === catId) return; // ya estás ahí
+    setPendingLevel(lvId);
+  }
+
+  function confirmSwitchLevel() {
+    if (!pendingLevel) return;
+    const cfg = levels.find((l) => l.id === pendingLevel);
+    if (!cfg) { setPendingLevel(null); return; }
+    // Bump gameSeed para que App remonte GameScreen con la nueva categoría
+    // (mismo patrón que `go("game")` en app.jsx). Reset de estrellas
+    // porque cada partida arranca en 0.
+    setApp((s) => ({
+      ...s,
+      level: cfg.id,
+      currentCategory: cfg.id,
+      currentCatLabel: cfg.catLabel,
+      stars: 0,
+      gameSeed: (s.gameSeed || 0) + 1,
+    }));
+    setPendingLevel(null);
+  }
 
   const started = useRefG(Date.now());
   const exerciseStart = useRefG(Date.now());
@@ -322,9 +429,9 @@ function GameScreen({ app, setApp, go }) {
         window.incrementGamesCompleted && window.incrementGamesCompleted();
         go("results");
       } else {
-        const p = makeProblem(usedRef.current);
+        const p = makeProblem(catId, usedRef.current);
         usedRef.current.add(p.word);
-        pushRecentlySeen(p.word);
+        pushRecentlySeen(catCfg.recentKey, p.word);
         setProblem(p);
         exerciseStart.current = Date.now();
       }
@@ -374,9 +481,45 @@ function GameScreen({ app, setApp, go }) {
         </div>
       </div>
 
-      {/* Indicador de ronda (3 dots) — debajo del HUD */}
+      {/* Chips de tema centrados — permiten cambiar de nivel sin volver al
+          Home. La acción es destructiva (se pierde la ronda) así que pasa
+          por SwitchLevelModal. */}
       <div style={{
-        position: "absolute", top: 60, left: "50%", transform: "translateX(-50%)",
+        position: "absolute", top: 18, left: "50%", transform: "translateX(-50%)",
+        display: "flex", alignItems: "center", gap: 6,
+      }}>
+        {levels.map((lv) => {
+          const active = lv.id === catId;
+          return (
+            <button
+              key={lv.id}
+              onClick={() => requestSwitchLevel(lv.id)}
+              title={active ? "Tema actual" : `Cambiar a "${lv.label}"`}
+              style={{
+                padding: "5px 12px",
+                borderRadius: 999,
+                background: active ? lv.grad : "rgba(0,0,0,0.35)",
+                color: active ? lv.ink : "rgba(252,233,168,0.85)",
+                fontFamily: "var(--ed-font-display)",
+                fontWeight: 700, fontSize: 11, letterSpacing: "0.02em",
+                border: active ? "1px solid rgba(255,255,255,0.55)" : "1px solid rgba(242,194,96,0.35)",
+                boxShadow: active
+                  ? "inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -2px 0 rgba(0,0,0,0.18), 0 0 12px rgba(255,255,255,0.18)"
+                  : "none",
+                cursor: active ? "default" : "pointer",
+                transition: "all 0.18s ease",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {lv.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Indicador de ronda (3 dots) — debajo de los chips */}
+      <div style={{
+        position: "absolute", top: 54, left: "50%", transform: "translateX(-50%)",
         display: "flex", alignItems: "center", gap: 8,
       }}>
         <span className="ed-label" style={{ color: "rgba(255,255,255,0.7)" }}>Ronda</span>
@@ -416,7 +559,7 @@ function GameScreen({ app, setApp, go }) {
             color: "#fce9a8", textAlign: "center",
             boxShadow: "0 10px 24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08)",
           }}>
-            Toca cada vocal en su lugar.
+            {catCfg.hint}
             {/* Cola del bocadillo — apunta hacia abajo a la cabeza del PNG. */}
             <div style={{
               position: "absolute", bottom: -10, left: 70,
@@ -446,20 +589,19 @@ function GameScreen({ app, setApp, go }) {
         }}>{char.name}</div>
       </div>
 
-      {/* Enunciado principal del ejercicio — texto blanco grande encima de
-          la pizarra/cartel. Sigue el patrón del juego de valor posicional
-          ("Completa el número usando decenas y unidades."): instrucción
-          accionable, una sola línea, 6-8 años. */}
+      {/* Enunciado principal del ejercicio — texto blanco grande encima
+          del cartel del emoji. Bajado a top:88 (era 76) para no chocar
+          con los dots de Ronda (top:54..68). */}
       <div style={{
-        position: "absolute", top: 76, left: 250, right: 250,
+        position: "absolute", top: 88, left: 250, right: 250,
         textAlign: "center",
         fontFamily: "var(--ed-font-display)", fontWeight: 700,
-        fontSize: 22, lineHeight: 1.15,
+        fontSize: 20, lineHeight: 1.15,
         color: "#fff",
         textShadow: "0 2px 6px rgba(0,0,0,0.55)",
         pointerEvents: "none",
       }}>
-        Completa la palabra usando las vocales.
+        {catCfg.instruction}
       </div>
 
       {/* ══════ ZONA CENTRAL: emoji + casillas de palabra ══════
@@ -467,21 +609,22 @@ function GameScreen({ app, setApp, go }) {
           cartel↔casillas ≈ 28, gap casillas↔bandeja ≈ 28 (la bandeja sube
           a bottom:30). El espacio vertical se reparte parejo. */}
       <div data-qa="zona-central" style={{
-        position: "absolute", top: 136, left: "50%", transform: "translateX(-50%)",
+        position: "absolute", top: 128, left: "50%", transform: "translateX(-50%)",
         width: 460, textAlign: "center",
         display: "flex", flexDirection: "column", alignItems: "center",
-        gap: 28,
+        gap: 24,
       }}>
-        {/* Cartel del emoji con marco dorado — protagonista visual del
-            centro. Crecido para que la pizarra no quede flotando. */}
+        {/* Cartel del emoji con marco dorado — achicado un poco (170×155
+            vs 195×180 anterior) para liberar espacio vertical y dar
+            respiración al enunciado/Ronda de arriba. */}
         <div style={{
-          width: 195, height: 180,
-          borderRadius: 22,
+          width: 170, height: 155,
+          borderRadius: 20,
           background: "linear-gradient(180deg, rgba(255,255,255,0.95), rgba(240,235,225,0.9))",
           border: "3px solid #f2c260",
           boxShadow: "0 12px 28px rgba(0,0,0,0.45), 0 0 0 1px rgba(242,194,96,0.35), inset 0 -4px 0 rgba(0,0,0,0.08)",
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 128, lineHeight: 1,
+          fontSize: 112, lineHeight: 1,
         }}>
           {problem.emoji}
         </div>
@@ -651,6 +794,51 @@ function GameScreen({ app, setApp, go }) {
           </div>
         </PortalToBody>
       )}
+
+      {/* Modal de cambio de tema — destructivo: pierde la ronda en curso. */}
+      {pendingLevel && (() => {
+        const cfg = levels.find((l) => l.id === pendingLevel);
+        if (!cfg) return null;
+        return (
+          <PortalToBody>
+            <div
+              onClick={() => setPendingLevel(null)}
+              style={{
+                position: "fixed", inset: 0, zIndex: 1000,
+                background: "rgba(0,0,0,0.62)",
+                backdropFilter: "blur(4px)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                animation: "ed-pop-in 0.18s",
+                padding: 16,
+              }}
+            >
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="ed-card"
+                style={{ padding: 24, maxWidth: 460, textAlign: "center", boxShadow: "var(--ed-shadow-card), 0 0 40px rgba(148,120,255,0.3)" }}
+              >
+                <div className="ed-label" style={{ color: "#a78bfa", marginBottom: 6 }}>
+                  Cambiar de tema
+                </div>
+                <h2 className="ed-h1" style={{ fontSize: 22, lineHeight: 1.15, marginBottom: 8 }}>
+                  ¿Ir a "{cfg.label}"?
+                </h2>
+                <p className="ed-body" style={{ marginBottom: 16, fontSize: 14 }}>
+                  Vas a perder el progreso de esta ronda ({attempted}/3 palabras). No habrá reporte de esta sesión.
+                </p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <button className="ed-btn ed-btn-ghost" onClick={() => setPendingLevel(null)} style={{ height: 44, fontWeight: 800, letterSpacing: "0.04em" }}>
+                    SEGUIR JUGANDO
+                  </button>
+                  <button className="ed-btn ed-btn-primary" onClick={confirmSwitchLevel} style={{ height: 44, fontWeight: 800, letterSpacing: "0.04em" }}>
+                    SÍ, CAMBIAR
+                  </button>
+                </div>
+              </div>
+            </div>
+          </PortalToBody>
+        );
+      })()}
 
       {/* Modal de salir */}
       {confirmingExit && (
