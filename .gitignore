@@ -1,6 +1,12 @@
 node_modules/
 package-lock.json
 
+# Local agent state (no commit)
+.claude/
+
+# QA screenshots ad-hoc en la raíz (los del juego van en .planning/qa-screenshots/)
+qa-juego*.png
+
 # QA visual — capturas y resumen se regeneran en cada corrida.
 **/.planning/qa-screenshots/
 **/.planning/qa-results.json

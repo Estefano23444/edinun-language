@@ -1,0 +1,508 @@
+/* ============================================================
+   EDINUN GAMES — Sistema de diseño
+   Estética: cósmica mágica · dorado EDINUN · tipografía educativa
+   ============================================================ */
+
+:root {
+  /* Paleta cósmica */
+  --ed-deep: #0b0826;
+  --ed-deep-2: #161042;
+  --ed-nebula: #2a1d6b;
+  --ed-violet: #6a3dd6;
+  --ed-violet-2: #8a5af2;
+  --ed-pink: #ff5fb3;
+  --ed-cyan: #4fd8ff;
+  --ed-mint: #7bf5c4;
+
+  /* Dorados EDINUN */
+  --ed-gold: #d9a441;
+  --ed-gold-2: #f2c260;
+  --ed-gold-hi: #fce9a8;
+  --ed-gold-shadow: #8a5e18;
+
+  /* Niveles (armonizados con la pantalla de juego de referencia) */
+  --ed-basic: #f5a623;
+  --ed-basic-d: #c47b0b;
+  --ed-medium: #f5d84b;
+  --ed-medium-d: #b99715;
+  --ed-advanced: #4fa0ff;
+  --ed-advanced-d: #1e67c7;
+
+  /* Feedback */
+  --ed-ok: #2ecc8f;
+  --ed-err: #ff6b6b;
+
+  /* Superficies y texto */
+  --ed-ink: #f6f1ff;
+  --ed-ink-dim: rgba(246, 241, 255, 0.72);
+  --ed-ink-soft: rgba(246, 241, 255, 0.5);
+  --ed-surface: rgba(30, 20, 70, 0.55);
+  --ed-surface-2: rgba(20, 12, 55, 0.72);
+  --ed-stroke: rgba(148, 120, 255, 0.35);
+  --ed-stroke-hot: rgba(79, 216, 255, 0.7);
+
+  /* Tipografía */
+  --ed-font-display: 'Fredoka', 'Baloo 2', system-ui, sans-serif;
+  --ed-font-ui: 'Nunito', system-ui, sans-serif;
+  --ed-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Radios y sombras */
+  --ed-r-sm: 10px;
+  --ed-r-md: 16px;
+  --ed-r-lg: 24px;
+  --ed-r-xl: 32px;
+  --ed-r-pill: 999px;
+
+  --ed-shadow-card: 0 24px 60px -12px rgba(0, 0, 0, 0.6),
+    0 0 0 1px var(--ed-stroke), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --ed-glow-cyan: 0 0 40px rgba(79, 216, 255, 0.55),
+    0 0 0 2px rgba(79, 216, 255, 0.7);
+  --ed-glow-gold: 0 0 30px rgba(242, 194, 96, 0.55),
+    0 0 0 2px rgba(242, 194, 96, 0.4);
+}
+
+/* Reset básico */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+input { font: inherit; }
+
+html, body {
+  /* No tocar el zoom del navegador. `overscroll-behavior: none` evita el
+     efecto rubber-band en iOS sin desactivar el pinch-zoom. */
+  overscroll-behavior: none;
+}
+body {
+  font-family: var(--ed-font-ui);
+  color: var(--ed-ink);
+  background: #050214;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* `manipulation` deja pan + pinch-zoom; solo deshabilita el doble-tap-to-
+     zoom, que en juegos es ruido. NO usamos `overflow: hidden` en body
+     porque iOS lo interpreta como "página fija sin zoom" cuando el
+     contenido ocupa exactamente el viewport — el pinch funciona pero
+     "rebota" o queda inestable. El wrapper de DeviceStage ya tiene su
+     propio overflow:hidden, así que no se necesita aquí. */
+  touch-action: manipulation;
+}
+
+/* ============================================================
+   Fondo cósmico reutilizable
+   ============================================================ */
+.ed-cosmos {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(138, 90, 242, 0.35), transparent 55%),
+    radial-gradient(ellipse at 85% 85%, rgba(79, 216, 255, 0.22), transparent 60%),
+    radial-gradient(ellipse at 50% 50%, rgba(106, 61, 214, 0.35), transparent 70%),
+    linear-gradient(180deg, #0b0826 0%, #120a38 50%, #070320 100%);
+  overflow: hidden;
+}
+.ed-cosmos::before {
+  /* estrellas */
+  content: "";
+  position: absolute; inset: -10%;
+  background-image:
+    radial-gradient(1px 1px at 13% 17%, #fff, transparent),
+    radial-gradient(1px 1px at 27% 82%, #e0d4ff, transparent),
+    radial-gradient(1.5px 1.5px at 44% 33%, #fff, transparent),
+    radial-gradient(1px 1px at 62% 12%, #aee5ff, transparent),
+    radial-gradient(1px 1px at 71% 66%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 88% 40%, #ffd8a8, transparent),
+    radial-gradient(1px 1px at 8% 58%, #fff, transparent),
+    radial-gradient(1px 1px at 93% 77%, #e0d4ff, transparent),
+    radial-gradient(1px 1px at 34% 96%, #fff, transparent),
+    radial-gradient(1px 1px at 55% 50%, #aee5ff, transparent),
+    radial-gradient(1.5px 1.5px at 76% 22%, #fff, transparent),
+    radial-gradient(1px 1px at 20% 40%, #ffd8a8, transparent);
+  opacity: 0.9;
+  animation: ed-twinkle 6s ease-in-out infinite;
+}
+.ed-cosmos::after {
+  /* símbolos matemáticos flotantes */
+  content: "";
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(circle at 10% 30%, rgba(138, 90, 242, 0.18), transparent 8%),
+    radial-gradient(circle at 90% 60%, rgba(79, 216, 255, 0.15), transparent 10%);
+  pointer-events: none;
+}
+@keyframes ed-twinkle {
+  0%, 100% { opacity: 0.75; }
+  50% { opacity: 1; }
+}
+
+/* Glifos matemáticos de fondo — escalan con el viewport para que se vean
+   consistentes en móvil, tablet y desktop sin importar el escalado del lienzo. */
+.ed-glyphs {
+  position: absolute; inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  color: rgba(255, 255, 255, 0.42);
+  font-family: var(--ed-font-display);
+  font-size: clamp(48px, 7vmin, 110px);
+  font-weight: 800;
+  text-shadow:
+    0 0 30px rgba(255, 255, 255, 0.35),
+    0 0 8px rgba(252, 233, 168, 0.25);
+}
+.ed-glyphs span {
+  position: absolute;
+  animation: ed-float 14s ease-in-out infinite;
+}
+@keyframes ed-float {
+  0%, 100% { transform: translateY(0) rotate(var(--rot, 0deg)); }
+  50% { transform: translateY(-14px) rotate(calc(var(--rot, 0deg) + 4deg)); }
+}
+
+/* ============================================================
+   Tipografía
+   ============================================================ */
+.ed-h1 {
+  font-family: var(--ed-font-display);
+  font-weight: 600;
+  font-size: 40px;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.ed-h2 {
+  font-family: var(--ed-font-display);
+  font-weight: 500;
+  font-size: 26px;
+  line-height: 1.15;
+  margin: 0;
+}
+.ed-label {
+  font-family: var(--ed-font-ui);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ed-ink-dim);
+}
+.ed-body {
+  font-family: var(--ed-font-ui);
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ed-ink-dim);
+}
+
+/* ============================================================
+   Botones
+   ============================================================ */
+.ed-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--ed-font-display);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  padding: 12px 20px;
+  border-radius: var(--ed-r-pill);
+  transition: transform 0.12s ease, box-shadow 0.18s ease, filter 0.18s ease;
+  white-space: nowrap;
+  user-select: none;
+}
+.ed-btn:active { transform: translateY(1px); }
+
+.ed-btn-primary {
+  background: linear-gradient(180deg, #f2c260 0%, #d9a441 55%, #a8781e 100%);
+  color: #3a2608;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.18),
+    0 8px 20px -6px rgba(242, 194, 96, 0.55),
+    0 0 0 1px rgba(0, 0, 0, 0.18);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.ed-btn-primary:hover {
+  filter: brightness(1.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.18),
+    0 12px 28px -6px rgba(242, 194, 96, 0.75),
+    0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+
+.ed-btn-ghost {
+  background: var(--ed-surface);
+  color: var(--ed-ink);
+  backdrop-filter: blur(12px);
+  box-shadow: inset 0 0 0 1px var(--ed-stroke);
+}
+.ed-btn-ghost:hover {
+  background: var(--ed-surface-2);
+  box-shadow: inset 0 0 0 1px var(--ed-stroke-hot);
+}
+
+.ed-btn-verify {
+  background: linear-gradient(180deg, #48e09a 0%, #2ecc8f 55%, #1a8f5f 100%);
+  color: #0a2817;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.18),
+    0 10px 24px -6px rgba(46, 204, 143, 0.6);
+}
+.ed-btn-erase {
+  background: linear-gradient(180deg, #ff8b8b 0%, #ef5a5a 55%, #b22f2f 100%);
+  color: #340a0a;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.18),
+    0 8px 18px -6px rgba(239, 90, 90, 0.5);
+}
+.ed-btn-hint {
+  background: linear-gradient(180deg, #ffe07a 0%, #f5c847 55%, #b88a0f 100%);
+  color: #3a2608;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.18),
+    0 8px 18px -6px rgba(245, 200, 71, 0.5);
+}
+
+/* ============================================================
+   Superficies / cards
+   ============================================================ */
+.ed-card {
+  background: linear-gradient(
+    180deg,
+    rgba(40, 26, 95, 0.78) 0%,
+    rgba(18, 10, 55, 0.88) 100%
+  );
+  border-radius: var(--ed-r-lg);
+  box-shadow: var(--ed-shadow-card);
+  position: relative;
+}
+.ed-card-glow {
+  box-shadow:
+    var(--ed-shadow-card),
+    0 0 50px rgba(138, 90, 242, 0.3);
+}
+
+/* Input ne\u00f3n */
+.ed-input {
+  width: 100%;
+  background: rgba(10, 6, 35, 0.7);
+  border: 2px solid rgba(79, 216, 255, 0.55);
+  border-radius: var(--ed-r-pill);
+  padding: 14px 22px;
+  color: var(--ed-ink);
+  font-family: var(--ed-font-display);
+  font-size: 18px;
+  outline: none;
+  box-shadow:
+    inset 0 0 12px rgba(79, 216, 255, 0.12),
+    0 0 20px rgba(79, 216, 255, 0.25);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.ed-input::placeholder { color: rgba(246, 241, 255, 0.38); font-weight: 500; }
+.ed-input:focus {
+  border-color: rgba(79, 216, 255, 0.9);
+  box-shadow:
+    inset 0 0 14px rgba(79, 216, 255, 0.2),
+    0 0 30px rgba(79, 216, 255, 0.5);
+}
+
+/* Chip de nivel */
+.ed-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--ed-r-pill);
+  font-family: var(--ed-font-display);
+  font-weight: 600;
+  font-size: 13px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 2px 4px rgba(0, 0, 0, 0.25);
+}
+.ed-chip-basic    { background: linear-gradient(180deg, #ffc06e, #e4881a); color: #3a2608; }
+.ed-chip-medium   { background: linear-gradient(180deg, #ffe97a, #d7b12a); color: #3a2608; }
+.ed-chip-advanced { background: linear-gradient(180deg, #7ab8ff, #2773d8); color: #08264d; }
+
+/* ============================================================
+   Elementos de juego
+   ============================================================ */
+.ed-numpad-key {
+  background: linear-gradient(180deg, #fff8e6 0%, #f7e3a8 100%);
+  color: #3a2608;
+  border-radius: 14px;
+  font-family: var(--ed-font-display);
+  font-weight: 700;
+  font-size: 28px;
+  height: 56px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.12),
+    0 4px 0 rgba(0, 0, 0, 0.12);
+  border: 2px solid transparent;
+  transition: transform 0.1s ease, box-shadow 0.12s ease;
+}
+.ed-numpad-key:hover { filter: brightness(1.06); }
+.ed-numpad-key:active { transform: translateY(2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.8), inset 0 -1px 0 rgba(0,0,0,.12), 0 1px 0 rgba(0,0,0,.12); }
+
+/* Slots de respuesta: solo línea entrecortada, sin sombreado de fondo.
+   Los dígitos colocados son "bloques" que viven sobre la línea, no en una caja
+   con fill. El estado .active solo realza el borde. */
+.ed-answer-slot {
+  width: 60px; height: 64px;
+  background: transparent;
+  border: 2px dashed rgba(255, 255, 255, 0.45);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--ed-font-display);
+  font-weight: 700;
+  font-size: 34px;
+  color: #fff;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.ed-answer-slot.active {
+  border-style: solid;
+  border-color: var(--ed-cyan);
+  box-shadow: 0 0 20px rgba(79, 216, 255, 0.5);
+}
+.ed-answer-slot.filled {
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.6);
+}
+.ed-answer-slot.drag-over {
+  border-style: solid;
+  border-color: #fce9a8;
+  box-shadow: 0 0 22px rgba(252, 233, 168, 0.55), inset 0 0 0 2px #fce9a8;
+  transform: scale(1.06);
+}
+
+/* Fichas arrastrables */
+.ed-draggable {
+  cursor: grab;
+  user-select: none;
+  -webkit-user-drag: element;
+  touch-action: none;
+}
+.ed-draggable:active { cursor: grabbing; }
+.ed-draggable.dragging {
+  opacity: 0.45;
+  transform: scale(0.92);
+}
+
+/* Ficha de dado (como en la ref de juego) */
+.ed-dice {
+  width: 38px; height: 38px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--ed-font-display);
+  font-weight: 700;
+  font-size: 18px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.4),
+    inset 0 -3px 0 rgba(0,0,0,.15),
+    0 4px 8px rgba(0,0,0,.3);
+}
+.ed-dice-c { background: linear-gradient(180deg, #ffb85c, #d97a0c); color: #3a1f05; }
+.ed-dice-d { background: linear-gradient(180deg, #7ab8ff, #2773d8); color: #08264d; }
+.ed-dice-u { background: linear-gradient(180deg, #ffd957, #b88a0f); color: #3a2608; }
+
+/* ============================================================
+   Rotate device prompt
+   ============================================================ */
+.ed-rotate {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 20px;
+  padding: 40px;
+  background: linear-gradient(180deg, #0b0826, #120a38);
+  color: var(--ed-ink);
+  text-align: center;
+  z-index: 9999;
+}
+
+/* ============================================================
+   Utilidades
+   ============================================================ */
+.ed-stack { display: flex; flex-direction: column; }
+.ed-row { display: flex; flex-direction: row; align-items: center; }
+.ed-row-center { display: flex; align-items: center; justify-content: center; }
+
+.ed-divider-dotted {
+  border-bottom: 2px dotted rgba(255, 255, 255, 0.25);
+}
+
+/* Scroll oculto */
+.ed-noscroll::-webkit-scrollbar { display: none; }
+.ed-noscroll { scrollbar-width: none; }
+
+/* animaciones utilitarias */
+@keyframes ed-pop-in {
+  0% { transform: scale(0.85); opacity: 0; }
+  60% { transform: scale(1.04); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.ed-pop-in { animation: ed-pop-in 0.35s cubic-bezier(.2,.8,.3,1.1) both; }
+
+@keyframes ed-slide-up {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.ed-slide-up { animation: ed-slide-up 0.35s ease both; }
+
+@keyframes ed-pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(79, 216, 255, 0.5); }
+  50% { box-shadow: 0 0 0 10px rgba(79, 216, 255, 0); }
+}
+.ed-pulse-glow { animation: ed-pulse-glow 2s ease-in-out infinite; }
+
+@keyframes ed-float-soft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.ed-float-soft { animation: ed-float-soft 3.5s ease-in-out infinite; }
+
+@keyframes ed-spin-slow {
+  from { transform: rotate(0); }
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   IMPRESIÓN DE REPORTE
+   Estrategia: el documento imprimible (.ed-print-doc) vive como hermano
+   de #root en <body> via Portal. En pantalla está oculto. En print:
+     - #root se oculta entero (con todo el lienzo escalado del DeviceStage)
+     - .ed-print-doc se muestra y fluye natural en A4
+   No usamos `position: fixed`, `visibility: hidden` ni truquitos con
+   transforms — todo eso se rompe en iOS Safari/Chrome durante el print
+   y produce PDFs en blanco. El toggle display:none ↔ display:block es
+   universalmente confiable.
+   ============================================================ */
+.ed-print-doc { display: none; }
+
+@media print {
+  @page { size: A4 portrait; margin: 14mm; }
+  html, body {
+    background: #fff !important;
+    color: #111 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+    width: auto !important;
+  }
+  /* Esconder TODO el árbol del juego — #root es hijo directo de body. */
+  body > #root { display: none !important; }
+  /* Mostrar el documento imprimible. */
+  body > .ed-print-doc {
+    display: block !important;
+    color: #111;
+    background: #fff;
+    font-family: 'Nunito', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 11pt;
+    line-height: 1.4;
+  }
+}
