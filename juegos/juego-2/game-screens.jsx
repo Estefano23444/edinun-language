@@ -262,9 +262,11 @@ const BLOG_MOCKUPS = [
 // ─────────────────────────────────────────────────────────────
 function GameScreen({ app, setApp, go }) {
   const cat = app.currentCategory || "letraR";
-  if (cat === "noticia") return <NoticiaGame app={app} setApp={setApp} go={go} />;
-  if (cat === "blog")    return <BlogGame    app={app} setApp={setApp} go={go} />;
-  return <LetraRGame app={app} setApp={setApp} go={go} />;
+  const [restartTick, setRestartTick] = useStateG(0);
+  const restart = () => setRestartTick((t) => t + 1);
+  if (cat === "noticia") return <NoticiaGame key={`noticia-${restartTick}`} app={app} setApp={setApp} go={go} onRestart={restart} />;
+  if (cat === "blog")    return <BlogGame    key={`blog-${restartTick}`}    app={app} setApp={setApp} go={go} onRestart={restart} />;
+  return <LetraRGame key={`letraR-${restartTick}`} app={app} setApp={setApp} go={go} onRestart={restart} />;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -303,39 +305,6 @@ function GameHUD({ elapsed, stars, attempted, solved, total = 3, app, setApp }) 
           <EdinunLogoMini size={64} />
         </div>
 
-        {/* Chips de tema en el centro — permiten cambiar de nivel */}
-        <div data-qa="hud-temas" style={{
-          display: "flex", alignItems: "center", gap: 6,
-        }}>
-          {levels.map((lv) => {
-            const active = lv.id === currentId;
-            return (
-              <button
-                key={lv.id}
-                onClick={() => requestSwitch(lv.id)}
-                title={active ? "Tema actual" : `Cambiar a "${lv.label}"`}
-                style={{
-                  padding: "5px 12px",
-                  borderRadius: 999,
-                  background: active ? lv.grad : "rgba(0,0,0,0.35)",
-                  color: active ? lv.ink : "rgba(252,233,168,0.85)",
-                  fontFamily: "var(--ed-font-display)",
-                  fontWeight: 700, fontSize: 11, letterSpacing: "0.02em",
-                  border: active ? "1px solid rgba(255,255,255,0.55)" : "1px solid rgba(242,194,96,0.35)",
-                  boxShadow: active
-                    ? "inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -2px 0 rgba(0,0,0,0.18), 0 0 12px rgba(255,255,255,0.18)"
-                    : "none",
-                  cursor: active ? "default" : "pointer",
-                  transition: "all 0.18s ease",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {lv.label}
-              </button>
-            );
-          })}
-        </div>
-
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{
             display: "flex", alignItems: "center", gap: 6,
@@ -352,6 +321,40 @@ function GameHUD({ elapsed, stars, attempted, solved, total = 3, app, setApp }) 
             ⭐ {stars}
           </div>
         </div>
+      </div>
+
+      {/* Chips de tema centrados respecto a la canvas (alineados con el indicador de ronda) */}
+      <div data-qa="hud-temas" style={{
+        position: "absolute", top: 24, left: "50%", transform: "translateX(-50%)",
+        display: "flex", alignItems: "center", gap: 6,
+      }}>
+        {levels.map((lv) => {
+          const active = lv.id === currentId;
+          return (
+            <button
+              key={lv.id}
+              onClick={() => requestSwitch(lv.id)}
+              title={active ? "Tema actual" : `Cambiar a "${lv.label}"`}
+              style={{
+                padding: "5px 12px",
+                borderRadius: 999,
+                background: active ? lv.grad : "rgba(0,0,0,0.35)",
+                color: active ? lv.ink : "rgba(252,233,168,0.85)",
+                fontFamily: "var(--ed-font-display)",
+                fontWeight: 700, fontSize: 11, letterSpacing: "0.02em",
+                border: active ? "1px solid rgba(255,255,255,0.55)" : "1px solid rgba(242,194,96,0.35)",
+                boxShadow: active
+                  ? "inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -2px 0 rgba(0,0,0,0.18), 0 0 12px rgba(255,255,255,0.18)"
+                  : "none",
+                cursor: active ? "default" : "pointer",
+                transition: "all 0.18s ease",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {lv.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Indicador de ronda (n puntos) */}
@@ -418,7 +421,7 @@ function SwitchLevelModal({ pendingLevel, levels, attempted, total, onCancel, on
   );
 }
 
-function ExitModal({ confirmingExit, setConfirmingExit, attempted, total, go }) {
+function RestartModal({ confirmingExit, setConfirmingExit, attempted, total, onRestart }) {
   if (!confirmingExit) return null;
   return (
     <PortalToBody>
@@ -431,17 +434,17 @@ function ExitModal({ confirmingExit, setConfirmingExit, attempted, total, go }) 
         <div onClick={(e) => e.stopPropagation()} className="ed-card"
           style={{ padding: 24, maxWidth: 440, textAlign: "center", boxShadow: "var(--ed-shadow-card), 0 0 40px rgba(255,107,107,0.3)" }}
         >
-          <div className="ed-label" style={{ color: "#ff8b8b", marginBottom: 6 }}>Salir del juego</div>
-          <h2 className="ed-h1" style={{ fontSize: 22, lineHeight: 1.15, marginBottom: 8 }}>¿Volver al inicio?</h2>
+          <div className="ed-label" style={{ color: "#ff8b8b", marginBottom: 6 }}>Reiniciar juego</div>
+          <h2 className="ed-h1" style={{ fontSize: 22, lineHeight: 1.15, marginBottom: 8 }}>¿Empezar de nuevo?</h2>
           <p className="ed-body" style={{ marginBottom: 16, fontSize: 14 }}>
-            Vas a perder el progreso de esta ronda ({attempted}/{total}). No habrá reporte de esta sesión.
+            Vas a perder el progreso de esta ronda ({attempted}/{total}) y volverás a la primera.
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingExit(false)} style={{ height: 44, fontWeight: 800, letterSpacing: "0.04em" }}>
               SEGUIR JUGANDO
             </button>
-            <button className="ed-btn ed-btn-primary" onClick={() => { setConfirmingExit(false); go("home"); }} style={{ height: 44, fontWeight: 800, letterSpacing: "0.04em" }}>
-              SÍ, SALIR
+            <button className="ed-btn ed-btn-primary" onClick={() => { setConfirmingExit(false); onRestart && onRestart(); }} style={{ height: 44, fontWeight: 800, letterSpacing: "0.04em" }}>
+              SÍ, REINICIAR
             </button>
           </div>
         </div>
@@ -514,7 +517,7 @@ function makeRProblem(usedKeys) {
   };
 }
 
-function LetraRGame({ app, setApp, go }) {
+function LetraRGame({ app, setApp, go, onRestart }) {
   const char = CHARACTERS.find((c) => c.id === app.character) || CHARACTERS[0];
   const catLabel = app.currentCatLabel || "La letra del ronroneo: rrrrrr";
 
@@ -815,11 +818,11 @@ function LetraRGame({ app, setApp, go }) {
         <button className="ed-btn ed-btn-erase" onClick={erase}
           style={{ fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}>BORRAR</button>
         <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingExit(true)}
-          style={{ fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}>SALIR</button>
+          style={{ fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}>REINICIAR</button>
       </div>
 
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />
-      <ExitModal confirmingExit={confirmingExit} setConfirmingExit={setConfirmingExit} attempted={attempted} total={3} go={go} />
+      <RestartModal confirmingExit={confirmingExit} setConfirmingExit={setConfirmingExit} attempted={attempted} total={3} onRestart={onRestart} />
     </div>
   );
 }
@@ -838,7 +841,7 @@ function pickNoticia(usedKeys) {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-function NoticiaGame({ app, setApp, go }) {
+function NoticiaGame({ app, setApp, go, onRestart }) {
   const char = CHARACTERS.find((c) => c.id === app.character) || CHARACTERS[0];
   const catLabel = app.currentCatLabel || "La noticia";
 
@@ -987,7 +990,7 @@ function NoticiaGame({ app, setApp, go }) {
             color: "#fce9a8", textAlign: "center",
             boxShadow: "0 10px 24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08)",
           }}>
-            {ronda === 0 && "¿Cómo se llama la parte amarilla?"}
+            {ronda === 0 && "¿Qué parte de la noticia está marcada?"}
             {ronda === 1 && "Selecciona el resumen correcto."}
             {ronda === 2 && "Selecciona el concepto correcto."}
             <div style={{
@@ -1035,15 +1038,15 @@ function NoticiaGame({ app, setApp, go }) {
         )}
       </div>
 
-      {/* Botón salir, debajo del personaje en la columna izquierda */}
+      {/* Botón reiniciar, debajo del personaje en la columna izquierda */}
       <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingExit(true)}
         style={{
-          position: "absolute", left: 70, bottom: 24, width: 96,
+          position: "absolute", left: 60, bottom: 24, width: 116,
           fontSize: 12, padding: "6px 12px", height: 36, fontWeight: 800, letterSpacing: "0.04em",
-        }}>SALIR</button>
+        }}>REINICIAR</button>
 
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />
-      <ExitModal confirmingExit={confirmingExit} setConfirmingExit={setConfirmingExit} attempted={attempted} total={3} go={go} />
+      <RestartModal confirmingExit={confirmingExit} setConfirmingExit={setConfirmingExit} attempted={attempted} total={3} onRestart={onRestart} />
     </div>
   );
 }
@@ -1156,24 +1159,24 @@ function NoticiaResumenCard({ noticia, options, onAnswer }) {
 // Tarjeta de concepto: definición + 4 chips
 function ConceptoCard({ def, chips, correct, onAnswer }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: 18, justifyContent: "center" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-evenly", gap: 0 }}>
       <div style={{
         background: "linear-gradient(180deg, rgba(255,255,255,0.95), rgba(240,235,225,0.9))",
         color: "#1a1a1a",
-        borderRadius: 16, padding: "22px 28px",
+        borderRadius: 16, padding: "28px 32px",
         border: "3px solid #f2c260",
         boxShadow: "0 12px 28px rgba(0,0,0,0.45)",
         fontFamily: "var(--ed-font-display)", fontWeight: 600,
-        fontSize: 19, lineHeight: 1.4,
+        fontSize: 20, lineHeight: 1.4,
         textAlign: "center",
       }}>
         "{def}"
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
         {chips.map((c, i) => (
           <button key={i} onClick={() => onAnswer(c)}
             style={{
-              padding: "18px 12px", borderRadius: 14,
+              padding: "22px 12px", borderRadius: 14,
               background: "linear-gradient(180deg, #ffe97a, #d7b12a)",
               color: "#3a2608",
               fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 16,
@@ -1199,7 +1202,7 @@ function pickBlogMockup(usedKeys) {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-function BlogGame({ app, setApp, go }) {
+function BlogGame({ app, setApp, go, onRestart }) {
   const char = CHARACTERS.find((c) => c.id === app.character) || CHARACTERS[0];
   const catLabel = app.currentCatLabel || "El blog";
 
@@ -1389,12 +1392,12 @@ function BlogGame({ app, setApp, go }) {
 
       <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingExit(true)}
         style={{
-          position: "absolute", left: 70, bottom: 24, width: 96,
+          position: "absolute", left: 60, bottom: 24, width: 116,
           fontSize: 12, padding: "6px 12px", height: 36, fontWeight: 800, letterSpacing: "0.04em",
-        }}>SALIR</button>
+        }}>REINICIAR</button>
 
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />
-      <ExitModal confirmingExit={confirmingExit} setConfirmingExit={setConfirmingExit} attempted={attempted} total={3} go={go} />
+      <RestartModal confirmingExit={confirmingExit} setConfirmingExit={setConfirmingExit} attempted={attempted} total={3} onRestart={onRestart} />
     </div>
   );
 }
@@ -1457,17 +1460,29 @@ function BlogShooterCard({ onFinish }) {
   const [timeLeft, setTimeLeft] = useStateG(20);
   const nextIdRef = useRefG(0);
   const finishedRef = useRefG(false);
+  const containerRef = useRefG(null);
+
+  // Estima el ancho del bubble a partir del texto: fontSize 15, uppercase
+  // bold ~9.3 px/char + padding 18*2 + borde 2*2 + colchón.
+  function estimateBubbleWidth(word) {
+    return Math.ceil(word.length * 9.3) + 44;
+  }
 
   useEffectG(() => {
-    // Spawner cada ~900ms
+    // Spawner cada ~900ms. La posición x se calcula al spawnear para
+    // garantizar que el bubble completo entra en el ancho real del
+    // contenedor — nada de palabras cortadas por el recuadro.
     const spawn = setInterval(() => {
       if (finishedRef.current) return;
       const useCorrect = Math.random() < 0.5;
       const pool = useCorrect ? BLOG_ELEMENTOS : BLOG_DISTRACTORES;
       const word = pool[Math.floor(Math.random() * pool.length)];
       const id = nextIdRef.current++;
-      // x dentro del área visible de zona-central (aprox 720 px de ancho)
-      const x = 20 + Math.random() * 540;
+      const containerW = (containerRef.current && containerRef.current.clientWidth) || 642;
+      const margin = 12;
+      const estW = estimateBubbleWidth(word);
+      const maxX = Math.max(margin, containerW - estW - margin);
+      const x = margin + Math.random() * (maxX - margin);
       setBubbles((bs) => [...bs, { id, word, isCorrect: useCorrect, x, y: -60, vy: 0.55 + Math.random() * 0.3 }]);
     }, 950);
 
@@ -1529,7 +1544,7 @@ function BlogShooterCard({ onFinish }) {
   }
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden", borderRadius: 14, background: "rgba(11,58,45,0.4)", border: "2px solid rgba(79,160,255,0.4)" }}>
+    <div ref={containerRef} style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden", borderRadius: 14, background: "rgba(11,58,45,0.4)", border: "2px solid rgba(79,160,255,0.4)" }}>
       {/* HUD del shooter */}
       <div style={{
         position: "absolute", top: 8, left: 12, right: 12,
