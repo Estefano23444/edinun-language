@@ -1108,6 +1108,40 @@ function RestartModal({ confirmingExit, setConfirmingExit, attempted, total, onR
   );
 }
 
+// Modal de confirmación para SALIR al Home: descarta la sesión sin generar
+// reporte. Patrón visual idéntico a RestartModal pero con copy "salida".
+function ExitToHomeModal({ confirmingHome, setConfirmingHome, attempted, total, go }) {
+  if (!confirmingHome) return null;
+  return (
+    <PortalToBody>
+      <div onClick={() => setConfirmingHome(false)} style={{
+        position: "fixed", inset: 0, zIndex: 1000,
+        background: "rgba(0,0,0,0.62)", backdropFilter: "blur(4px)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        animation: "ed-pop-in 0.18s", padding: 16,
+      }}>
+        <div onClick={(e) => e.stopPropagation()} className="ed-card"
+          style={{ padding: 24, maxWidth: 440, textAlign: "center", boxShadow: "var(--ed-shadow-card), 0 0 40px rgba(255,107,107,0.3)" }}
+        >
+          <div className="ed-label" style={{ color: "#ff8b8b", marginBottom: 6 }}>Salir al inicio</div>
+          <h2 className="ed-h1" style={{ fontSize: 22, lineHeight: 1.15, marginBottom: 8 }}>¿Salir del juego?</h2>
+          <p className="ed-body" style={{ marginBottom: 16, fontSize: 14 }}>
+            Vas a perder el progreso de esta ronda ({attempted}/{total}) y volverás al inicio. No habrá reporte de esta sesión.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingHome(false)} style={{ height: 44, fontWeight: 800, letterSpacing: "0.04em" }}>
+              SEGUIR JUGANDO
+            </button>
+            <button className="ed-btn ed-btn-primary" onClick={() => { setConfirmingHome(false); go && go("home"); }} style={{ height: 44, fontWeight: 800, letterSpacing: "0.04em" }}>
+              SÍ, SALIR
+            </button>
+          </div>
+        </div>
+      </div>
+    </PortalToBody>
+  );
+}
+
 function FeedbackOverlay({ feedback, feedbackMsg, charName }) {
   if (!feedback) return null;
   return (
@@ -1192,6 +1226,7 @@ function LetraRGame({ app, setApp, go, onRestart }) {
   const [feedback, setFeedback] = useStateG(null);
   const [feedbackMsg, setFeedbackMsg] = useStateG("");
   const [confirmingExit, setConfirmingExit] = useStateG(false);
+  const [confirmingHome, setConfirmingHome] = useStateG(false);
   const [log, setLog] = useStateG([]);
 
   const started = useRefG(Date.now());
@@ -1474,10 +1509,13 @@ function LetraRGame({ app, setApp, go, onRestart }) {
           style={{ fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}>BORRAR</button>
         <button className="ed-btn ed-btn-restart" onClick={() => setConfirmingExit(true)}
           style={{ fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}>REINICIAR</button>
+        <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingHome(true)}
+          style={{ fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}>SALIR</button>
       </div>
 
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />
       <RestartModal confirmingExit={confirmingExit} setConfirmingExit={setConfirmingExit} attempted={attempted} total={3} onRestart={onRestart} />
+      <ExitToHomeModal confirmingHome={confirmingHome} setConfirmingHome={setConfirmingHome} attempted={attempted} total={3} go={go} />
     </div>
   );
 }
