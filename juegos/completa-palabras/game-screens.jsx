@@ -763,7 +763,7 @@ function GameScreen({ app, setApp, go }) {
           BORRAR
         </button>
         <button
-          className="ed-btn ed-btn-ghost"
+          className="ed-btn ed-btn-restart"
           onClick={() => setConfirmingRestart(true)}
           title="Reiniciar la sesión"
           style={{ fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}

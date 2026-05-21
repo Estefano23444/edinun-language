@@ -10,42 +10,45 @@ const { useState, useEffect, useRef, useMemo } = React;
 // solo cambian los glifos para que el fondo respire "lenguaje" en vez de
 // fórmulas.
 // ─────────────────────────────────────────────────────────────
-// Glifos del fondo chalkboard según el nivel activo. Cada nivel pinta
-// SOLO sus letras/sílabas para que el fondo del juego respire el tema:
-//   • Vocales → A E I O U (cada una repetida con tamaño/ángulo distinto)
-//   • Letra V → VA VE VI VO VU (sílabas del nivel)
-const CHALK_GLYPHS = {
-  vocales: [
-    { c: "A", l: "6%",  t: "12%", r: "-8deg" },
-    { c: "E", l: "82%", t: "16%", r: "6deg",  s: "0.62em" },
-    { c: "I", l: "10%", t: "78%", r: "12deg", s: "0.7em" },
-    { c: "O", l: "88%", t: "72%", r: "-10deg", s: "0.55em" },
-    { c: "U", l: "45%", t: "8%",  r: "4deg",  s: "0.5em" },
-    { c: "A", l: "3%",  t: "45%", r: "-4deg", s: "0.6em" },
-    { c: "E", l: "92%", t: "45%", r: "8deg",  s: "0.58em" },
-    { c: "I", l: "30%", t: "55%", r: "-6deg", s: "0.5em" },
-    { c: "O", l: "70%", t: "62%", r: "8deg",  s: "0.52em" },
-    { c: "U", l: "55%", t: "30%", r: "-4deg", s: "0.46em" },
-  ],
-  letraV: [
-    { c: "VA", l: "6%",  t: "12%", r: "-8deg" },
-    { c: "VE", l: "82%", t: "16%", r: "6deg",  s: "0.62em" },
-    { c: "VI", l: "10%", t: "78%", r: "12deg", s: "0.7em" },
-    { c: "VO", l: "88%", t: "72%", r: "-10deg", s: "0.55em" },
-    { c: "VU", l: "45%", t: "8%",  r: "4deg",  s: "0.5em" },
-    { c: "VA", l: "3%",  t: "45%", r: "-4deg", s: "0.6em" },
-    { c: "VE", l: "92%", t: "45%", r: "8deg",  s: "0.58em" },
-    { c: "VI", l: "30%", t: "55%", r: "-6deg", s: "0.5em" },
-    { c: "VO", l: "70%", t: "62%", r: "8deg",  s: "0.52em" },
-    { c: "VU", l: "55%", t: "30%", r: "-4deg", s: "0.46em" },
-  ],
-};
+// Glifos del fondo: un único set mezclado con vocales (A E I O U) y
+// sílabas de la letra V (VA VE VI VO VU), usado para CUALQUIER nivel.
+// Idea: el fondo respira el tema del juego como un todo, no se reorganiza
+// según el nivel actual del estudiante.
+const CHALK_GLYPHS = [
+  { c: "A",  l: "6%",  t: "12%", r: "-8deg" },
+  { c: "VE", l: "82%", t: "16%", r: "6deg",  s: "0.62em" },
+  { c: "I",  l: "10%", t: "78%", r: "12deg", s: "0.7em" },
+  { c: "VO", l: "88%", t: "72%", r: "-10deg", s: "0.55em" },
+  { c: "U",  l: "45%", t: "8%",  r: "4deg",  s: "0.5em" },
+  { c: "VA", l: "3%",  t: "45%", r: "-4deg", s: "0.6em" },
+  { c: "E",  l: "92%", t: "45%", r: "8deg",  s: "0.58em" },
+  { c: "VI", l: "30%", t: "55%", r: "-6deg", s: "0.5em" },
+  { c: "O",  l: "70%", t: "62%", r: "8deg",  s: "0.52em" },
+  { c: "VU", l: "55%", t: "30%", r: "-4deg", s: "0.46em" },
+];
 
-function CosmosBg({ variant = "cosmic", glyphSize, level }) {
+const COSMIC_GLYPHS = [
+  { c: "A",  l: "5%",  t: "10%", r: "-8deg" },
+  { c: "VE", l: "84%", t: "6%",  r: "6deg",  s: "0.78em" },
+  { c: "I",  l: "92%", t: "72%", r: "-12deg", s: "0.74em" },
+  { c: "VO", l: "3%",  t: "82%", r: "12deg",  s: "0.91em" },
+  { c: "U",  l: "46%", t: "4%",  r: "-4deg",  s: "0.59em" },
+  { c: "VA", l: "7%",  t: "46%", r: "-4deg",  s: "0.67em" },
+  { c: "E",  l: "88%", t: "40%", r: "8deg",   s: "0.65em" },
+  { c: "VI", l: "22%", t: "22%", r: "10deg",  s: "0.52em" },
+  { c: "O",  l: "70%", t: "24%", r: "-6deg",  s: "0.57em" },
+  { c: "VU", l: "32%", t: "70%", r: "8deg",   s: "0.61em" },
+  { c: "A",  l: "62%", t: "78%", r: "-10deg", s: "0.63em" },
+  { c: "E",  l: "18%", t: "58%", r: "14deg",  s: "0.48em" },
+  { c: "I",  l: "78%", t: "56%", r: "-8deg",  s: "0.52em" },
+  { c: "O",  l: "50%", t: "88%", r: "4deg",   s: "0.5em" },
+  { c: "U",  l: "40%", t: "38%", r: "-6deg",  s: "0.54em" },
+];
+
+function CosmosBg({ variant = "cosmic", glyphSize }) {
   const glyphsStyle = glyphSize ? { fontSize: glyphSize + "px" } : undefined;
   if (variant === "chalkboard") {
-    // Pantalla de juego (pizarra verde). 10 glifos según el nivel activo.
-    const glyphs = CHALK_GLYPHS[level] || CHALK_GLYPHS.vocales;
+    // Pantalla de juego (pizarra verde). 10 glifos mezclados.
     return (
       <div
         style={{
@@ -57,7 +60,7 @@ function CosmosBg({ variant = "cosmic", glyphSize, level }) {
         }}
       >
         <div className="ed-glyphs" style={{ color: "rgba(255,255,255,0.10)", ...glyphsStyle }}>
-          {glyphs.map((g, i) => (
+          {CHALK_GLYPHS.map((g, i) => (
             <span key={i} style={{
               left: g.l, top: g.t, "--rot": g.r,
               ...(g.s ? { fontSize: g.s } : {}),
@@ -67,26 +70,17 @@ function CosmosBg({ variant = "cosmic", glyphSize, level }) {
       </div>
     );
   }
-  // Pantallas de marco cósmico (home/character/results). 15 letras.
+  // Pantallas de marco cósmico (home/character/results). 15 glifos mezclados.
   return (
     <>
       <div className="ed-cosmos" />
       <div className="ed-glyphs" style={glyphsStyle}>
-        <span style={{ left: "5%", top: "10%", "--rot": "-8deg" }}>A</span>
-        <span style={{ left: "84%", top: "6%", "--rot": "6deg", fontSize: "0.78em" }}>E</span>
-        <span style={{ left: "92%", top: "72%", "--rot": "-12deg", fontSize: "0.74em" }}>I</span>
-        <span style={{ left: "3%", top: "82%", "--rot": "12deg", fontSize: "0.91em" }}>O</span>
-        <span style={{ left: "46%", top: "4%", "--rot": "-4deg", fontSize: "0.59em" }}>U</span>
-        <span style={{ left: "7%", top: "46%", "--rot": "-4deg", fontSize: "0.67em" }}>M</span>
-        <span style={{ left: "88%", top: "40%", "--rot": "8deg", fontSize: "0.65em" }}>N</span>
-        <span style={{ left: "22%", top: "22%", "--rot": "10deg", fontSize: "0.52em" }}>P</span>
-        <span style={{ left: "70%", top: "24%", "--rot": "-6deg", fontSize: "0.57em" }}>R</span>
-        <span style={{ left: "32%", top: "70%", "--rot": "8deg", fontSize: "0.61em" }}>S</span>
-        <span style={{ left: "62%", top: "78%", "--rot": "-10deg", fontSize: "0.63em" }}>T</span>
-        <span style={{ left: "18%", top: "58%", "--rot": "14deg", fontSize: "0.48em" }}>L</span>
-        <span style={{ left: "78%", top: "56%", "--rot": "-8deg", fontSize: "0.52em" }}>B</span>
-        <span style={{ left: "50%", top: "88%", "--rot": "4deg", fontSize: "0.5em" }}>C</span>
-        <span style={{ left: "40%", top: "38%", "--rot": "-6deg", fontSize: "0.54em" }}>D</span>
+        {COSMIC_GLYPHS.map((g, i) => (
+          <span key={i} style={{
+            left: g.l, top: g.t, "--rot": g.r,
+            ...(g.s ? { fontSize: g.s } : {}),
+          }}>{g.c}</span>
+        ))}
       </div>
     </>
   );
