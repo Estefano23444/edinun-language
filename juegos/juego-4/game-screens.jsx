@@ -959,7 +959,7 @@ function TiposDeTextoGame({ app, setApp, go, onRestart }) {
   const enunciado =
     ronda === 0 ? "¿Qué tipo de texto es?" :
     ronda === 1 ? "Organizador gráfico de relación" :
-    `Encuentra los textos ${r3Current.id === "literario" ? "literarios" : r3Current.id === "informativo" ? "informativos" : "funcionales"}`;
+    `Encuentra los textos ${r3Current.id === "literario" ? "literarios" : r3Current.id === "informativo" ? "informativos" : "funcionales"}.`;
 
   const bocadillo =
     ronda === 0 ? "Lee y elige. Después ¡VERIFICA!" :
@@ -1469,8 +1469,8 @@ function PoeticaGame({ app, setApp, go, onRestart }) {
 
   const enunciado =
     ronda === 0 ? "¿Qué función cumple esta oración?" :
-    ronda === 1 ? "Une cada refrán con su significado" :
-    "Encuentra las figuras literarias del poema";
+    ronda === 1 ? "Une cada refrán con su significado." :
+    "Encuentra las figuras literarias del poema.";
 
   const bocadillo =
     ronda === 0 ? "Lee y elige. Después ¡VERIFICA!" :
@@ -1882,9 +1882,9 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
   }
 
   const enunciado =
-    ronda === 0 ? "Ordena las partes del informe (1 a 6)" :
-    ronda === 1 ? "Elige el conector correcto" :
-    "Encuentra las palabras con error";
+    ronda === 0 ? "Ordena las partes del informe (1 a 6)." :
+    ronda === 1 ? "Elige el conector correcto." :
+    "Encuentra las palabras con error.";
 
   const bocadillo =
     ronda === 0 ? "Arrastra cada parte y ¡VERIFICA!" :
@@ -2304,8 +2304,8 @@ function EnriquecimientoGame({ app, setApp, go, onRestart }) {
 
   const enunciado =
     ronda === 0 ? "¿Qué palabra conecta las imágenes?" :
-    ronda === 1 ? "Elige la letra correcta" :
-    "Completa el párrafo con los verbos correctos";
+    ronda === 1 ? "Elige la letra correcta." :
+    "Completa el párrafo con los verbos correctos.";
 
   const bocadillo =
     ronda === 0 ? "Mira las imágenes y elige. ¡VERIFICA!" :
