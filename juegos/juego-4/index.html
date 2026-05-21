@@ -1256,6 +1256,79 @@ function RestartModal({ confirmingExit, setConfirmingExit, attempted, total, onR
   );
 }
 
+function ExitModal({ confirmingExit, setConfirmingExit, attempted, total, onExit }) {
+  if (!confirmingExit) return null;
+  return (
+    <PortalToBody>
+      <div onClick={() => setConfirmingExit(false)} style={{
+        position: "fixed", inset: 0, zIndex: 1000,
+        background: "rgba(0,0,0,0.62)", backdropFilter: "blur(4px)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        animation: "ed-pop-in 0.18s", padding: 16,
+      }}>
+        <div onClick={(e) => e.stopPropagation()} className="ed-card"
+          style={{ padding: 24, maxWidth: 440, textAlign: "center", boxShadow: "var(--ed-shadow-card), 0 0 40px rgba(255,138,76,0.3)" }}>
+          <div className="ed-label" style={{ color: "#ff8b4c", marginBottom: 6 }}>Volver al inicio</div>
+          <h2 className="ed-h1" style={{ fontSize: 22, lineHeight: 1.15, marginBottom: 8 }}>¿Volver al inicio?</h2>
+          <p className="ed-body" style={{ marginBottom: 16, fontSize: 14 }}>
+            Vas a perder el progreso de esta ronda ({attempted}/{total}). No habrá reporte de esta sesión.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingExit(false)} style={{ height: 44, fontWeight: 800, letterSpacing: "0.04em" }}>
+              SEGUIR JUGANDO
+            </button>
+            <button className="ed-btn ed-btn-primary" onClick={() => { setConfirmingExit(false); onExit && onExit(); }} style={{ height: 44, fontWeight: 800, letterSpacing: "0.04em" }}>
+              SÍ, SALIR
+            </button>
+          </div>
+        </div>
+      </div>
+    </PortalToBody>
+  );
+}
+
+// Rail derecho con botones de acción. Cada sub-juego declara qué botones
+// aplican a la ronda actual mediante los props canVerify y showErase.
+function ActionRail({ canVerify, onVerify, showErase, onErase, onRestart, onExit }) {
+  return (
+    <div data-qa="acciones" style={{
+      position: "absolute", right: 10, top: 92,
+      display: "flex", flexDirection: "column", gap: 8, width: 148,
+    }}>
+      <button className="ed-btn ed-btn-verify"
+        onClick={() => { if (canVerify && onVerify) onVerify(); }}
+        disabled={!canVerify}
+        style={{
+          fontSize: 13, padding: "0 8px", height: 48, fontWeight: 800, letterSpacing: "0.04em",
+          opacity: canVerify ? 1 : 0.45, cursor: canVerify ? "pointer" : "not-allowed",
+        }}>
+        ¡VERIFICAR!
+      </button>
+      {showErase && (
+        <button className="ed-btn ed-btn-erase" onClick={onErase}
+          style={{ fontSize: 13, padding: "0 8px", height: 48, fontWeight: 800, letterSpacing: "0.04em" }}>
+          BORRAR
+        </button>
+      )}
+      <button className="ed-btn ed-btn-ghost" onClick={onRestart}
+        style={{ fontSize: 13, padding: "0 8px", height: 48, fontWeight: 800, letterSpacing: "0.04em" }}>
+        REINICIAR
+      </button>
+      <button onClick={onExit}
+        style={{
+          fontSize: 13, padding: "0 8px", height: 48, fontWeight: 800, letterSpacing: "0.04em",
+          borderRadius: 12, cursor: "pointer",
+          background: "rgba(255,138,76,0.12)",
+          border: "1.5px solid rgba(255,138,76,0.55)",
+          color: "#ff8b4c",
+          fontFamily: "var(--ed-font-display)",
+        }}>
+        SALIR
+      </button>
+    </div>
+  );
+}
+
 function FeedbackOverlay({ feedback, feedbackMsg, charName }) {
   if (!feedback) return null;
   return (
@@ -1365,6 +1438,15 @@ function TiposDeTextoGame({ app, setApp, go, onRestart }) {
   // 3 rondas con mecánicas distintas. Ronda 0=trivia, 1=organizador, 2=burbujas.
   const [ronda, setRonda] = useStateG(0);
 
+  // State controlado de cada card (levantado para que ActionRail pueda actuar)
+  const [r1Selected, setR1Selected] = useStateG(null);
+  const [r1Locked, setR1Locked] = useStateG(false);
+  const [r2Placed, setR2Placed] = useStateG({});
+  const [r2Picked, setR2Picked] = useStateG(null);
+  const [r2Verified, setR2Verified] = useStateG(false);
+  const [r3Picked, setR3Picked] = useStateG(new Set());
+  const [r3Locked, setR3Locked] = useStateG(false);
+
   // R1 — pick aleatorio del banco de textos
   const [r1Pick] = useStateG(() => {
     const recent = new Set(getRecent("tipos"));
@@ -1424,6 +1506,55 @@ function TiposDeTextoGame({ app, setApp, go, onRestart }) {
     return () => { window.__currentChalkGlyphs = null; };
   }, []);
 
+  // canVerify y showErase por ronda
+  const canVerify =
+    ronda === 0 ? (r1Selected !== null && !r1Locked) :
+    ronda === 1 ? (Object.keys(r2Placed).length === 4 && !r2Verified) :
+    ronda === 2 ? (r3Picked.size > 0 && !r3Locked) :
+    false;
+  const showErase = ronda !== 0;
+
+  function handleVerify() {
+    if (!canVerify) return;
+    if (ronda === 0) {
+      setR1Locked(true);
+      answer(r1Selected === r1Pick.tipo, r1Selected, r1Pick.tipo, "📖");
+    } else if (ronda === 1) {
+      setR2Verified(true);
+      let allOK = true;
+      const SLOTS = ["definicion", "oracion", "sinonimo", "dibujo"];
+      for (const s of SLOTS) {
+        const pieceIdx = r2Placed[s];
+        if (pieceIdx === undefined) { allOK = false; break; }
+        if (r2Pieces[pieceIdx].slot !== s) { allOK = false; break; }
+      }
+      setTimeout(() => answer(allOK, JSON.stringify(r2Placed), "ok", "🗂"), 400);
+    } else if (ronda === 2) {
+      setR3Locked(true);
+      const correctSet = new Set(r3Current.correctos);
+      let isOK = r3Picked.size === correctSet.size;
+      if (isOK) for (const w of r3Picked) if (!correctSet.has(w)) { isOK = false; break; }
+      setTimeout(() => answer(isOK, Array.from(r3Picked).join(","), r3Current.correctos.join(","), "💧"), 400);
+    }
+  }
+
+  function handleErase() {
+    if (ronda === 1) {
+      if (r2Verified) return;
+      setR2Placed({});
+      setR2Picked(null);
+    } else if (ronda === 2) {
+      if (r3Locked) return;
+      setR3Picked(new Set());
+    }
+  }
+
+  // r2Pieces se calcula en el componente, lo necesitamos arriba para verify
+  const [r2Pieces] = useStateG(() => {
+    const SLOTS = ["definicion", "oracion", "sinonimo", "dibujo"];
+    return shuffle(SLOTS.map((s) => ({ slot: s, text: r2Pick[s] })));
+  });
+
   function answer(isCorrect, userText, correctText, opIcon) {
     if (typeof window.markFirstAttempt === "function") window.markFirstAttempt();
     const exerciseSec = Math.max(0, Math.floor((Date.now() - exerciseStart.current) / 1000));
@@ -1467,11 +1598,13 @@ function TiposDeTextoGame({ app, setApp, go, onRestart }) {
     }, wait);
   }
 
+  const [confirmingActualExit, setConfirmingActualExit] = useStateG(false);
+
   // Bocadillo dinámico por ronda
   const bocadillo =
-    ronda === 0 ? "¿De qué familia es este texto?" :
-    ronda === 1 ? "Arrastra cada pieza al cuadro correcto." :
-    "Pinta solo las burbujas correctas. Después VERIFICA.";
+    ronda === 0 ? "¿De qué familia es este texto? Después VERIFICA." :
+    ronda === 1 ? "Coloca cada pieza en el cuadro correcto." :
+    "Pinta solo las burbujas correctas.";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
@@ -1479,48 +1612,62 @@ function TiposDeTextoGame({ app, setApp, go, onRestart }) {
 
       <CharacterCorner char={char} message={bocadillo} />
 
-      {/* Zona central — varía por ronda */}
+      {/* Zona central — varía por ronda. right:168 deja sitio al ActionRail. */}
       <div data-qa="zona-central" style={{
-        position: "absolute", top: 100, left: 240, right: 16, bottom: 14,
+        position: "absolute", top: 100, left: 240, right: 168, bottom: 14,
       }}>
         {ronda === 0 && (
           <TiposTriviaCard pick={r1Pick}
-            onAnswer={(picked) => answer(picked === r1Pick.tipo, picked, r1Pick.tipo, "📖")}
+            selected={r1Selected} locked={r1Locked}
+            onSelect={(t) => { if (!r1Locked) setR1Selected(r1Selected === t ? null : t); }}
           />
         )}
         {ronda === 1 && (
           <OrganizadorCard pick={r2Pick}
-            onAnswer={(isCorrect, userMap) => answer(isCorrect, userMap, "ok", "🗂")}
+            pieces={r2Pieces} placed={r2Placed} picked={r2Picked} verified={r2Verified}
+            onPickPiece={(idx) => { if (r2Verified) return; if (Object.values(r2Placed).includes(idx)) return; setR2Picked(r2Picked === idx ? null : idx); }}
+            onPlaceIn={(slot) => {
+              if (r2Verified) return;
+              if (r2Picked === null) {
+                if (r2Placed[slot] !== undefined) { const next = { ...r2Placed }; delete next[slot]; setR2Placed(next); }
+                return;
+              }
+              const next = { ...r2Placed };
+              for (const k of Object.keys(next)) if (next[k] === r2Picked) delete next[k];
+              next[slot] = r2Picked;
+              setR2Placed(next);
+              setR2Picked(null);
+            }}
           />
         )}
         {ronda === 2 && (
           <BurbujasCard data={r3Current}
-            onAnswer={(isCorrect, userSet) => answer(isCorrect, userSet, r3Current.correctos.join(","), "💧")}
+            picked={r3Picked} locked={r3Locked}
+            onToggle={(w) => { if (r3Locked) return; const next = new Set(r3Picked); if (next.has(w)) next.delete(w); else next.add(w); setR3Picked(next); }}
           />
         )}
       </div>
 
-      <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingExit(true)}
-        style={{
-          position: "absolute", left: 60, bottom: 18, width: 116,
-          fontSize: 11, padding: "6px 12px", height: 32, fontWeight: 800, letterSpacing: "0.04em",
-        }}>REINICIAR</button>
+      <ActionRail
+        canVerify={canVerify}
+        onVerify={handleVerify}
+        showErase={showErase}
+        onErase={handleErase}
+        onRestart={() => setConfirmingExit(true)}
+        onExit={() => setConfirmingActualExit(true)}
+      />
 
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />
       <RestartModal confirmingExit={confirmingExit} setConfirmingExit={setConfirmingExit} attempted={attempted} total={3} onRestart={onRestart} />
+      <ExitModal confirmingExit={confirmingActualExit} setConfirmingExit={setConfirmingActualExit} attempted={attempted} total={3} onExit={() => go("home")} />
     </div>
   );
 }
 
-function TiposTriviaCard({ pick, onAnswer }) {
-  const [selected, setSelected] = useStateG(null);
-  const [locked, setLocked] = useStateG(false);
-
+function TiposTriviaCard({ pick, selected, locked, onSelect }) {
   function choose(tipo) {
     if (locked) return;
-    setSelected(tipo);
-    setLocked(true);
-    setTimeout(() => onAnswer(tipo), 250);
+    onSelect && onSelect(tipo);
   }
 
   return (
@@ -1567,57 +1714,14 @@ function TiposTriviaCard({ pick, onAnswer }) {
   );
 }
 
-function OrganizadorCard({ pick, onAnswer }) {
-  // 4 piezas mezcladas a la izquierda (bandeja), 4 cuadros a la derecha alrededor de la palabra central
+function OrganizadorCard({ pick, pieces, placed, picked, verified, onPickPiece, onPlaceIn }) {
+  // 4 piezas mezcladas a la izquierda (bandeja), 4 cuadros alrededor de la palabra central.
+  // Componente CONTROLADO — el state vive en el padre para que ActionRail pueda actuar.
   const SLOTS = ["definicion", "oracion", "sinonimo", "dibujo"];
   const LABELS = { definicion: "Definición", oracion: "Oración", sinonimo: "Sinónimo", dibujo: "Dibujo" };
-  const [pieces] = useStateG(() => {
-    return shuffle(SLOTS.map((s) => ({ slot: s, text: pick[s] })));
-  });
-  const [placed, setPlaced] = useStateG({}); // slot -> piece index
-  const [picked, setPicked] = useStateG(null); // piece index seleccionado para colocar
-  const [verified, setVerified] = useStateG(false);
+  const pickPiece = (idx) => onPickPiece && onPickPiece(idx);
+  const placeIn = (slot) => onPlaceIn && onPlaceIn(slot);
 
-  function pickPiece(idx) {
-    if (verified) return;
-    if (Object.values(placed).includes(idx)) return; // ya colocada
-    setPicked(picked === idx ? null : idx);
-  }
-  function placeIn(slot) {
-    if (verified) return;
-    if (picked === null) {
-      // Si el slot tiene pieza, devuélvela
-      if (placed[slot] !== undefined) {
-        const next = { ...placed };
-        delete next[slot];
-        setPlaced(next);
-      }
-      return;
-    }
-    setPlaced((prev) => {
-      const next = { ...prev };
-      // si esa pieza estaba en otro slot, sacarla
-      for (const k of Object.keys(next)) if (next[k] === picked) delete next[k];
-      next[slot] = picked;
-      return next;
-    });
-    setPicked(null);
-  }
-
-  function verify() {
-    if (verified) return;
-    if (Object.keys(placed).length < 4) return;
-    setVerified(true);
-    let allOK = true;
-    for (const s of SLOTS) {
-      const pieceIdx = placed[s];
-      if (pieceIdx === undefined) { allOK = false; break; }
-      if (pieces[pieceIdx].slot !== s) { allOK = false; break; }
-    }
-    setTimeout(() => onAnswer(allOK, JSON.stringify(placed), "ok"), 400);
-  }
-
-  const allPlaced = Object.keys(placed).length === 4;
   const SLOT_W = 168, SLOT_H = 56;
 
   function renderSlot(slot, pos) {
@@ -1696,37 +1800,16 @@ function OrganizadorCard({ pick, onAnswer }) {
             </button>
           );
         })}
-        {Object.keys(placed).length === 4 && !verified && (
-          <button onClick={verify} className="ed-btn ed-btn-verify"
-            style={{ padding: "0 18px", height: 42, fontSize: 13, fontWeight: 800, letterSpacing: "0.04em" }}>
-            ¡VERIFICAR!
-          </button>
-        )}
       </div>
     </div>
   );
 }
 
-function BurbujasCard({ data, onAnswer }) {
-  const [picked, setPicked] = useStateG(new Set());
-  const [locked, setLocked] = useStateG(false);
-
+function BurbujasCard({ data, picked, locked, onToggle }) {
   function toggle(word) {
     if (locked) return;
-    const next = new Set(picked);
-    if (next.has(word)) next.delete(word);
-    else next.add(word);
-    setPicked(next);
+    onToggle && onToggle(word);
   }
-  function verify() {
-    if (locked) return;
-    setLocked(true);
-    const correctSet = new Set(data.correctos);
-    let isOK = picked.size === correctSet.size;
-    if (isOK) for (const w of picked) if (!correctSet.has(w)) { isOK = false; break; }
-    setTimeout(() => onAnswer(isOK, Array.from(picked).join(","), data.correctos.join(",")), 400);
-  }
-
   // 7 burbujas en una grilla con la central destacada
   const positions = [
     { left: "10%", top: "8%" },
@@ -1787,15 +1870,6 @@ function BurbujasCard({ data, onAnswer }) {
           );
         })}
       </div>
-
-      {!locked && (
-        <button onClick={verify}
-          className="ed-btn ed-btn-verify"
-          style={{
-            position: "absolute", bottom: 6, left: "50%", transform: "translateX(-50%)",
-            padding: "0 22px", height: 40, fontSize: 13, fontWeight: 800, letterSpacing: "0.04em",
-          }}>¡VERIFICAR!</button>
-      )}
     </div>
   );
 }
@@ -1851,9 +1925,20 @@ function PoeticaGame({ app, setApp, go, onRestart }) {
   const [feedback, setFeedback] = useStateG(null);
   const [feedbackMsg, setFeedbackMsg] = useStateG("");
   const [confirmingExit, setConfirmingExit] = useStateG(false);
+  const [confirmingActualExit, setConfirmingActualExit] = useStateG(false);
   const [log, setLog] = useStateG([]);
   const started = useRefG(Date.now());
   const exerciseStart = useRefG(Date.now());
+
+  // States levantados de las cards
+  const [r1Selected, setR1Selected] = useStateG(null);
+  const [r1Locked, setR1Locked] = useStateG(false);
+  const [r2RightOrder] = useStateG(() => shuffle(r2Pairs.map((p, i) => ({ origIdx: i, sig: p.significado }))));
+  const [r2SelectedLeft, setR2SelectedLeft] = useStateG(null);
+  const [r2Connections, setR2Connections] = useStateG({});
+  const [r2Verified, setR2Verified] = useStateG(false);
+  const [r3Picked, setR3Picked] = useStateG(new Set());
+  const [r3Locked, setR3Locked] = useStateG(false);
 
   useEffectG(() => {
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - started.current) / 1000)), 500);
@@ -1910,9 +1995,51 @@ function PoeticaGame({ app, setApp, go, onRestart }) {
     }, wait);
   }
 
+  const canVerify =
+    ronda === 0 ? (r1Selected !== null && !r1Locked) :
+    ronda === 1 ? (Object.keys(r2Connections).length === r2Pairs.length && !r2Verified) :
+    ronda === 2 ? (r3Picked.size > 0 && !r3Locked) :
+    false;
+  const showErase = ronda !== 0;
+
+  function handleVerify() {
+    if (!canVerify) return;
+    if (ronda === 0) {
+      setR1Locked(true);
+      answer(r1Selected === r1Pick.funcion, r1Selected, r1Pick.funcion, "✨");
+    } else if (ronda === 1) {
+      setR2Verified(true);
+      let ok = true;
+      for (let i = 0; i < r2Pairs.length; i++) {
+        const ri = r2Connections[i];
+        if (ri === undefined) { ok = false; break; }
+        if (r2RightOrder[ri].origIdx !== i) { ok = false; break; }
+      }
+      setTimeout(() => answer(ok, JSON.stringify(r2Connections), "ok", "🔗"), 400);
+    } else if (ronda === 2) {
+      setR3Locked(true);
+      const correctSet = new Set();
+      r3Pick.versos.forEach((v, i) => { if (v.figura) correctSet.add(i); });
+      let ok = r3Picked.size === correctSet.size;
+      if (ok) for (const i of r3Picked) if (!correctSet.has(i)) { ok = false; break; }
+      setTimeout(() => answer(ok, Array.from(r3Picked).join(","), Array.from(correctSet).join(","), "✨"), 400);
+    }
+  }
+
+  function handleErase() {
+    if (ronda === 1) {
+      if (r2Verified) return;
+      setR2Connections({});
+      setR2SelectedLeft(null);
+    } else if (ronda === 2) {
+      if (r3Locked) return;
+      setR3Picked(new Set());
+    }
+  }
+
   const bocadillo =
-    ronda === 0 ? "¿Qué función tiene esta oración?" :
-    ronda === 1 ? "Toca un refrán y luego su significado." :
+    ronda === 0 ? "¿Qué función tiene? Después VERIFICA." :
+    ronda === 1 ? "Une cada refrán con su significado." :
     "Toca las figuras literarias del poema.";
 
   return (
@@ -1922,33 +2049,62 @@ function PoeticaGame({ app, setApp, go, onRestart }) {
       <CharacterCorner char={char} message={bocadillo} />
 
       <div data-qa="zona-central" style={{
-        position: "absolute", top: 100, left: 240, right: 16, bottom: 14,
+        position: "absolute", top: 100, left: 240, right: 168, bottom: 14,
       }}>
-        {ronda === 0 && <PoeticaTriviaCard pick={r1Pick}
-          onAnswer={(picked) => answer(picked === r1Pick.funcion, picked, r1Pick.funcion, "✨")} />}
-        {ronda === 1 && <RefranesCard pairs={r2Pairs}
-          onAnswer={(isCorrect, userMap) => answer(isCorrect, userMap, "todo correcto", "🔗")} />}
-        {ronda === 2 && <FigurasCard poema={r3Pick}
-          onAnswer={(isCorrect, userSet) => answer(isCorrect, userSet,
-            r3Pick.versos.map((v,i) => v.figura ? i : null).filter(x => x !== null).join(","), "✨")} />}
+        {ronda === 0 && (
+          <PoeticaTriviaCard pick={r1Pick}
+            selected={r1Selected} locked={r1Locked}
+            onSelect={(t) => { if (!r1Locked) setR1Selected(r1Selected === t ? null : t); }}
+          />
+        )}
+        {ronda === 1 && (
+          <RefranesCard pairs={r2Pairs} rightOrder={r2RightOrder}
+            selectedLeft={r2SelectedLeft} connections={r2Connections} verified={r2Verified}
+            onTapLeft={(i) => { if (r2Verified) return; setR2SelectedLeft(r2SelectedLeft === i ? null : i); }}
+            onTapRight={(rightIdx) => {
+              if (r2Verified) return;
+              if (r2SelectedLeft === null) {
+                const k = Object.entries(r2Connections).find(([_, v]) => v === rightIdx);
+                if (k) { const next = { ...r2Connections }; delete next[k[0]]; setR2Connections(next); }
+                return;
+              }
+              const next = { ...r2Connections };
+              delete next[r2SelectedLeft];
+              for (const k of Object.keys(next)) if (next[k] === rightIdx) delete next[k];
+              next[r2SelectedLeft] = rightIdx;
+              setR2Connections(next);
+              setR2SelectedLeft(null);
+            }}
+          />
+        )}
+        {ronda === 2 && (
+          <FigurasCard poema={r3Pick}
+            picked={r3Picked} locked={r3Locked}
+            onToggle={(i) => { if (r3Locked) return; const next = new Set(r3Picked); if (next.has(i)) next.delete(i); else next.add(i); setR3Picked(next); }}
+          />
+        )}
       </div>
 
-      <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingExit(true)}
-        style={{ position: "absolute", left: 60, bottom: 18, width: 116, fontSize: 11, padding: "6px 12px", height: 32, fontWeight: 800, letterSpacing: "0.04em" }}>REINICIAR</button>
+      <ActionRail
+        canVerify={canVerify}
+        onVerify={handleVerify}
+        showErase={showErase}
+        onErase={handleErase}
+        onRestart={() => setConfirmingExit(true)}
+        onExit={() => setConfirmingActualExit(true)}
+      />
 
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />
       <RestartModal confirmingExit={confirmingExit} setConfirmingExit={setConfirmingExit} attempted={attempted} total={3} onRestart={onRestart} />
+      <ExitModal confirmingExit={confirmingActualExit} setConfirmingExit={setConfirmingActualExit} attempted={attempted} total={3} onExit={() => go("home")} />
     </div>
   );
 }
 
-function PoeticaTriviaCard({ pick, onAnswer }) {
-  const [selected, setSelected] = useStateG(null);
-  const [locked, setLocked] = useStateG(false);
+function PoeticaTriviaCard({ pick, selected, locked, onSelect }) {
   function choose(f) {
     if (locked) return;
-    setSelected(f); setLocked(true);
-    setTimeout(() => onAnswer(f), 250);
+    onSelect && onSelect(f);
   }
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 18, padding: "0 8px" }}>
@@ -1985,51 +2141,10 @@ function PoeticaTriviaCard({ pick, onAnswer }) {
   );
 }
 
-function RefranesCard({ pairs, onAnswer }) {
-  // 3 refranes a la izquierda + 3 significados a la derecha mezclados
-  const [rightOrder] = useStateG(() => shuffle(pairs.map((p, i) => ({ origIdx: i, sig: p.significado }))));
-  const [selectedLeft, setSelectedLeft] = useStateG(null);
-  const [connections, setConnections] = useStateG({}); // leftIdx -> rightIdx
-  const [verified, setVerified] = useStateG(false);
-
-  function tapLeft(i) {
-    if (verified) return;
-    setSelectedLeft(selectedLeft === i ? null : i);
-  }
-  function tapRight(rightIdx) {
-    if (verified) return;
-    if (selectedLeft === null) {
-      // si está conectado, desconectar
-      const k = Object.entries(connections).find(([_, v]) => v === rightIdx);
-      if (k) {
-        const next = { ...connections };
-        delete next[k[0]];
-        setConnections(next);
-      }
-      return;
-    }
-    setConnections((prev) => {
-      const next = { ...prev };
-      // quitar conexión previa del left elegido y de cualquiera que apunte al right
-      delete next[selectedLeft];
-      for (const k of Object.keys(next)) if (next[k] === rightIdx) delete next[k];
-      next[selectedLeft] = rightIdx;
-      return next;
-    });
-    setSelectedLeft(null);
-  }
-  function verify() {
-    if (verified) return;
-    if (Object.keys(connections).length < pairs.length) return;
-    setVerified(true);
-    let ok = true;
-    for (let i = 0; i < pairs.length; i++) {
-      const ri = connections[i];
-      if (ri === undefined) { ok = false; break; }
-      if (rightOrder[ri].origIdx !== i) { ok = false; break; }
-    }
-    setTimeout(() => onAnswer(ok, JSON.stringify(connections), "ok"), 400);
-  }
+function RefranesCard({ pairs, rightOrder, selectedLeft, connections, verified, onTapLeft, onTapRight }) {
+  // Componente CONTROLADO — state vive en el padre.
+  const tapLeft = (i) => onTapLeft && onTapLeft(i);
+  const tapRight = (rightIdx) => onTapRight && onTapRight(rightIdx);
 
   return (
     <div style={{ position: "absolute", inset: 0, padding: "4px 8px" }}>
@@ -2100,34 +2215,14 @@ function RefranesCard({ pairs, onAnswer }) {
         </div>
       </div>
 
-      {!verified && Object.keys(connections).length === pairs.length && (
-        <button onClick={verify} className="ed-btn ed-btn-verify"
-          style={{ position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)",
-            padding: "0 22px", height: 40, fontSize: 13, fontWeight: 800, letterSpacing: "0.04em" }}>
-          ¡VERIFICAR!
-        </button>
-      )}
     </div>
   );
 }
 
-function FigurasCard({ poema, onAnswer }) {
-  const [picked, setPicked] = useStateG(new Set());
-  const [locked, setLocked] = useStateG(false);
+function FigurasCard({ poema, picked, locked, onToggle }) {
   function toggle(i) {
     if (locked) return;
-    const next = new Set(picked);
-    if (next.has(i)) next.delete(i); else next.add(i);
-    setPicked(next);
-  }
-  function verify() {
-    if (locked) return;
-    setLocked(true);
-    const correct = new Set();
-    poema.versos.forEach((v, i) => { if (v.figura) correct.add(i); });
-    let ok = correct.size === picked.size;
-    if (ok) for (const i of picked) if (!correct.has(i)) { ok = false; break; }
-    setTimeout(() => onAnswer(ok, Array.from(picked).join(","), Array.from(correct).join(",")), 400);
+    onToggle && onToggle(i);
   }
 
   return (
@@ -2171,13 +2266,6 @@ function FigurasCard({ poema, onAnswer }) {
         })}
       </div>
 
-      {!locked && (
-        <button onClick={verify} className="ed-btn ed-btn-verify"
-          style={{ position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)",
-            padding: "0 22px", height: 40, fontSize: 13, fontWeight: 800, letterSpacing: "0.04em" }}>
-          ¡VERIFICAR!
-        </button>
-      )}
     </div>
   );
 }
@@ -2224,9 +2312,21 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
   const [feedback, setFeedback] = useStateG(null);
   const [feedbackMsg, setFeedbackMsg] = useStateG("");
   const [confirmingExit, setConfirmingExit] = useStateG(false);
+  const [confirmingActualExit, setConfirmingActualExit] = useStateG(false);
   const [log, setLog] = useStateG([]);
   const started = useRefG(Date.now());
   const exerciseStart = useRefG(Date.now());
+
+  // States levantados de las cards
+  const [r1Pieces] = useStateG(() => shuffle(INFORME_PARTES.map((p, i) => ({ text: p, origIdx: i }))));
+  const [r1Placed, setR1Placed] = useStateG([null, null, null, null, null, null]);
+  const [r1Picked, setR1Picked] = useStateG(null);
+  const [r1Verified, setR1Verified] = useStateG(false);
+  const [r2Opciones] = useStateG(() => shuffle([r2Pick.correcta, ...r2Pick.distractores]));
+  const [r2Selected, setR2Selected] = useStateG(null);
+  const [r2Locked, setR2Locked] = useStateG(false);
+  const [r3Picked, setR3Picked] = useStateG(new Set());
+  const [r3Locked, setR3Locked] = useStateG(false);
 
   useEffectG(() => {
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - started.current) / 1000)), 500);
@@ -2281,10 +2381,65 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
     }, wait);
   }
 
+  // r3 — parsear tokens del párrafo (algunos marcados con [..] son errores)
+  const r3Tokens = useMemoG(() => {
+    const arr = [];
+    const regex = /(\[[^\]]+\])|(\s+)|([^\s\[\]]+)/g;
+    let m;
+    while ((m = regex.exec(r3Pick.tokens)) !== null) {
+      if (m[1]) arr.push({ type: "err", text: m[1].slice(1, -1) });
+      else if (m[2]) arr.push({ type: "space", text: m[2] });
+      else arr.push({ type: "ok", text: m[3] });
+    }
+    return arr;
+  }, [r3Pick.tokens]);
+
+  const canVerify =
+    ronda === 0 ? (r1Placed.every((p) => p !== null) && !r1Verified) :
+    ronda === 1 ? (r2Selected !== null && !r2Locked) :
+    ronda === 2 ? (r3Picked.size > 0 && !r3Locked) :
+    false;
+  const showErase = ronda !== 1;
+
+  function handleVerify() {
+    if (!canVerify) return;
+    if (ronda === 0) {
+      setR1Verified(true);
+      let ok = true;
+      for (let i = 0; i < INFORME_PARTES.length; i++) {
+        if (r1Placed[i] !== INFORME_PARTES[i]) { ok = false; break; }
+      }
+      setTimeout(() => answer(ok, r1Placed.join(" → "), INFORME_PARTES.join(" → "), "📑"), 400);
+    } else if (ronda === 1) {
+      setR2Locked(true);
+      answer(r2Selected === r2Pick.correcta, r2Selected, r2Pick.correcta, "🔗");
+    } else if (ronda === 2) {
+      setR3Locked(true);
+      const correctSet = new Set();
+      r3Tokens.forEach((t, i) => { if (t.type === "err") correctSet.add(i); });
+      let ok = correctSet.size === r3Picked.size;
+      if (ok) for (const i of r3Picked) if (!correctSet.has(i)) { ok = false; break; }
+      setTimeout(() => answer(ok,
+        Array.from(r3Picked).map((i) => r3Tokens[i].text).join(", "),
+        r3Tokens.filter((t) => t.type === "err").map((t) => t.text).join(", "), "✗"), 400);
+    }
+  }
+
+  function handleErase() {
+    if (ronda === 0) {
+      if (r1Verified) return;
+      setR1Placed([null, null, null, null, null, null]);
+      setR1Picked(null);
+    } else if (ronda === 2) {
+      if (r3Locked) return;
+      setR3Picked(new Set());
+    }
+  }
+
   const bocadillo =
-    ronda === 0 ? "Arrastra cada parte al orden correcto (1-6)." :
-    ronda === 1 ? "Elige el conector que mejor une las oraciones." :
-    "Toca las palabras con error ortográfico.";
+    ronda === 0 ? "Coloca cada parte en su orden (1-6)." :
+    ronda === 1 ? "Elige el conector y VERIFICA." :
+    "Toca las palabras con error.";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
@@ -2293,64 +2448,59 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
       <CharacterCorner char={char} message={bocadillo} />
 
       <div data-qa="zona-central" style={{
-        position: "absolute", top: 100, left: 240, right: 16, bottom: 14,
+        position: "absolute", top: 100, left: 240, right: 168, bottom: 14,
       }}>
-        {ronda === 0 && <OrdenInformeCard contexto={r1Pick}
-          onAnswer={(isCorrect, userOrder) => answer(isCorrect, userOrder, INFORME_PARTES.join(" → "), "📑")} />}
-        {ronda === 1 && <ConectoresCard pick={r2Pick}
-          onAnswer={(picked) => answer(picked === r2Pick.correcta, picked, r2Pick.correcta, "🔗")} />}
-        {ronda === 2 && <ErroresCard pick={r3Pick}
-          onAnswer={(isCorrect, userSet, correctSet) => answer(isCorrect, userSet, correctSet, "✗")} />}
+        {ronda === 0 && (
+          <OrdenInformeCard contexto={r1Pick}
+            pieces={r1Pieces} placed={r1Placed} picked={r1Picked} verified={r1Verified}
+            onPickPiece={(text) => { if (r1Verified) return; if (r1Placed.includes(text)) return; setR1Picked(r1Picked === text ? null : text); }}
+            onPlaceAt={(idx) => {
+              if (r1Verified) return;
+              if (r1Picked === null) {
+                if (r1Placed[idx]) { const next = [...r1Placed]; next[idx] = null; setR1Placed(next); }
+                return;
+              }
+              const next = [...r1Placed];
+              for (let k = 0; k < next.length; k++) if (next[k] === r1Picked) next[k] = null;
+              next[idx] = r1Picked;
+              setR1Placed(next);
+              setR1Picked(null);
+            }}
+          />
+        )}
+        {ronda === 1 && (
+          <ConectoresCard pick={r2Pick} opciones={r2Opciones}
+            selected={r2Selected} locked={r2Locked}
+            onSelect={(opt) => { if (!r2Locked) setR2Selected(r2Selected === opt ? null : opt); }}
+          />
+        )}
+        {ronda === 2 && (
+          <ErroresCard pick={r3Pick} tokens={r3Tokens}
+            picked={r3Picked} locked={r3Locked}
+            onToggle={(idx) => { if (r3Locked) return; const next = new Set(r3Picked); if (next.has(idx)) next.delete(idx); else next.add(idx); setR3Picked(next); }}
+          />
+        )}
       </div>
 
-      <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingExit(true)}
-        style={{ position: "absolute", left: 60, bottom: 18, width: 116, fontSize: 11, padding: "6px 12px", height: 32, fontWeight: 800, letterSpacing: "0.04em" }}>REINICIAR</button>
+      <ActionRail
+        canVerify={canVerify}
+        onVerify={handleVerify}
+        showErase={showErase}
+        onErase={handleErase}
+        onRestart={() => setConfirmingExit(true)}
+        onExit={() => setConfirmingActualExit(true)}
+      />
 
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />
       <RestartModal confirmingExit={confirmingExit} setConfirmingExit={setConfirmingExit} attempted={attempted} total={3} onRestart={onRestart} />
+      <ExitModal confirmingExit={confirmingActualExit} setConfirmingExit={setConfirmingActualExit} attempted={attempted} total={3} onExit={() => go("home")} />
     </div>
   );
 }
 
-function OrdenInformeCard({ contexto, onAnswer }) {
-  const [pieces] = useStateG(() => shuffle(INFORME_PARTES.map((p, i) => ({ text: p, origIdx: i }))));
-  const [placed, setPlaced] = useStateG([null, null, null, null, null, null]); // slot -> piece text or null
-  const [picked, setPicked] = useStateG(null);
-  const [verified, setVerified] = useStateG(false);
-
-  function pickPiece(text) {
-    if (verified) return;
-    if (placed.includes(text)) return;
-    setPicked(picked === text ? null : text);
-  }
-  function placeAt(idx) {
-    if (verified) return;
-    if (picked === null) {
-      if (placed[idx]) {
-        const next = [...placed]; next[idx] = null;
-        setPlaced(next);
-      }
-      return;
-    }
-    setPlaced((prev) => {
-      const next = [...prev];
-      // si la pieza ya está en otro slot, removerla de ahí
-      for (let k = 0; k < next.length; k++) if (next[k] === picked) next[k] = null;
-      next[idx] = picked;
-      return next;
-    });
-    setPicked(null);
-  }
-  function verify() {
-    if (verified) return;
-    if (placed.some((p) => p === null)) return;
-    setVerified(true);
-    let ok = true;
-    for (let i = 0; i < INFORME_PARTES.length; i++) {
-      if (placed[i] !== INFORME_PARTES[i]) { ok = false; break; }
-    }
-    setTimeout(() => onAnswer(ok, placed.join(" → "), INFORME_PARTES.join(" → ")), 400);
-  }
+function OrdenInformeCard({ contexto, pieces, placed, picked, verified, onPickPiece, onPlaceAt }) {
+  const pickPiece = (text) => onPickPiece && onPickPiece(text);
+  const placeAt = (idx) => onPlaceAt && onPlaceAt(idx);
 
   return (
     <div style={{ position: "absolute", inset: 0, padding: "2px 8px", display: "flex", flexDirection: "column", gap: 6 }}>
@@ -2406,24 +2556,14 @@ function OrdenInformeCard({ contexto, onAnswer }) {
         </div>
       </div>
 
-      {!verified && !placed.some((p) => p === null) && (
-        <button onClick={verify} className="ed-btn ed-btn-verify"
-          style={{ alignSelf: "center", padding: "0 18px", height: 36, fontSize: 12, fontWeight: 800, letterSpacing: "0.04em" }}>
-          ¡VERIFICAR!
-        </button>
-      )}
     </div>
   );
 }
 
-function ConectoresCard({ pick, onAnswer }) {
-  const [selected, setSelected] = useStateG(null);
-  const [locked, setLocked] = useStateG(false);
-  const [opciones] = useStateG(() => shuffle([pick.correcta, ...pick.distractores]));
+function ConectoresCard({ pick, opciones, selected, locked, onSelect }) {
   function choose(opt) {
     if (locked) return;
-    setSelected(opt); setLocked(true);
-    setTimeout(() => onAnswer(opt), 250);
+    onSelect && onSelect(opt);
   }
   // Insertar el hueco visualmente en la oración
   const parts = pick.oracion.split("___");
@@ -2472,38 +2612,10 @@ function ConectoresCard({ pick, onAnswer }) {
   );
 }
 
-function ErroresCard({ pick, onAnswer }) {
-  // Parsear el texto: tokens entre [..] son palabras con error tocables
-  const tokens = useMemoG(() => {
-    const arr = [];
-    const regex = /(\[[^\]]+\])|(\s+)|([^\s\[\]]+)/g;
-    let m;
-    while ((m = regex.exec(pick.tokens)) !== null) {
-      if (m[1]) arr.push({ type: "err", text: m[1].slice(1, -1) });
-      else if (m[2]) arr.push({ type: "space", text: m[2] });
-      else arr.push({ type: "ok", text: m[3] });
-    }
-    return arr;
-  }, [pick.tokens]);
-
-  const [picked, setPicked] = useStateG(new Set());
-  const [locked, setLocked] = useStateG(false);
+function ErroresCard({ pick, tokens, picked, locked, onToggle }) {
   function toggle(idx) {
     if (locked) return;
-    const next = new Set(picked);
-    if (next.has(idx)) next.delete(idx); else next.add(idx);
-    setPicked(next);
-  }
-  function verify() {
-    if (locked) return;
-    setLocked(true);
-    const correctSet = new Set();
-    tokens.forEach((t, i) => { if (t.type === "err") correctSet.add(i); });
-    let ok = correctSet.size === picked.size;
-    if (ok) for (const i of picked) if (!correctSet.has(i)) { ok = false; break; }
-    setTimeout(() => onAnswer(ok,
-      Array.from(picked).map((i) => tokens[i].text).join(", "),
-      tokens.filter((t) => t.type === "err").map((t) => t.text).join(", ")), 400);
+    onToggle && onToggle(idx);
   }
 
   return (
@@ -2540,14 +2652,6 @@ function ErroresCard({ pick, onAnswer }) {
           );
         })}
       </div>
-
-      {!locked && (
-        <button onClick={verify} className="ed-btn ed-btn-verify"
-          style={{ position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)",
-            padding: "0 22px", height: 40, fontSize: 13, fontWeight: 800, letterSpacing: "0.04em" }}>
-          ¡VERIFICAR!
-        </button>
-      )}
     </div>
   );
 }
@@ -2599,9 +2703,21 @@ function EnriquecimientoGame({ app, setApp, go, onRestart }) {
   const [feedback, setFeedback] = useStateG(null);
   const [feedbackMsg, setFeedbackMsg] = useStateG("");
   const [confirmingExit, setConfirmingExit] = useStateG(false);
+  const [confirmingActualExit, setConfirmingActualExit] = useStateG(false);
   const [log, setLog] = useStateG([]);
   const started = useRefG(Date.now());
   const exerciseStart = useRefG(Date.now());
+
+  // States levantados de las cards
+  const [r1Opciones] = useStateG(() => shuffle([r1Pick.palabra, ...r1Pick.distractores]));
+  const [r1Selected, setR1Selected] = useStateG(null);
+  const [r1Locked, setR1Locked] = useStateG(false);
+  const [r2Selected, setR2Selected] = useStateG(null);
+  const [r2Locked, setR2Locked] = useStateG(false);
+  const [r3Opciones] = useStateG(() => shuffle([...r3Pick.correctas, ...r3Pick.distractores]));
+  const [r3Placed, setR3Placed] = useStateG([null, null, null]);
+  const [r3Picked, setR3Picked] = useStateG(null);
+  const [r3Verified, setR3Verified] = useStateG(false);
 
   useEffectG(() => {
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - started.current) / 1000)), 500);
@@ -2656,10 +2772,43 @@ function EnriquecimientoGame({ app, setApp, go, onRestart }) {
     }, wait);
   }
 
+  const canVerify =
+    ronda === 0 ? (r1Selected !== null && !r1Locked) :
+    ronda === 1 ? (r2Selected !== null && !r2Locked) :
+    ronda === 2 ? (r3Placed.every((p) => p !== null) && !r3Verified) :
+    false;
+  const showErase = ronda === 2;
+
+  function handleVerify() {
+    if (!canVerify) return;
+    if (ronda === 0) {
+      setR1Locked(true);
+      answer(r1Selected === r1Pick.palabra, r1Selected, r1Pick.palabra, "🔤");
+    } else if (ronda === 1) {
+      setR2Locked(true);
+      answer(r2Selected === r2Pick.correcta, r2Selected, r2Pick.correcta, "🔠");
+    } else if (ronda === 2) {
+      setR3Verified(true);
+      let ok = true;
+      for (let i = 0; i < r3Pick.correctas.length; i++) {
+        if (r3Placed[i] !== r3Pick.correctas[i]) { ok = false; break; }
+      }
+      setTimeout(() => answer(ok, r3Placed.join(" / "), r3Pick.correctas.join(" / "), "✏"), 400);
+    }
+  }
+
+  function handleErase() {
+    if (ronda === 2) {
+      if (r3Verified) return;
+      setR3Placed([null, null, null]);
+      setR3Picked(null);
+    }
+  }
+
   const bocadillo =
-    ronda === 0 ? "¿Qué palabra conecta estas dos imágenes?" :
-    ronda === 1 ? "Elige la letra que completa la palabra." :
-    "Arrastra cada verbo al hueco correcto.";
+    ronda === 0 ? "¿Qué palabra conecta las imágenes?" :
+    ronda === 1 ? "Elige la letra correcta." :
+    "Coloca cada verbo en su hueco.";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
@@ -2668,33 +2817,60 @@ function EnriquecimientoGame({ app, setApp, go, onRestart }) {
       <CharacterCorner char={char} message={bocadillo} />
 
       <div data-qa="zona-central" style={{
-        position: "absolute", top: 100, left: 240, right: 16, bottom: 14,
+        position: "absolute", top: 100, left: 240, right: 168, bottom: 14,
       }}>
-        {ronda === 0 && <PolisemiasCard pick={r1Pick}
-          onAnswer={(picked) => answer(picked === r1Pick.palabra, picked, r1Pick.palabra, "🔤")} />}
-        {ronda === 1 && <HomofonasCard pick={r2Pick}
-          onAnswer={(letter) => answer(letter === r2Pick.correcta, letter, r2Pick.correcta, "🔠")} />}
-        {ronda === 2 && <CondicionalCard pick={r3Pick}
-          onAnswer={(isCorrect, userArr) => answer(isCorrect, userArr.join(" / "), r3Pick.correctas.join(" / "), "✏")} />}
+        {ronda === 0 && (
+          <PolisemiasCard pick={r1Pick} opciones={r1Opciones}
+            selected={r1Selected} locked={r1Locked}
+            onSelect={(opt) => { if (!r1Locked) setR1Selected(r1Selected === opt ? null : opt); }}
+          />
+        )}
+        {ronda === 1 && (
+          <HomofonasCard pick={r2Pick}
+            selected={r2Selected} locked={r2Locked}
+            onSelect={(letter) => { if (!r2Locked) setR2Selected(r2Selected === letter ? null : letter); }}
+          />
+        )}
+        {ronda === 2 && (
+          <CondicionalCard pick={r3Pick} opciones={r3Opciones}
+            placed={r3Placed} picked={r3Picked} verified={r3Verified}
+            onPickWord={(w) => { if (r3Verified) return; if (r3Placed.includes(w)) return; setR3Picked(r3Picked === w ? null : w); }}
+            onPlaceAt={(holeIdx) => {
+              if (r3Verified) return;
+              if (r3Picked === null) {
+                if (r3Placed[holeIdx]) { const next = [...r3Placed]; next[holeIdx] = null; setR3Placed(next); }
+                return;
+              }
+              const next = [...r3Placed];
+              for (let k = 0; k < next.length; k++) if (next[k] === r3Picked) next[k] = null;
+              next[holeIdx] = r3Picked;
+              setR3Placed(next);
+              setR3Picked(null);
+            }}
+          />
+        )}
       </div>
 
-      <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingExit(true)}
-        style={{ position: "absolute", left: 60, bottom: 18, width: 116, fontSize: 11, padding: "6px 12px", height: 32, fontWeight: 800, letterSpacing: "0.04em" }}>REINICIAR</button>
+      <ActionRail
+        canVerify={canVerify}
+        onVerify={handleVerify}
+        showErase={showErase}
+        onErase={handleErase}
+        onRestart={() => setConfirmingExit(true)}
+        onExit={() => setConfirmingActualExit(true)}
+      />
 
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />
       <RestartModal confirmingExit={confirmingExit} setConfirmingExit={setConfirmingExit} attempted={attempted} total={3} onRestart={onRestart} />
+      <ExitModal confirmingExit={confirmingActualExit} setConfirmingExit={setConfirmingActualExit} attempted={attempted} total={3} onExit={() => go("home")} />
     </div>
   );
 }
 
-function PolisemiasCard({ pick, onAnswer }) {
-  const [selected, setSelected] = useStateG(null);
-  const [locked, setLocked] = useStateG(false);
-  const [opciones] = useStateG(() => shuffle([pick.palabra, ...pick.distractores]));
+function PolisemiasCard({ pick, opciones, selected, locked, onSelect }) {
   function choose(opt) {
     if (locked) return;
-    setSelected(opt); setLocked(true);
-    setTimeout(() => onAnswer(opt), 250);
+    onSelect && onSelect(opt);
   }
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, padding: "0 8px" }}>
@@ -2737,13 +2913,10 @@ function PolisemiasCard({ pick, onAnswer }) {
   );
 }
 
-function HomofonasCard({ pick, onAnswer }) {
-  const [selected, setSelected] = useStateG(null);
-  const [locked, setLocked] = useStateG(false);
+function HomofonasCard({ pick, selected, locked, onSelect }) {
   function choose(letter) {
     if (locked) return;
-    setSelected(letter); setLocked(true);
-    setTimeout(() => onAnswer(letter), 250);
+    onSelect && onSelect(letter);
   }
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 18, padding: "0 8px" }}>
@@ -2791,44 +2964,9 @@ function HomofonasCard({ pick, onAnswer }) {
   );
 }
 
-function CondicionalCard({ pick, onAnswer }) {
-  // Texto es array: ["...", null, "...", null, "...", null, "..."] (3 huecos)
-  const [opciones] = useStateG(() => shuffle([...pick.correctas, ...pick.distractores]));
-  const [placed, setPlaced] = useStateG([null, null, null]); // hueco -> verbo
-  const [picked, setPicked] = useStateG(null);
-  const [verified, setVerified] = useStateG(false);
-
-  function pickWord(w) {
-    if (verified) return;
-    if (placed.includes(w)) return;
-    setPicked(picked === w ? null : w);
-  }
-  function placeAt(holeIdx) {
-    if (verified) return;
-    if (picked === null) {
-      if (placed[holeIdx]) {
-        const next = [...placed]; next[holeIdx] = null; setPlaced(next);
-      }
-      return;
-    }
-    setPlaced((prev) => {
-      const next = [...prev];
-      for (let k = 0; k < next.length; k++) if (next[k] === picked) next[k] = null;
-      next[holeIdx] = picked;
-      return next;
-    });
-    setPicked(null);
-  }
-  function verify() {
-    if (verified) return;
-    if (placed.some((p) => p === null)) return;
-    setVerified(true);
-    let ok = true;
-    for (let i = 0; i < pick.correctas.length; i++) {
-      if (placed[i] !== pick.correctas[i]) { ok = false; break; }
-    }
-    setTimeout(() => onAnswer(ok, placed), 400);
-  }
+function CondicionalCard({ pick, opciones, placed, picked, verified, onPickWord, onPlaceAt }) {
+  const pickWord = (w) => onPickWord && onPickWord(w);
+  const placeAt = (holeIdx) => onPlaceAt && onPlaceAt(holeIdx);
 
   // Renderizar el párrafo intercalando texto y huecos
   const fragments = [];
@@ -2896,12 +3034,6 @@ function CondicionalCard({ pick, onAnswer }) {
         })}
       </div>
 
-      {!verified && !placed.some((p) => p === null) && (
-        <button onClick={verify} className="ed-btn ed-btn-verify"
-          style={{ alignSelf: "center", padding: "0 22px", height: 40, fontSize: 13, fontWeight: 800, letterSpacing: "0.04em" }}>
-          ¡VERIFICAR!
-        </button>
-      )}
     </div>
   );
 }
