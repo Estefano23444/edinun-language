@@ -963,9 +963,9 @@ function TiposDeTextoGame({ app, setApp, go, onRestart }) {
     `Encuentra los textos ${r3Current.id === "literario" ? "literarios" : r3Current.id === "informativo" ? "informativos" : "funcionales"}.`;
 
   const bocadillo =
-    ronda === 0 ? "Lee y elige. Después ¡VERIFICA!" :
-    ronda === 1 ? "Coloca cada una donde corresponda y ¡VERIFICA!" :
-    "Toca las burbujas correctas y ¡VERIFICA!";
+    ronda === 0 ? "Lee y elige." :
+    ronda === 1 ? "Coloca cada una donde corresponda." :
+    "Toca las burbujas correctas.";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
@@ -1473,9 +1473,9 @@ function PoeticaGame({ app, setApp, go, onRestart }) {
     "Encuentra las figuras literarias del poema.";
 
   const bocadillo =
-    ronda === 0 ? "Lee y elige. Después ¡VERIFICA!" :
+    ronda === 0 ? "Lee y elige." :
     ronda === 1 ? "Toca un refrán y luego su significado." :
-    "Toca los versos con figuras y ¡VERIFICA!";
+    "Toca los versos con figuras.";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
@@ -1890,9 +1890,9 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
     "Encuentra las palabras con error.";
 
   const bocadillo =
-    ronda === 0 ? "Arrastra cada parte y ¡VERIFICA!" :
-    ronda === 1 ? "Elige y ¡VERIFICA!" :
-    "Toca las palabras con error y ¡VERIFICA!";
+    ronda === 0 ? "Arrastra cada parte." :
+    ronda === 1 ? "Elige." :
+    "Toca las palabras con error.";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
@@ -2312,9 +2312,9 @@ function EnriquecimientoGame({ app, setApp, go, onRestart }) {
     "Completa el párrafo con los verbos correctos.";
 
   const bocadillo =
-    ronda === 0 ? "Mira las imágenes y elige. ¡VERIFICA!" :
-    ronda === 1 ? "Lee la pista y elige. ¡VERIFICA!" :
-    "Arrastra cada verbo a su hueco y ¡VERIFICA!";
+    ronda === 0 ? "Mira las imágenes y elige." :
+    ronda === 1 ? "Lee la pista y elige." :
+    "Arrastra cada verbo a su hueco.";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
