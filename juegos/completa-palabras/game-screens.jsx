@@ -271,6 +271,7 @@ function GameScreen({ app, setApp, go }) {
   const [feedback, setFeedback] = useStateG(null);
   const [feedbackMsg, setFeedbackMsg] = useStateG("");
   const [confirmingExit, setConfirmingExit] = useStateG(false);
+  const [confirmingRestart, setConfirmingRestart] = useStateG(false);
   // pendingLevel: id del nivel al que se quiere cambiar desde los chips
   // del HUD. Null = no hay cambio pendiente. La acción es destructiva
   // (pierde la ronda), por eso pasa por modal de confirmación.
@@ -302,6 +303,17 @@ function GameScreen({ app, setApp, go }) {
       gameSeed: (s.gameSeed || 0) + 1,
     }));
     setPendingLevel(null);
+  }
+
+  // Reinicia la sesión manteniendo el nivel actual. Bump gameSeed para que
+  // App remonte GameScreen con estado fresco (palabra nueva, 0/3 rondas).
+  function confirmRestart() {
+    setApp((s) => ({
+      ...s,
+      stars: 0,
+      gameSeed: (s.gameSeed || 0) + 1,
+    }));
+    setConfirmingRestart(false);
   }
 
   const started = useRefG(Date.now());
@@ -729,7 +741,9 @@ function GameScreen({ app, setApp, go }) {
         })}
       </div>
 
-      {/* Acciones derecha — VERIFICAR, BORRAR, SALIR. */}
+      {/* Acciones derecha — VERIFICAR · BORRAR · REINICIAR · SALIR.
+          Total 4 botones × 56px + 3 gaps × 12px = 260px, centrados
+          verticalmente en el canvas de 540px (sobra margen). */}
       <div data-qa="acciones" style={{
         position: "absolute", right: 18, top: "50%", transform: "translateY(-50%)",
         display: "flex", flexDirection: "column", gap: 12, width: 150,
@@ -747,6 +761,14 @@ function GameScreen({ app, setApp, go }) {
           style={{ fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}
         >
           BORRAR
+        </button>
+        <button
+          className="ed-btn ed-btn-ghost"
+          onClick={() => setConfirmingRestart(true)}
+          title="Reiniciar la sesión"
+          style={{ fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}
+        >
+          REINICIAR
         </button>
         <button
           className="ed-btn ed-btn-ghost"
@@ -874,6 +896,48 @@ function GameScreen({ app, setApp, go }) {
                 </button>
                 <button className="ed-btn ed-btn-primary" onClick={() => { setConfirmingExit(false); go("home"); }} style={{ height: 44, fontWeight: 800, letterSpacing: "0.04em" }}>
                   SÍ, SALIR
+                </button>
+              </div>
+            </div>
+          </div>
+        </PortalToBody>
+      )}
+
+      {/* Modal de reiniciar — confirma antes de descartar la sesión y empezar
+          una palabra nueva en el mismo nivel. */}
+      {confirmingRestart && (
+        <PortalToBody>
+          <div
+            onClick={() => setConfirmingRestart(false)}
+            style={{
+              position: "fixed", inset: 0, zIndex: 1000,
+              background: "rgba(0,0,0,0.62)",
+              backdropFilter: "blur(4px)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              animation: "ed-pop-in 0.18s",
+              padding: 16,
+            }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="ed-card"
+              style={{ padding: 24, maxWidth: 440, textAlign: "center", boxShadow: "var(--ed-shadow-card), 0 0 40px rgba(255,107,107,0.3)" }}
+            >
+              <div className="ed-label" style={{ color: "#ff8b8b", marginBottom: 6 }}>
+                Reiniciar juego
+              </div>
+              <h2 className="ed-h1" style={{ fontSize: 22, lineHeight: 1.15, marginBottom: 8 }}>
+                ¿Empezar de nuevo?
+              </h2>
+              <p className="ed-body" style={{ marginBottom: 16, fontSize: 14 }}>
+                Vas a perder el progreso de esta ronda ({attempted}/3 palabras) y volverás a la primera.
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingRestart(false)} style={{ height: 44, fontWeight: 800, letterSpacing: "0.04em" }}>
+                  SEGUIR JUGANDO
+                </button>
+                <button className="ed-btn ed-btn-primary" onClick={confirmRestart} style={{ height: 44, fontWeight: 800, letterSpacing: "0.04em" }}>
+                  SÍ, REINICIAR
                 </button>
               </div>
             </div>
