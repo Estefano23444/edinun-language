@@ -1281,11 +1281,11 @@ function SpeedQuizCard({ pool, chips, onFinish, verifyRef, setVerifyReady }) {
                 fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 15,
                 border: isSelected ? "2.5px solid #fce9a8" : "none",
                 boxShadow: isSelected
-                  ? "0 0 16px rgba(252,233,168,0.55), inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.18)"
+                  ? "0 0 0 4px rgba(255,255,255,1), 0 0 0 8px rgba(252,233,168,0.65), 0 0 38px rgba(252,233,168,0.9), inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -3px 0 rgba(0,0,0,0.2), 0 8px 22px -4px rgba(0,0,0,0.55)"
                   : "inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.18), 0 4px 10px -2px rgba(0,0,0,0.45)",
                 cursor: finishedRef.current ? "default" : "pointer", letterSpacing: "0.02em",
                 opacity: finishedRef.current ? 0.5 : 1,
-                transform: isSelected ? "translateY(-1px)" : "none",
+                transform: isSelected ? "translateY(-4px) scale(1.04)" : "none",
                 transition: "all 0.15s ease",
                 animation: shake === c ? "ed-shake 0.35s" : "none",
               }}>{c}</button>
@@ -1411,7 +1411,7 @@ function DragMatchCard({ pool, chips, onFinish, verifyRef, setVerifyReady, clear
                 border: `2px solid ${isSelected ? "#fce9a8" : matchedChip ? "#d9a441" : "rgba(242,194,96,0.5)"}`,
                 textAlign: "left", lineHeight: 1.35,
                 cursor: finishedRef.current ? "default" : "pointer",
-                boxShadow: isSelected ? "0 0 14px rgba(252,233,168,0.5)" : "0 3px 8px rgba(0,0,0,0.25)",
+                boxShadow: isSelected ? "0 0 0 4px rgba(255,255,255,1), 0 0 0 8px rgba(252,233,168,0.65), 0 0 38px rgba(252,233,168,0.9), 0 8px 22px -4px rgba(0,0,0,0.55)" : "0 3px 8px rgba(0,0,0,0.25)",
                 transition: "all 0.15s ease",
                 position: "relative",
               }}>
@@ -1550,8 +1550,8 @@ function ElijeElFinalCard({ pool, onAnswer, verifyRef, setVerifyReady }) {
                 border: `2.5px solid ${showCorrect ? "#1a8f5e" : showWrong ? "#a13b3b" : isSelected ? "#fce9a8" : "rgba(242,194,96,0.7)"}`,
                 textAlign: "left", lineHeight: 1.3,
                 cursor: answered ? "default" : "pointer",
-                boxShadow: isSelected ? "0 0 16px rgba(252,233,168,0.5), 0 4px 10px rgba(0,0,0,0.3)" : "0 4px 10px rgba(0,0,0,0.3)",
-                transform: isSelected ? "translateY(-1px)" : "none",
+                boxShadow: isSelected ? "0 0 0 4px rgba(255,255,255,1), 0 0 0 8px rgba(252,233,168,0.65), 0 0 38px rgba(252,233,168,0.9), 0 8px 22px -4px rgba(0,0,0,0.55)" : "0 4px 10px rgba(0,0,0,0.3)",
+                transform: isSelected ? "translateY(-4px) scale(1.04)" : "none",
                 transition: "all 0.15s ease",
               }}>{opt.text}</button>
           );

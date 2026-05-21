@@ -1065,7 +1065,11 @@ function TiposTriviaCard({ pick, selected, locked, onSelect }) {
               color: "#3a2608", border: `3px solid ${opt.color}`,
               fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 14, letterSpacing: "0.04em",
               cursor: locked ? "default" : "pointer",
-              boxShadow: "0 6px 14px rgba(0,0,0,0.35)",
+              boxShadow: selected === opt.id
+                ? "0 0 0 4px rgba(255,255,255,1), 0 0 0 8px rgba(252,233,168,0.65), 0 0 38px rgba(252,233,168,0.9), 0 8px 22px -4px rgba(0,0,0,0.55)"
+                : "0 6px 14px rgba(0,0,0,0.35)",
+              transform: selected === opt.id ? "translateY(-4px) scale(1.04)" : "none",
+              transition: "all 0.18s ease",
               opacity: locked && selected !== opt.id ? 0.5 : 1,
             }}>
             {opt.label}
@@ -1535,7 +1539,12 @@ function PoeticaTriviaCard({ pick, selected, locked, onSelect }) {
               background: selected === opt.id ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.92)",
               color: "#3a2608", border: `3px solid ${opt.color}`,
               fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 14, letterSpacing: "0.04em",
-              cursor: locked ? "default" : "pointer", boxShadow: "0 6px 14px rgba(0,0,0,0.35)",
+              cursor: locked ? "default" : "pointer",
+              boxShadow: selected === opt.id
+                ? "0 0 0 4px rgba(255,255,255,1), 0 0 0 8px rgba(252,233,168,0.65), 0 0 38px rgba(252,233,168,0.9), 0 8px 22px -4px rgba(0,0,0,0.55)"
+                : "0 6px 14px rgba(0,0,0,0.35)",
+              transform: selected === opt.id ? "translateY(-4px) scale(1.04)" : "none",
+              transition: "all 0.18s ease",
               opacity: locked && selected !== opt.id ? 0.5 : 1,
             }}>
             {opt.label}
