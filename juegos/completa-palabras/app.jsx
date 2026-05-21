@@ -99,7 +99,7 @@ function readSize() {
 //   · Mobile landscape: lienzo escalado al viewport visible (visualViewport,
 //     no innerHeight, para no clippearse debajo de la URL bar de iOS).
 // ─────────────────────────────────────────────────────────────
-function DeviceStage({ children, variant = "cosmic" }) {
+function DeviceStage({ children, variant = "cosmic", level }) {
   const W = 900, H = 540;
   const { vw, vh } = useViewportSize();
   const minSide = Math.min(vw, vh);
@@ -319,7 +319,7 @@ function DeviceStage({ children, variant = "cosmic" }) {
       // funcionando — esto solo bloquea gestos del browser, no eventos.
       touchAction: "none",
     }}>
-      <CosmosBg variant={variant} glyphSize={glyphSize} />
+      <CosmosBg variant={variant} glyphSize={glyphSize} level={level} />
 
       {/* Lienzo lógico 900×540 centrado y escalado.
           El transform combina el escalado base (contain del viewport),
@@ -464,7 +464,7 @@ function App() {
   const variant = route === "game" ? "chalkboard" : "cosmic";
 
   return (
-    <DeviceStage variant={variant}>
+    <DeviceStage variant={variant} level={app.level}>
       <Screen key={route === "game" ? `game-${app.gameSeed}` : route} {...screenProps} />
     </DeviceStage>
   );

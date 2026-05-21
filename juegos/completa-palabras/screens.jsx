@@ -10,10 +10,42 @@ const { useState, useEffect, useRef, useMemo } = React;
 // solo cambian los glifos para que el fondo respire "lenguaje" en vez de
 // fórmulas.
 // ─────────────────────────────────────────────────────────────
-function CosmosBg({ variant = "cosmic", glyphSize }) {
+// Glifos del fondo chalkboard según el nivel activo. Cada nivel pinta
+// SOLO sus letras/sílabas para que el fondo del juego respire el tema:
+//   • Vocales → A E I O U (cada una repetida con tamaño/ángulo distinto)
+//   • Letra V → VA VE VI VO VU (sílabas del nivel)
+const CHALK_GLYPHS = {
+  vocales: [
+    { c: "A", l: "6%",  t: "12%", r: "-8deg" },
+    { c: "E", l: "82%", t: "16%", r: "6deg",  s: "0.62em" },
+    { c: "I", l: "10%", t: "78%", r: "12deg", s: "0.7em" },
+    { c: "O", l: "88%", t: "72%", r: "-10deg", s: "0.55em" },
+    { c: "U", l: "45%", t: "8%",  r: "4deg",  s: "0.5em" },
+    { c: "A", l: "3%",  t: "45%", r: "-4deg", s: "0.6em" },
+    { c: "E", l: "92%", t: "45%", r: "8deg",  s: "0.58em" },
+    { c: "I", l: "30%", t: "55%", r: "-6deg", s: "0.5em" },
+    { c: "O", l: "70%", t: "62%", r: "8deg",  s: "0.52em" },
+    { c: "U", l: "55%", t: "30%", r: "-4deg", s: "0.46em" },
+  ],
+  letraV: [
+    { c: "VA", l: "6%",  t: "12%", r: "-8deg" },
+    { c: "VE", l: "82%", t: "16%", r: "6deg",  s: "0.62em" },
+    { c: "VI", l: "10%", t: "78%", r: "12deg", s: "0.7em" },
+    { c: "VO", l: "88%", t: "72%", r: "-10deg", s: "0.55em" },
+    { c: "VU", l: "45%", t: "8%",  r: "4deg",  s: "0.5em" },
+    { c: "VA", l: "3%",  t: "45%", r: "-4deg", s: "0.6em" },
+    { c: "VE", l: "92%", t: "45%", r: "8deg",  s: "0.58em" },
+    { c: "VI", l: "30%", t: "55%", r: "-6deg", s: "0.5em" },
+    { c: "VO", l: "70%", t: "62%", r: "8deg",  s: "0.52em" },
+    { c: "VU", l: "55%", t: "30%", r: "-4deg", s: "0.46em" },
+  ],
+};
+
+function CosmosBg({ variant = "cosmic", glyphSize, level }) {
   const glyphsStyle = glyphSize ? { fontSize: glyphSize + "px" } : undefined;
   if (variant === "chalkboard") {
-    // Pantalla de juego (pizarra verde). 10 glifos de lenguaje.
+    // Pantalla de juego (pizarra verde). 10 glifos según el nivel activo.
+    const glyphs = CHALK_GLYPHS[level] || CHALK_GLYPHS.vocales;
     return (
       <div
         style={{
@@ -25,16 +57,12 @@ function CosmosBg({ variant = "cosmic", glyphSize }) {
         }}
       >
         <div className="ed-glyphs" style={{ color: "rgba(255,255,255,0.10)", ...glyphsStyle }}>
-          <span style={{ left: "6%", top: "12%", "--rot": "-8deg" }}>A</span>
-          <span style={{ left: "82%", top: "16%", "--rot": "6deg", fontSize: "0.62em" }}>E</span>
-          <span style={{ left: "10%", top: "78%", "--rot": "12deg", fontSize: "0.7em" }}>I</span>
-          <span style={{ left: "88%", top: "72%", "--rot": "-10deg", fontSize: "0.55em" }}>O</span>
-          <span style={{ left: "45%", top: "8%", "--rot": "4deg", fontSize: "0.5em" }}>U</span>
-          <span style={{ left: "3%", top: "45%", "--rot": "-4deg", fontSize: "0.6em" }}>?</span>
-          <span style={{ left: "92%", top: "45%", "--rot": "8deg", fontSize: "0.58em" }}>_</span>
-          <span style={{ left: "30%", top: "55%", "--rot": "-6deg", fontSize: "0.5em" }}>📖</span>
-          <span style={{ left: "70%", top: "62%", "--rot": "8deg", fontSize: "0.52em" }}>✏</span>
-          <span style={{ left: "55%", top: "30%", "--rot": "-4deg", fontSize: "0.46em" }}>✎</span>
+          {glyphs.map((g, i) => (
+            <span key={i} style={{
+              left: g.l, top: g.t, "--rot": g.r,
+              ...(g.s ? { fontSize: g.s } : {}),
+            }}>{g.c}</span>
+          ))}
         </div>
       </div>
     );
