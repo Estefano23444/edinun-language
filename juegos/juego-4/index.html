@@ -1081,7 +1081,8 @@ function GameEnunciado({ text }) {
   if (!text) return null;
   return (
     <div style={{
-      position: "absolute", top: 88, left: 240, right: 168,
+      position: "absolute", top: 88, left: "50%", transform: "translateX(-50%)",
+      maxWidth: 540, width: "auto",
       textAlign: "center",
       fontFamily: "var(--ed-font-display)", fontWeight: 700,
       fontSize: 19, lineHeight: 1.2,
@@ -1617,7 +1618,7 @@ function TiposDeTextoGame({ app, setApp, go, onRestart }) {
   // Bocadillo (CÓMO) — corto, dentro del bocadillo del personaje.
   const enunciado =
     ronda === 0 ? "¿Qué tipo de texto es?" :
-    ronda === 1 ? "Organizador gráfico de relación" :
+    ronda === 1 ? "Organizador gráfico de relación." :
     `Encuentra los textos ${r3Current.id === "literario" ? "literarios" : r3Current.id === "informativo" ? "informativos" : "funcionales"}.`;
 
   const bocadillo =
