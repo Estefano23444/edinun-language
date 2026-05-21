@@ -653,8 +653,8 @@ function ExitModal({ confirmingExit, setConfirmingExit, attempted, total, onExit
 function ActionRail({ canVerify, onVerify, showErase, onErase, onRestart, onExit }) {
   return (
     <div data-qa="acciones" style={{
-      position: "absolute", right: 10, top: 92,
-      display: "flex", flexDirection: "column", gap: 8, width: 148,
+      position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
+      display: "flex", flexDirection: "column", gap: 10, width: 148,
     }}>
       <button className="ed-btn ed-btn-verify"
         onClick={() => { if (canVerify && onVerify) onVerify(); }}
@@ -958,7 +958,7 @@ function TiposDeTextoGame({ app, setApp, go, onRestart }) {
   // Bocadillo (CÓMO) — corto, dentro del bocadillo del personaje.
   const enunciado =
     ronda === 0 ? "¿Qué tipo de texto es?" :
-    ronda === 1 ? "Arrastra cada pieza al cuadro correcto" :
+    ronda === 1 ? "Organizador gráfico de relación" :
     `Encuentra los textos ${r3Current.id === "literario" ? "literarios" : r3Current.id === "informativo" ? "informativos" : "funcionales"}`;
 
   const bocadillo =
@@ -987,6 +987,15 @@ function TiposDeTextoGame({ app, setApp, go, onRestart }) {
           <OrganizadorCard pick={r2Pick}
             pieces={r2Pieces} placed={r2Placed} picked={r2Picked} verified={r2Verified}
             onPickPiece={(idx) => { if (r2Verified) return; if (Object.values(r2Placed).includes(idx)) return; setR2Picked(r2Picked === idx ? null : idx); }}
+            onPickFromSlot={(slot) => {
+              if (r2Verified) return;
+              const idx = r2Placed[slot];
+              if (idx === undefined) return;
+              const next = { ...r2Placed };
+              delete next[slot];
+              setR2Placed(next);
+              setR2Picked(idx);
+            }}
             onPlaceIn={(slot, explicitIdx) => {
               if (r2Verified) return;
               const idx = explicitIdx !== undefined ? explicitIdx : r2Picked;
@@ -1034,24 +1043,27 @@ function TiposTriviaCard({ pick, selected, locked, onSelect }) {
 
   return (
     <div style={{
-      display: "flex", flexDirection: "column", alignItems: "center",
-      justifyContent: "center", height: "100%", gap: 20, padding: "0 8px",
+      display: "flex", flexDirection: "row", alignItems: "center",
+      justifyContent: "center", height: "100%", gap: 22, padding: "0 4px",
     }}>
+      {/* Texto a la izquierda — usa el espacio vertical disponible */}
       <div style={{
+        flex: "1 1 0", maxWidth: 320, minHeight: 180,
         background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(245,238,225,0.95))",
         border: "3px solid #f2c260",
         borderRadius: 18,
-        padding: "14px 22px",
+        padding: "20px 22px",
         boxShadow: "0 10px 24px rgba(0,0,0,0.45)",
-        maxWidth: 460, minHeight: 130,
         color: "#3a2608",
+        display: "flex", flexDirection: "column", justifyContent: "center",
       }}>
-        <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 17, marginBottom: 6 }}>
+        <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 17, marginBottom: 8 }}>
           {pick.titulo}
         </div>
-        <div style={{ fontSize: 14, lineHeight: 1.35, fontStyle: "italic" }}>"{pick.fragmento}"</div>
+        <div style={{ fontSize: 14, lineHeight: 1.4, fontStyle: "italic" }}>"{pick.fragmento}"</div>
       </div>
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
+      {/* Opciones en columna vertical a la derecha */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "stretch", minWidth: 160 }}>
         {[
           { id: "literario",   label: "LITERARIO",   color: "#ffc06e" },
           { id: "informativo", label: "INFORMATIVO", color: "#ffe97a" },
@@ -1060,7 +1072,7 @@ function TiposTriviaCard({ pick, selected, locked, onSelect }) {
           <button key={opt.id} onClick={() => choose(opt.id)}
             disabled={locked}
             style={{
-              padding: "14px 20px", borderRadius: 14,
+              padding: "14px 18px", borderRadius: 14,
               background: selected === opt.id ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.92)",
               color: "#3a2608", border: `3px solid ${opt.color}`,
               fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 14, letterSpacing: "0.04em",
@@ -1080,14 +1092,15 @@ function TiposTriviaCard({ pick, selected, locked, onSelect }) {
   );
 }
 
-function OrganizadorCard({ pick, pieces, placed, picked, verified, onPickPiece, onPlaceIn }) {
+function OrganizadorCard({ pick, pieces, placed, picked, verified, onPickPiece, onPickFromSlot, onPlaceIn }) {
   // 4 cuadros (2x2) alrededor de la palabra central + bandeja con piezas.
-  // Soporta DRAG (HTML5) y tap-to-place. State vive en el padre.
+  // Soporta DRAG (HTML5) y tap-to-place, también desde slot a slot.
   const LABELS = { definicion: "Definición", oracion: "Oración", sinonimo: "Sinónimo", dibujo: "Dibujo" };
   const [dragIdx, setDragIdx] = React.useState(null);
   const [dragOverSlot, setDragOverSlot] = React.useState(null);
 
   const pickPiece = (idx) => onPickPiece && onPickPiece(idx);
+  const pickFromSlot = (slot) => onPickFromSlot && onPickFromSlot(slot);
   const placeIn = (slot, explicitIdx) => onPlaceIn && onPlaceIn(slot, explicitIdx);
 
   function renderSlot(slot, pos) {
@@ -1096,9 +1109,24 @@ function OrganizadorCard({ pick, pieces, placed, picked, verified, onPickPiece, 
     const correct = verified && piece && piece.slot === slot;
     const wrong = verified && piece && piece.slot !== slot;
     const isHover = dragOverSlot === slot;
+    const isDragSource = piece && dragIdx === idx;
     return (
       <div key={slot}
-        onClick={() => { if (!verified) placeIn(slot); }}
+        // Tap: si tiene pieza y nada en mano → la levanta. Si no, intenta placeIn.
+        onClick={() => {
+          if (verified) return;
+          if (piece && picked === null) { pickFromSlot(slot); return; }
+          placeIn(slot);
+        }}
+        // Drag-source: la pieza colocada se puede arrastrar a otro slot.
+        draggable={!verified && !!piece}
+        onDragStart={(e) => {
+          if (verified || !piece) return;
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", String(idx));
+          setDragIdx(idx);
+        }}
+        onDragEnd={() => { setDragIdx(null); setDragOverSlot(null); }}
         onDragOver={(e) => { if (!verified) { e.preventDefault(); setDragOverSlot(slot); } }}
         onDragLeave={() => setDragOverSlot((s) => s === slot ? null : s)}
         onDrop={(e) => {
@@ -1121,11 +1149,13 @@ function OrganizadorCard({ pick, pieces, placed, picked, verified, onPickPiece, 
           color: piece ? "#3a2608" : "rgba(252,233,168,0.65)",
           fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12, lineHeight: 1.2,
           borderRadius: 12, padding: "8px 10px",
-          cursor: verified ? "default" : "pointer",
+          cursor: verified ? "default" : (piece ? "grab" : "pointer"),
+          userSelect: "none",
           textAlign: piece && piece.slot === "dibujo" && piece.text.length < 4 ? "center" : "left",
           overflow: "hidden",
+          opacity: isDragSource ? 0.4 : 1,
           boxShadow: isHover ? "0 0 12px rgba(79,216,255,0.5)" : "none",
-          transition: "background 0.15s, border-color 0.15s",
+          transition: "background 0.15s, border-color 0.15s, opacity 0.15s",
         }}>
         <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.06em", color: piece ? "#3a2608" : "#a78bfa", textTransform: "uppercase", marginBottom: 2 }}>
           {LABELS[slot]}
