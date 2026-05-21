@@ -145,21 +145,21 @@ const ORG_BANK = [
 // R3 — Mapa de burbujas: 3 ejercicios con consigna distinta
 const BURBUJAS_DATA = [
   {
-    id: "literario", consigna: "Pinta los LITERARIOS",
+    id: "literario", consigna: "Encuentra los textos LITERARIOS",
     burbujas: ["cuento", "poema", "teatro", "novela", "noticia", "receta", "manual"],
     correctos: ["cuento", "poema", "teatro", "novela"],
     centro: "TEXTOS LITERARIOS",
     color: "#ffc06e",
   },
   {
-    id: "informativo", consigna: "Pinta los INFORMATIVOS",
+    id: "informativo", consigna: "Encuentra los textos INFORMATIVOS",
     burbujas: ["noticias", "libros escolares", "publicidad", "textos históricos", "cuento", "poema", "receta"],
     correctos: ["noticias", "libros escolares", "publicidad", "textos históricos"],
     centro: "TEXTOS INFORMATIVOS",
     color: "#ffe97a",
   },
   {
-    id: "funcional", consigna: "Pinta los FUNCIONALES",
+    id: "funcional", consigna: "Encuentra los textos FUNCIONALES",
     burbujas: ["receta", "carta", "manual", "email", "cuento", "noticia", "poema"],
     correctos: ["receta", "carta", "manual", "email"],
     centro: "TEXTOS FUNCIONALES",
@@ -651,19 +651,12 @@ function ActionRail({ canVerify, onVerify, showErase, onErase, onRestart, onExit
           BORRAR
         </button>
       )}
-      <button className="ed-btn ed-btn-ghost" onClick={onRestart}
+      <button className="ed-btn ed-btn-restart" onClick={onRestart}
         style={{ fontSize: 13, padding: "0 8px", height: 48, fontWeight: 800, letterSpacing: "0.04em" }}>
         REINICIAR
       </button>
-      <button onClick={onExit}
-        style={{
-          fontSize: 13, padding: "0 8px", height: 48, fontWeight: 800, letterSpacing: "0.04em",
-          borderRadius: 12, cursor: "pointer",
-          background: "rgba(255,138,76,0.12)",
-          border: "1.5px solid rgba(255,138,76,0.55)",
-          color: "#ff8b4c",
-          fontFamily: "var(--ed-font-display)",
-        }}>
+      <button className="ed-btn ed-btn-ghost" onClick={onExit}
+        style={{ fontSize: 13, padding: "0 8px", height: 48, fontWeight: 800, letterSpacing: "0.04em" }}>
         SALIR
       </button>
     </div>
@@ -941,11 +934,12 @@ function TiposDeTextoGame({ app, setApp, go, onRestart }) {
 
   const [confirmingActualExit, setConfirmingActualExit] = useStateG(false);
 
-  // Bocadillo dinámico por ronda
+  // Bocadillo dinámico por ronda. El enunciado del juego dice QUÉ hacer;
+  // el bocadillo dice CÓMO hacerlo / cuándo verificar.
   const bocadillo =
-    ronda === 0 ? "¿De qué familia es este texto? Después VERIFICA." :
-    ronda === 1 ? "Coloca cada pieza en el cuadro correcto." :
-    "Pinta solo las burbujas correctas.";
+    ronda === 0 ? "Lee el texto y elige una opción. Después toca ¡VERIFICAR!" :
+    ronda === 1 ? "Arrastra cada pieza al cuadro correcto y luego ¡VERIFICA!" :
+    "Toca las burbujas correctas y luego ¡VERIFICA!";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
@@ -967,15 +961,16 @@ function TiposDeTextoGame({ app, setApp, go, onRestart }) {
           <OrganizadorCard pick={r2Pick}
             pieces={r2Pieces} placed={r2Placed} picked={r2Picked} verified={r2Verified}
             onPickPiece={(idx) => { if (r2Verified) return; if (Object.values(r2Placed).includes(idx)) return; setR2Picked(r2Picked === idx ? null : idx); }}
-            onPlaceIn={(slot) => {
+            onPlaceIn={(slot, explicitIdx) => {
               if (r2Verified) return;
-              if (r2Picked === null) {
+              const idx = explicitIdx !== undefined ? explicitIdx : r2Picked;
+              if (idx === null || idx === undefined) {
                 if (r2Placed[slot] !== undefined) { const next = { ...r2Placed }; delete next[slot]; setR2Placed(next); }
                 return;
               }
               const next = { ...r2Placed };
-              for (const k of Object.keys(next)) if (next[k] === r2Picked) delete next[k];
-              next[slot] = r2Picked;
+              for (const k of Object.keys(next)) if (next[k] === idx) delete next[k];
+              next[slot] = idx;
               setR2Placed(next);
               setR2Picked(null);
             }}
@@ -1012,37 +1007,40 @@ function TiposTriviaCard({ pick, selected, locked, onSelect }) {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, padding: "0 8px" }}>
+    <div style={{
+      display: "flex", flexDirection: "column", alignItems: "center",
+      justifyContent: "center", height: "100%", gap: 20, padding: "0 8px",
+    }}>
       <div style={{
         background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(245,238,225,0.95))",
         border: "3px solid #f2c260",
         borderRadius: 18,
-        padding: "12px 20px",
+        padding: "14px 22px",
         boxShadow: "0 10px 24px rgba(0,0,0,0.45)",
         maxWidth: 460, minHeight: 130,
         color: "#3a2608",
       }}>
-        <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 17, marginBottom: 4 }}>
+        <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 17, marginBottom: 6 }}>
           {pick.titulo}
         </div>
         <div style={{ fontSize: 14, lineHeight: 1.35, fontStyle: "italic" }}>"{pick.fragmento}"</div>
       </div>
-      <div style={{ fontFamily: "var(--ed-font-display)", color: "#fce9a8", fontSize: 14, fontWeight: 700 }}>
+      <div style={{ fontFamily: "var(--ed-font-display)", color: "#fce9a8", fontSize: 15, fontWeight: 700 }}>
         ¿Qué tipo de texto es?
       </div>
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
         {[
-          { id: "literario",   label: "📖 LITERARIO",  color: "#ffc06e" },
-          { id: "informativo", label: "📰 INFORMATIVO",color: "#ffe97a" },
-          { id: "funcional",   label: "📋 FUNCIONAL",  color: "#7ab8ff" },
+          { id: "literario",   label: "LITERARIO",   color: "#ffc06e" },
+          { id: "informativo", label: "INFORMATIVO", color: "#ffe97a" },
+          { id: "funcional",   label: "FUNCIONAL",   color: "#7ab8ff" },
         ].map((opt) => (
           <button key={opt.id} onClick={() => choose(opt.id)}
             disabled={locked}
             style={{
-              padding: "12px 18px", borderRadius: 14,
+              padding: "14px 20px", borderRadius: 14,
               background: selected === opt.id ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.92)",
               color: "#3a2608", border: `3px solid ${opt.color}`,
-              fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 14, letterSpacing: "0.03em",
+              fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 14, letterSpacing: "0.04em",
               cursor: locked ? "default" : "pointer",
               boxShadow: "0 6px 14px rgba(0,0,0,0.35)",
               opacity: locked && selected !== opt.id ? 0.5 : 1,
@@ -1056,33 +1054,51 @@ function TiposTriviaCard({ pick, selected, locked, onSelect }) {
 }
 
 function OrganizadorCard({ pick, pieces, placed, picked, verified, onPickPiece, onPlaceIn }) {
-  // 4 piezas mezcladas a la izquierda (bandeja), 4 cuadros alrededor de la palabra central.
-  // Componente CONTROLADO — el state vive en el padre para que ActionRail pueda actuar.
-  const SLOTS = ["definicion", "oracion", "sinonimo", "dibujo"];
+  // 4 cuadros (2x2) alrededor de la palabra central + bandeja con piezas.
+  // Soporta DRAG (HTML5) y tap-to-place. State vive en el padre.
   const LABELS = { definicion: "Definición", oracion: "Oración", sinonimo: "Sinónimo", dibujo: "Dibujo" };
-  const pickPiece = (idx) => onPickPiece && onPickPiece(idx);
-  const placeIn = (slot) => onPlaceIn && onPlaceIn(slot);
+  const [dragIdx, setDragIdx] = React.useState(null);
+  const [dragOverSlot, setDragOverSlot] = React.useState(null);
 
-  const SLOT_W = 168, SLOT_H = 56;
+  const pickPiece = (idx) => onPickPiece && onPickPiece(idx);
+  const placeIn = (slot, explicitIdx) => onPlaceIn && onPlaceIn(slot, explicitIdx);
 
   function renderSlot(slot, pos) {
     const idx = placed[slot];
     const piece = idx !== undefined ? pieces[idx] : null;
     const correct = verified && piece && piece.slot === slot;
     const wrong = verified && piece && piece.slot !== slot;
+    const isHover = dragOverSlot === slot;
     return (
-      <button key={slot} onClick={() => placeIn(slot)} disabled={verified}
+      <div key={slot}
+        onClick={() => { if (!verified) placeIn(slot); }}
+        onDragOver={(e) => { if (!verified) { e.preventDefault(); setDragOverSlot(slot); } }}
+        onDragLeave={() => setDragOverSlot((s) => s === slot ? null : s)}
+        onDrop={(e) => {
+          if (verified) return;
+          e.preventDefault();
+          const raw = e.dataTransfer.getData("text/plain");
+          const dIdx = parseInt(raw, 10);
+          setDragOverSlot(null);
+          setDragIdx(null);
+          if (!Number.isNaN(dIdx)) placeIn(slot, dIdx);
+        }}
         style={{
           ...pos,
-          width: SLOT_W, height: SLOT_H,
-          border: `2px dashed ${correct ? "#2ecc8f" : wrong ? "#ff6b6b" : "rgba(252,233,168,0.55)"}`,
-          background: piece ? "linear-gradient(180deg, rgba(252,233,168,0.95), rgba(217,164,65,0.85))" : "rgba(10,6,35,0.55)",
+          position: "absolute",
+          width: 170, height: 70,
+          border: `2px dashed ${correct ? "#2ecc8f" : wrong ? "#ff6b6b" : isHover ? "#4fd8ff" : "rgba(252,233,168,0.55)"}`,
+          background: piece
+            ? "linear-gradient(180deg, rgba(252,233,168,0.95), rgba(217,164,65,0.85))"
+            : isHover ? "rgba(79,216,255,0.18)" : "rgba(10,6,35,0.55)",
           color: piece ? "#3a2608" : "rgba(252,233,168,0.65)",
           fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12, lineHeight: 1.2,
-          borderRadius: 12, padding: "6px 10px",
+          borderRadius: 12, padding: "8px 10px",
           cursor: verified ? "default" : "pointer",
-          position: "absolute", textAlign: piece && piece.slot === "dibujo" && piece.text.length < 4 ? "center" : "left",
+          textAlign: piece && piece.slot === "dibujo" && piece.text.length < 4 ? "center" : "left",
           overflow: "hidden",
+          boxShadow: isHover ? "0 0 12px rgba(79,216,255,0.5)" : "none",
+          transition: "background 0.15s, border-color 0.15s",
         }}>
         <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.06em", color: piece ? "#3a2608" : "#a78bfa", textTransform: "uppercase", marginBottom: 2 }}>
           {LABELS[slot]}
@@ -1090,22 +1106,24 @@ function OrganizadorCard({ pick, pieces, placed, picked, verified, onPickPiece, 
         <div style={{ fontSize: piece && piece.text.length < 4 ? 28 : 11, lineHeight: 1.15 }}>
           {piece ? piece.text : "(vacío)"}
         </div>
-      </button>
+      </div>
     );
   }
 
   return (
-    <div style={{ position: "absolute", inset: 0, padding: "4px 8px" }}>
-      {/* Cuadros alrededor de la palabra central */}
-      <div style={{ position: "absolute", left: 0, right: 0, top: 0, height: 250 }}>
-        {renderSlot("definicion", { left: "16%", top: 0 })}
-        {renderSlot("oracion",    { right: "16%", top: 0 })}
-        {renderSlot("sinonimo",   { left: "16%", top: 144 })}
-        {renderSlot("dibujo",     { right: "16%", top: 144 })}
+    <div style={{ position: "absolute", inset: 0, padding: "0 8px",
+      display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+
+      {/* Cuadros (2×2) con palabra central — alto fijo */}
+      <div style={{ position: "relative", height: 230, marginTop: 4 }}>
+        {renderSlot("definicion", { left: "8%",  top: 0 })}
+        {renderSlot("oracion",    { right: "8%", top: 0 })}
+        {renderSlot("sinonimo",   { left: "8%",  bottom: 0 })}
+        {renderSlot("dibujo",     { right: "8%", bottom: 0 })}
 
         {/* Palabra central */}
         <div style={{
-          position: "absolute", left: "50%", top: 92, transform: "translateX(-50%)",
+          position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
           background: "linear-gradient(180deg, #f2c260, #d9a441)",
           border: "3px solid rgba(255,255,255,0.85)",
           padding: "10px 22px", borderRadius: 999,
@@ -1117,28 +1135,47 @@ function OrganizadorCard({ pick, pieces, placed, picked, verified, onPickPiece, 
         </div>
       </div>
 
-      {/* Bandeja con piezas (sólo las no colocadas) */}
+      {/* Bandeja con piezas (sólo las no colocadas) — arriba de los slots para que sea visible */}
       <div data-qa="bandeja" style={{
-        position: "absolute", bottom: 0, left: 0, right: 0,
-        display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap",
+        background: "rgba(10,6,35,0.45)",
+        border: "1px dashed rgba(252,233,168,0.3)",
+        borderRadius: 12,
+        padding: "10px 8px",
+        marginBottom: 6,
+        display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap",
+        minHeight: 56,
       }}>
         {pieces.map((p, i) => {
           if (Object.values(placed).includes(i)) return null;
           const isPicked = picked === i;
+          const isDragging = dragIdx === i;
           return (
-            <button key={i} onClick={() => pickPiece(i)} disabled={verified}
+            <div key={i}
+              draggable={!verified}
+              onDragStart={(e) => {
+                if (verified) return;
+                e.dataTransfer.effectAllowed = "move";
+                e.dataTransfer.setData("text/plain", String(i));
+                setDragIdx(i);
+              }}
+              onDragEnd={() => { setDragIdx(null); setDragOverSlot(null); }}
+              onClick={() => { if (!verified) pickPiece(i); }}
               style={{
-                padding: "6px 10px", maxWidth: 168,
+                padding: "8px 12px", maxWidth: 180,
                 background: isPicked ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.92)",
                 color: "#3a2608",
                 border: `2px solid ${isPicked ? "#4fd8ff" : "rgba(242,194,96,0.65)"}`,
                 borderRadius: 10,
                 fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: p.text.length < 4 ? 24 : 11,
-                lineHeight: 1.2, cursor: "pointer",
+                lineHeight: 1.2,
+                cursor: verified ? "default" : "grab",
+                userSelect: "none",
+                opacity: isDragging ? 0.4 : 1,
                 boxShadow: isPicked ? "0 0 14px rgba(79,216,255,0.6)" : "0 4px 10px rgba(0,0,0,0.3)",
+                transition: "opacity 0.15s",
               }}>
               {p.text}
-            </button>
+            </div>
           );
         })}
       </div>
@@ -1151,31 +1188,42 @@ function BurbujasCard({ data, picked, locked, onToggle }) {
     if (locked) return;
     onToggle && onToggle(word);
   }
-  // 7 burbujas en una grilla con la central destacada
+  // 7 burbujas distribuidas en 3 filas alrededor del centro (sin huecos visibles).
   const positions = [
-    { left: "10%", top: "8%" },
-    { left: "65%", top: "8%" },
-    { left: "5%",  top: "42%" },
-    { left: "70%", top: "42%" },
-    { left: "12%", top: "75%" },
-    { left: "42%", top: "75%" },
-    { left: "70%", top: "75%" },
+    { left: "8%",  top: "6%"  },
+    { left: "62%", top: "6%"  },
+    { left: "2%",  top: "44%" },
+    { left: "75%", top: "44%" },
+    { left: "10%", top: "82%" },
+    { left: "42%", top: "82%" },
+    { left: "72%", top: "82%" },
   ];
 
   return (
-    <div style={{ position: "absolute", inset: 0, padding: "0 8px" }}>
-      <div style={{ textAlign: "center", color: "#fce9a8", fontWeight: 800, fontSize: 14, marginTop: 2 }}>
+    <div style={{ position: "absolute", inset: 0, padding: "0 8px",
+      display: "flex", flexDirection: "column" }}>
+      {/* Enunciado: el QUÉ hacer. Sin caja, tipográfico limpio. */}
+      <div style={{
+        textAlign: "center",
+        color: "#fce9a8",
+        fontFamily: "var(--ed-font-display)",
+        fontWeight: 800,
+        fontSize: 18,
+        letterSpacing: "0.02em",
+        marginTop: 6,
+        textShadow: "0 2px 6px rgba(0,0,0,0.5)",
+      }}>
         {data.consigna}
       </div>
 
-      <div style={{ position: "absolute", left: 0, right: 0, top: 28, bottom: 50 }}>
+      <div style={{ position: "relative", flex: 1, marginTop: 4 }}>
         {/* Burbuja central */}
         <div style={{
           position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
           background: `linear-gradient(180deg, ${data.color}, #d9a441)`,
           border: "3px solid rgba(255,255,255,0.85)",
-          padding: "12px 22px", borderRadius: 999,
-          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12, color: "#3a2608",
+          padding: "14px 24px", borderRadius: 999,
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 13, color: "#3a2608",
           boxShadow: "0 8px 18px rgba(0,0,0,0.45)",
           whiteSpace: "nowrap", textAlign: "center",
         }}>
@@ -1199,9 +1247,9 @@ function BurbujasCard({ data, picked, locked, onToggle }) {
             <button key={i} onClick={() => toggle(w)} disabled={locked}
               style={{
                 position: "absolute", ...pos,
-                padding: "8px 14px", borderRadius: 999,
+                padding: "10px 16px", borderRadius: 999,
                 background: bg, color: "#3a2608", border: `2px solid ${border}`,
-                fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 11,
+                fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12,
                 cursor: locked ? "default" : "pointer",
                 boxShadow: "0 4px 12px rgba(0,0,0,0.35)",
                 whiteSpace: "nowrap",
@@ -1379,9 +1427,9 @@ function PoeticaGame({ app, setApp, go, onRestart }) {
   }
 
   const bocadillo =
-    ronda === 0 ? "¿Qué función tiene? Después VERIFICA." :
-    ronda === 1 ? "Une cada refrán con su significado." :
-    "Toca las figuras literarias del poema.";
+    ronda === 0 ? "Lee la oración y elige una opción. Después ¡VERIFICA!" :
+    ronda === 1 ? "Toca un refrán y luego su significado. Después ¡VERIFICA!" :
+    "Toca los versos con figuras literarias y luego ¡VERIFICA!";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
@@ -1448,7 +1496,10 @@ function PoeticaTriviaCard({ pick, selected, locked, onSelect }) {
     onSelect && onSelect(f);
   }
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 18, padding: "0 8px" }}>
+    <div style={{
+      display: "flex", flexDirection: "column", alignItems: "center",
+      justifyContent: "center", height: "100%", gap: 22, padding: "0 8px",
+    }}>
       <div style={{
         background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(245,238,225,0.95))",
         border: "3px solid #f2c260", borderRadius: 18,
@@ -1459,18 +1510,21 @@ function PoeticaTriviaCard({ pick, selected, locked, onSelect }) {
       }}>
         "{pick.oracion}"
       </div>
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
+      <div style={{ fontFamily: "var(--ed-font-display)", color: "#fce9a8", fontSize: 15, fontWeight: 700 }}>
+        ¿Qué función cumple esta oración?
+      </div>
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
         {[
-          { id: "poetica", label: "✨ POÉTICA",     color: "#ffe97a" },
-          { id: "informa", label: "📰 INFORMA",     color: "#7ab8ff" },
-          { id: "pide",    label: "📢 PIDE ALGO",   color: "#ffc06e" },
+          { id: "poetica", label: "POÉTICA",   color: "#ffe97a" },
+          { id: "informa", label: "INFORMA",   color: "#7ab8ff" },
+          { id: "pide",    label: "PIDE ALGO", color: "#ffc06e" },
         ].map((opt) => (
           <button key={opt.id} onClick={() => choose(opt.id)} disabled={locked}
             style={{
-              padding: "12px 18px", borderRadius: 14,
+              padding: "14px 20px", borderRadius: 14,
               background: selected === opt.id ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.92)",
               color: "#3a2608", border: `3px solid ${opt.color}`,
-              fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 14, letterSpacing: "0.03em",
+              fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 14, letterSpacing: "0.04em",
               cursor: locked ? "default" : "pointer", boxShadow: "0 6px 14px rgba(0,0,0,0.35)",
               opacity: locked && selected !== opt.id ? 0.5 : 1,
             }}>
@@ -1488,9 +1542,9 @@ function RefranesCard({ pairs, rightOrder, selectedLeft, connections, verified, 
   const tapRight = (rightIdx) => onTapRight && onTapRight(rightIdx);
 
   return (
-    <div style={{ position: "absolute", inset: 0, padding: "4px 8px" }}>
-      <div style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 56 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 14px 1fr", gap: 10, height: "100%", alignItems: "center" }}>
+    <div style={{ position: "absolute", inset: 0, padding: "8px 8px" }}>
+      <div style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 14px 1fr", gap: 12, height: "100%", alignItems: "center" }}>
           {/* Columna izquierda — refranes */}
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {pairs.map((p, i) => {
@@ -1567,7 +1621,8 @@ function FigurasCard({ poema, picked, locked, onToggle }) {
   }
 
   return (
-    <div style={{ position: "absolute", inset: 0, padding: "0 8px" }}>
+    <div style={{ position: "absolute", inset: 0, padding: "0 8px",
+      display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{
         margin: "0 auto", maxWidth: 480,
         background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(245,238,225,0.95))",
@@ -1778,9 +1833,9 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
   }
 
   const bocadillo =
-    ronda === 0 ? "Coloca cada parte en su orden (1-6)." :
-    ronda === 1 ? "Elige el conector y VERIFICA." :
-    "Toca las palabras con error.";
+    ronda === 0 ? "Arrastra cada parte a su orden (1-6) y luego ¡VERIFICA!" :
+    ronda === 1 ? "Elige el conector correcto. Después ¡VERIFICA!" :
+    "Toca las palabras con error y luego ¡VERIFICA!";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
@@ -1795,15 +1850,16 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
           <OrdenInformeCard contexto={r1Pick}
             pieces={r1Pieces} placed={r1Placed} picked={r1Picked} verified={r1Verified}
             onPickPiece={(text) => { if (r1Verified) return; if (r1Placed.includes(text)) return; setR1Picked(r1Picked === text ? null : text); }}
-            onPlaceAt={(idx) => {
+            onPlaceAt={(idx, explicitText) => {
               if (r1Verified) return;
-              if (r1Picked === null) {
+              const text = explicitText !== undefined ? explicitText : r1Picked;
+              if (text === null || text === undefined) {
                 if (r1Placed[idx]) { const next = [...r1Placed]; next[idx] = null; setR1Placed(next); }
                 return;
               }
               const next = [...r1Placed];
-              for (let k = 0; k < next.length; k++) if (next[k] === r1Picked) next[k] = null;
-              next[idx] = r1Picked;
+              for (let k = 0; k < next.length; k++) if (next[k] === text) next[k] = null;
+              next[idx] = text;
               setR1Placed(next);
               setR1Picked(null);
             }}
@@ -1840,58 +1896,99 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
 }
 
 function OrdenInformeCard({ contexto, pieces, placed, picked, verified, onPickPiece, onPlaceAt }) {
+  // Soporta DRAG (HTML5) y tap-to-place.
+  const [dragText, setDragText] = React.useState(null);
+  const [dragOverIdx, setDragOverIdx] = React.useState(null);
   const pickPiece = (text) => onPickPiece && onPickPiece(text);
-  const placeAt = (idx) => onPlaceAt && onPlaceAt(idx);
+  const placeAt = (idx, explicitText) => onPlaceAt && onPlaceAt(idx, explicitText);
 
   return (
-    <div style={{ position: "absolute", inset: 0, padding: "2px 8px", display: "flex", flexDirection: "column", gap: 6 }}>
-      <div style={{ textAlign: "center", fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12, color: "#fce9a8" }}>
+    <div style={{ position: "absolute", inset: 0, padding: "4px 8px", display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{
+        textAlign: "center",
+        fontFamily: "var(--ed-font-display)",
+        fontWeight: 800, fontSize: 13, color: "#fce9a8",
+        textShadow: "0 2px 4px rgba(0,0,0,0.4)",
+      }}>
         {contexto.titulo}
       </div>
 
-      <div style={{ display: "flex", gap: 10, flex: 1, minHeight: 0 }}>
+      <div style={{ display: "flex", gap: 14, flex: 1, minHeight: 0 }}>
         {/* Slots numerados (izquierda) */}
-        <div style={{ flex: "0 0 220px", display: "flex", flexDirection: "column", gap: 4, overflow: "auto" }}>
+        <div style={{ flex: "0 0 230px", display: "flex", flexDirection: "column", gap: 6, overflow: "auto" }}>
           {placed.map((t, i) => {
             const correct = verified && t === INFORME_PARTES[i];
             const wrong = verified && t !== INFORME_PARTES[i];
+            const isHover = dragOverIdx === i;
             return (
-              <button key={i} onClick={() => placeAt(i)} disabled={verified}
+              <div key={i}
+                onClick={() => { if (!verified) placeAt(i); }}
+                onDragOver={(e) => { if (!verified) { e.preventDefault(); setDragOverIdx(i); } }}
+                onDragLeave={() => setDragOverIdx((x) => x === i ? null : x)}
+                onDrop={(e) => {
+                  if (verified) return;
+                  e.preventDefault();
+                  const raw = e.dataTransfer.getData("text/plain");
+                  setDragOverIdx(null); setDragText(null);
+                  if (raw) placeAt(i, raw);
+                }}
                 style={{
                   display: "flex", alignItems: "center", gap: 8,
-                  padding: "6px 10px", borderRadius: 10,
-                  background: t ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(10,6,35,0.55)",
+                  padding: "8px 12px", borderRadius: 10,
+                  background: t ? "linear-gradient(180deg,#fce9a8,#d9a441)"
+                    : isHover ? "rgba(79,216,255,0.18)" : "rgba(10,6,35,0.55)",
                   color: t ? "#3a2608" : "rgba(252,233,168,0.5)",
-                  border: `2px dashed ${correct ? "#2ecc8f" : wrong ? "#ff6b6b" : "rgba(252,233,168,0.45)"}`,
-                  fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 11,
+                  border: `2px dashed ${correct ? "#2ecc8f" : wrong ? "#ff6b6b" : isHover ? "#4fd8ff" : "rgba(252,233,168,0.45)"}`,
+                  fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12,
                   textAlign: "left", cursor: verified ? "default" : "pointer",
-                  width: "100%",
+                  width: "100%", minHeight: 38,
+                  boxShadow: isHover ? "0 0 12px rgba(79,216,255,0.5)" : "none",
+                  transition: "background 0.15s, border-color 0.15s",
                 }}>
-                <span style={{ fontWeight: 800, color: t ? "#3a2608" : "#a78bfa" }}>{i + 1}.</span>
+                <span style={{ fontWeight: 800, fontSize: 14, color: t ? "#3a2608" : "#a78bfa" }}>{i + 1}.</span>
                 <span style={{ flex: 1 }}>{t || "(vacío)"}</span>
-              </button>
+              </div>
             );
           })}
         </div>
 
         {/* Bandeja de piezas (derecha) */}
-        <div style={{ flex: 1, minWidth: 0, display: "flex", flexWrap: "wrap", alignContent: "flex-start", gap: 6 }}>
+        <div style={{
+          flex: 1, minWidth: 0,
+          background: "rgba(10,6,35,0.45)",
+          border: "1px dashed rgba(252,233,168,0.3)",
+          borderRadius: 12,
+          padding: 10,
+          display: "flex", flexWrap: "wrap", alignContent: "flex-start", gap: 8,
+        }}>
           {pieces.map((p, i) => {
             if (placed.includes(p.text)) return null;
             const isPicked = picked === p.text;
+            const isDragging = dragText === p.text;
             return (
-              <button key={i} onClick={() => pickPiece(p.text)} disabled={verified}
+              <div key={i}
+                draggable={!verified}
+                onDragStart={(e) => {
+                  if (verified) return;
+                  e.dataTransfer.effectAllowed = "move";
+                  e.dataTransfer.setData("text/plain", p.text);
+                  setDragText(p.text);
+                }}
+                onDragEnd={() => { setDragText(null); setDragOverIdx(null); }}
+                onClick={() => { if (!verified) pickPiece(p.text); }}
                 style={{
-                  padding: "6px 10px", borderRadius: 10,
+                  padding: "8px 12px", borderRadius: 10,
                   background: isPicked ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.92)",
                   color: "#3a2608",
                   border: `2px solid ${isPicked ? "#4fd8ff" : "rgba(242,194,96,0.65)"}`,
-                  fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 11,
-                  cursor: "pointer",
+                  fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12,
+                  cursor: verified ? "default" : "grab", userSelect: "none",
+                  opacity: isDragging ? 0.4 : 1,
                   boxShadow: isPicked ? "0 0 14px rgba(79,216,255,0.6)" : "0 4px 10px rgba(0,0,0,0.3)",
+                  transition: "opacity 0.15s",
                 }}>
                 {p.text}
-              </button>
+              </div>
             );
           })}
         </div>
@@ -1909,7 +2006,10 @@ function ConectoresCard({ pick, opciones, selected, locked, onSelect }) {
   // Insertar el hueco visualmente en la oración
   const parts = pick.oracion.split("___");
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, padding: "0 8px" }}>
+    <div style={{
+      display: "flex", flexDirection: "column", alignItems: "center",
+      justifyContent: "center", height: "100%", gap: 18, padding: "0 8px",
+    }}>
       <div style={{
         background: "rgba(167,139,250,0.18)",
         border: "1px solid rgba(167,139,250,0.6)",
@@ -1960,7 +2060,8 @@ function ErroresCard({ pick, tokens, picked, locked, onToggle }) {
   }
 
   return (
-    <div style={{ position: "absolute", inset: 0, padding: "0 8px" }}>
+    <div style={{ position: "absolute", inset: 0, padding: "0 8px",
+      display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{
         margin: "0 auto", maxWidth: 480,
         background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(245,238,225,0.95))",
@@ -2147,9 +2248,9 @@ function EnriquecimientoGame({ app, setApp, go, onRestart }) {
   }
 
   const bocadillo =
-    ronda === 0 ? "¿Qué palabra conecta las imágenes?" :
-    ronda === 1 ? "Elige la letra correcta." :
-    "Coloca cada verbo en su hueco.";
+    ronda === 0 ? "Mira las imágenes y elige la palabra. Después ¡VERIFICA!" :
+    ronda === 1 ? "Lee la pista y elige la letra. Después ¡VERIFICA!" :
+    "Arrastra cada verbo a su hueco y luego ¡VERIFICA!";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
@@ -2176,15 +2277,16 @@ function EnriquecimientoGame({ app, setApp, go, onRestart }) {
           <CondicionalCard pick={r3Pick} opciones={r3Opciones}
             placed={r3Placed} picked={r3Picked} verified={r3Verified}
             onPickWord={(w) => { if (r3Verified) return; if (r3Placed.includes(w)) return; setR3Picked(r3Picked === w ? null : w); }}
-            onPlaceAt={(holeIdx) => {
+            onPlaceAt={(holeIdx, explicitWord) => {
               if (r3Verified) return;
-              if (r3Picked === null) {
+              const w = explicitWord !== undefined ? explicitWord : r3Picked;
+              if (w === null || w === undefined) {
                 if (r3Placed[holeIdx]) { const next = [...r3Placed]; next[holeIdx] = null; setR3Placed(next); }
                 return;
               }
               const next = [...r3Placed];
-              for (let k = 0; k < next.length; k++) if (next[k] === r3Picked) next[k] = null;
-              next[holeIdx] = r3Picked;
+              for (let k = 0; k < next.length; k++) if (next[k] === w) next[k] = null;
+              next[holeIdx] = w;
               setR3Placed(next);
               setR3Picked(null);
             }}
@@ -2214,7 +2316,10 @@ function PolisemiasCard({ pick, opciones, selected, locked, onSelect }) {
     onSelect && onSelect(opt);
   }
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, padding: "0 8px" }}>
+    <div style={{
+      display: "flex", flexDirection: "column", alignItems: "center",
+      justifyContent: "center", height: "100%", gap: 18, padding: "0 8px",
+    }}>
       <div style={{ display: "flex", gap: 14, alignItems: "center", justifyContent: "center" }}>
         {[{ emoji: pick.emoji1, label: pick.label1 }, { emoji: pick.emoji2, label: pick.label2 }].map((it, i) => (
           <div key={i} style={{
@@ -2260,7 +2365,10 @@ function HomofonasCard({ pick, selected, locked, onSelect }) {
     onSelect && onSelect(letter);
   }
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 18, padding: "0 8px" }}>
+    <div style={{
+      display: "flex", flexDirection: "column", alignItems: "center",
+      justifyContent: "center", height: "100%", gap: 22, padding: "0 8px",
+    }}>
       <div style={{
         background: "rgba(195,156,255,0.18)",
         border: "1px solid rgba(195,156,255,0.6)",
@@ -2306,8 +2414,11 @@ function HomofonasCard({ pick, selected, locked, onSelect }) {
 }
 
 function CondicionalCard({ pick, opciones, placed, picked, verified, onPickWord, onPlaceAt }) {
+  // Soporta DRAG (HTML5) y tap-to-place.
+  const [dragWord, setDragWord] = React.useState(null);
+  const [dragOverIdx, setDragOverIdx] = React.useState(null);
   const pickWord = (w) => onPickWord && onPickWord(w);
-  const placeAt = (holeIdx) => onPlaceAt && onPlaceAt(holeIdx);
+  const placeAt = (holeIdx, explicitWord) => onPlaceAt && onPlaceAt(holeIdx, explicitWord);
 
   // Renderizar el párrafo intercalando texto y huecos
   const fragments = [];
@@ -2318,20 +2429,33 @@ function CondicionalCard({ pick, opciones, placed, picked, verified, onPickWord,
       const filled = placed[slotIdx];
       const correct = verified && filled === pick.correctas[slotIdx];
       const wrong = verified && filled !== pick.correctas[slotIdx];
+      const isHover = dragOverIdx === slotIdx;
       fragments.push(
-        <button key={`h${slotIdx}`} onClick={() => placeAt(slotIdx)} disabled={verified}
+        <span key={`h${slotIdx}`}
+          onClick={() => { if (!verified) placeAt(slotIdx); }}
+          onDragOver={(e) => { if (!verified) { e.preventDefault(); setDragOverIdx(slotIdx); } }}
+          onDragLeave={() => setDragOverIdx((x) => x === slotIdx ? null : x)}
+          onDrop={(e) => {
+            if (verified) return;
+            e.preventDefault();
+            const raw = e.dataTransfer.getData("text/plain");
+            setDragOverIdx(null); setDragWord(null);
+            if (raw) placeAt(slotIdx, raw);
+          }}
           style={{
             display: "inline-block",
             padding: "2px 10px", margin: "0 3px",
-            background: filled ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(195,156,255,0.18)",
+            background: filled ? "linear-gradient(180deg,#fce9a8,#d9a441)"
+              : isHover ? "rgba(79,216,255,0.25)" : "rgba(195,156,255,0.18)",
             color: filled ? "#3a2608" : "#c39cff",
-            border: `2px dashed ${correct ? "#2ecc8f" : wrong ? "#ff6b6b" : "#c39cff"}`,
+            border: `2px dashed ${correct ? "#2ecc8f" : wrong ? "#ff6b6b" : isHover ? "#4fd8ff" : "#c39cff"}`,
             borderRadius: 8, minWidth: 80,
             fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13,
             cursor: verified ? "default" : "pointer",
+            transition: "background 0.15s, border-color 0.15s",
           }}>
           {filled || "___"}
-        </button>
+        </span>
       );
       holeIdx++;
     } else {
@@ -2340,41 +2464,58 @@ function CondicionalCard({ pick, opciones, placed, picked, verified, onPickWord,
   }
 
   return (
-    <div style={{ position: "absolute", inset: 0, padding: "0 8px", display: "flex", flexDirection: "column", gap: 10 }}>
+    <div style={{ position: "absolute", inset: 0, padding: "0 8px",
+      display: "flex", flexDirection: "column", justifyContent: "center", gap: 14 }}>
       <div style={{
         background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(245,238,225,0.95))",
         border: "3px solid #f2c260", borderRadius: 14,
-        padding: "14px 18px", boxShadow: "0 10px 24px rgba(0,0,0,0.45)",
+        padding: "16px 20px", boxShadow: "0 10px 24px rgba(0,0,0,0.45)",
         color: "#3a2608",
-        fontFamily: "var(--ed-font-display)", fontSize: 14, lineHeight: 1.8,
+        fontFamily: "var(--ed-font-display)", fontSize: 14, lineHeight: 1.9,
         textAlign: "left", maxWidth: 480, margin: "0 auto",
       }}>
         {fragments}
       </div>
 
       <div data-qa="bandeja" style={{
-        display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap", marginTop: 8,
+        background: "rgba(10,6,35,0.45)",
+        border: "1px dashed rgba(195,156,255,0.4)",
+        borderRadius: 12,
+        padding: "10px 8px",
+        display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap",
+        minHeight: 50,
       }}>
         {opciones.map((w, i) => {
           if (placed.includes(w)) return null;
           const isPicked = picked === w;
+          const isDragging = dragWord === w;
           return (
-            <button key={i} onClick={() => pickWord(w)} disabled={verified}
+            <div key={i}
+              draggable={!verified}
+              onDragStart={(e) => {
+                if (verified) return;
+                e.dataTransfer.effectAllowed = "move";
+                e.dataTransfer.setData("text/plain", w);
+                setDragWord(w);
+              }}
+              onDragEnd={() => { setDragWord(null); setDragOverIdx(null); }}
+              onClick={() => { if (!verified) pickWord(w); }}
               style={{
-                padding: "8px 12px", borderRadius: 10,
+                padding: "8px 14px", borderRadius: 10,
                 background: isPicked ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.92)",
                 color: "#3a2608",
                 border: `2px solid ${isPicked ? "#4fd8ff" : "#c39cff"}`,
                 fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13,
-                cursor: "pointer",
+                cursor: verified ? "default" : "grab", userSelect: "none",
+                opacity: isDragging ? 0.4 : 1,
                 boxShadow: isPicked ? "0 0 14px rgba(79,216,255,0.6)" : "0 4px 10px rgba(0,0,0,0.3)",
+                transition: "opacity 0.15s",
               }}>
               {w}
-            </button>
+            </div>
           );
         })}
       </div>
-
     </div>
   );
 }

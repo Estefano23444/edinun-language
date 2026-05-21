@@ -875,14 +875,8 @@ function LetraCQGame({ app, setApp, go, onRestart }) {
             fontSize: 13, padding: "0 8px", height: 50, fontWeight: 800, letterSpacing: "0.04em",
             opacity: !lockedRef.current && filled.some((v) => v !== undefined) ? 1 : 0.45,
           }}>BORRAR</button>
-        <button className="ed-btn" onClick={() => setConfirmingExit(true)}
-          style={{
-            fontSize: 13, padding: "0 8px", height: 50, fontWeight: 800, letterSpacing: "0.04em",
-            background: "linear-gradient(180deg, #b89cff, #6d4ed1)",
-            color: "#fff",
-            border: "none",
-            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -3px 0 rgba(0,0,0,0.25), 0 4px 10px -2px rgba(0,0,0,0.45)",
-          }}>REINICIAR</button>
+        <button className="ed-btn ed-btn-restart" onClick={() => setConfirmingExit(true)}
+          style={{ fontSize: 13, padding: "0 8px", height: 50, fontWeight: 800, letterSpacing: "0.04em" }}>REINICIAR</button>
         <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingHomeExit(true)}
           style={{ fontSize: 13, padding: "0 8px", height: 50, fontWeight: 800, letterSpacing: "0.04em" }}>SALIR</button>
       </div>
@@ -1141,14 +1135,8 @@ function ElementosTextoGame({ app, setApp, go, onRestart }) {
               cursor: clearReady ? "pointer" : "not-allowed",
             }}>BORRAR</button>
         )}
-        <button className="ed-btn" onClick={() => setConfirmingExit(true)}
-          style={{
-            fontSize: 13, padding: "0 8px", height: 50, fontWeight: 800, letterSpacing: "0.04em",
-            background: "linear-gradient(180deg, #b89cff, #6d4ed1)",
-            color: "#fff",
-            border: "none",
-            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -3px 0 rgba(0,0,0,0.25), 0 4px 10px -2px rgba(0,0,0,0.45)",
-          }}>REINICIAR</button>
+        <button className="ed-btn ed-btn-restart" onClick={() => setConfirmingExit(true)}
+          style={{ fontSize: 13, padding: "0 8px", height: 50, fontWeight: 800, letterSpacing: "0.04em" }}>REINICIAR</button>
         <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingHomeExit(true)}
           style={{ fontSize: 13, padding: "0 8px", height: 50, fontWeight: 800, letterSpacing: "0.04em" }}>SALIR</button>
       </div>

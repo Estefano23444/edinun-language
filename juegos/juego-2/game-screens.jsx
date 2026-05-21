@@ -817,7 +817,7 @@ function LetraRGame({ app, setApp, go, onRestart }) {
           style={{ fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}>¡VERIFICAR!</button>
         <button className="ed-btn ed-btn-erase" onClick={erase}
           style={{ fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}>BORRAR</button>
-        <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingExit(true)}
+        <button className="ed-btn ed-btn-restart" onClick={() => setConfirmingExit(true)}
           style={{ fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}>REINICIAR</button>
       </div>
 
@@ -1039,7 +1039,7 @@ function NoticiaGame({ app, setApp, go, onRestart }) {
       </div>
 
       {/* Botón reiniciar, debajo del personaje en la columna izquierda */}
-      <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingExit(true)}
+      <button className="ed-btn ed-btn-restart" onClick={() => setConfirmingExit(true)}
         style={{
           position: "absolute", left: 60, bottom: 24, width: 116,
           fontSize: 12, padding: "6px 12px", height: 36, fontWeight: 800, letterSpacing: "0.04em",
@@ -1390,7 +1390,7 @@ function BlogGame({ app, setApp, go, onRestart }) {
         )}
       </div>
 
-      <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingExit(true)}
+      <button className="ed-btn ed-btn-restart" onClick={() => setConfirmingExit(true)}
         style={{
           position: "absolute", left: 60, bottom: 24, width: 116,
           fontSize: 12, padding: "6px 12px", height: 36, fontWeight: 800, letterSpacing: "0.04em",
