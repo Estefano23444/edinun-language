@@ -416,6 +416,26 @@ function GameScreen({ app, setApp, go }) {
 // ─────────────────────────────────────────────────────────────
 // HUD común (logo + chips de 4 temas + timer + estrellas) y modales
 // ─────────────────────────────────────────────────────────────
+// Enunciado grande arriba (estilo completa-palabras): texto blanco con sombra,
+// centrado entre el personaje (left:240) y el ActionRail (right:168).
+function GameEnunciado({ text }) {
+  if (!text) return null;
+  return (
+    <div style={{
+      position: "absolute", top: 88, left: 240, right: 168,
+      textAlign: "center",
+      fontFamily: "var(--ed-font-display)", fontWeight: 700,
+      fontSize: 19, lineHeight: 1.2,
+      color: "#fff",
+      textShadow: "0 2px 6px rgba(0,0,0,0.55)",
+      pointerEvents: "none",
+      zIndex: 5,
+    }}>
+      {text}
+    </div>
+  );
+}
+
 function GameHUD({ elapsed, stars, attempted, solved, total = 3, app, setApp }) {
   const levels = (typeof LEVELS_CFG !== "undefined" && LEVELS_CFG) || (window.LEVELS_CFG || []);
   const currentId = app && app.currentCategory ? app.currentCategory : "tipos";
@@ -934,22 +954,28 @@ function TiposDeTextoGame({ app, setApp, go, onRestart }) {
 
   const [confirmingActualExit, setConfirmingActualExit] = useStateG(false);
 
-  // Bocadillo dinámico por ronda. El enunciado del juego dice QUÉ hacer;
-  // el bocadillo dice CÓMO hacerlo / cuándo verificar.
+  // Enunciado (QUÉ hacer) — grande, arriba, blanco con sombra.
+  // Bocadillo (CÓMO) — corto, dentro del bocadillo del personaje.
+  const enunciado =
+    ronda === 0 ? "¿Qué tipo de texto es?" :
+    ronda === 1 ? "Arrastra cada pieza al cuadro correcto" :
+    `Encuentra los textos ${r3Current.id === "literario" ? "literarios" : r3Current.id === "informativo" ? "informativos" : "funcionales"}`;
+
   const bocadillo =
-    ronda === 0 ? "Lee el texto y elige una opción. Después toca ¡VERIFICAR!" :
-    ronda === 1 ? "Arrastra cada pieza al cuadro correcto y luego ¡VERIFICA!" :
-    "Toca las burbujas correctas y luego ¡VERIFICA!";
+    ronda === 0 ? "Lee y elige. Después ¡VERIFICA!" :
+    ronda === 1 ? "Coloca las 4 piezas y ¡VERIFICA!" :
+    "Toca las burbujas correctas y ¡VERIFICA!";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
       <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} app={app} setApp={setApp} />
 
       <CharacterCorner char={char} message={bocadillo} />
+      <GameEnunciado text={enunciado} />
 
       {/* Zona central — varía por ronda. right:168 deja sitio al ActionRail. */}
       <div data-qa="zona-central" style={{
-        position: "absolute", top: 100, left: 240, right: 168, bottom: 14,
+        position: "absolute", top: 128, left: 240, right: 168, bottom: 14,
       }}>
         {ronda === 0 && (
           <TiposTriviaCard pick={r1Pick}
@@ -1024,9 +1050,6 @@ function TiposTriviaCard({ pick, selected, locked, onSelect }) {
           {pick.titulo}
         </div>
         <div style={{ fontSize: 14, lineHeight: 1.35, fontStyle: "italic" }}>"{pick.fragmento}"</div>
-      </div>
-      <div style={{ fontFamily: "var(--ed-font-display)", color: "#fce9a8", fontSize: 15, fontWeight: 700 }}>
-        ¿Qué tipo de texto es?
       </div>
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
         {[
@@ -1112,10 +1135,10 @@ function OrganizadorCard({ pick, pieces, placed, picked, verified, onPickPiece, 
 
   return (
     <div style={{ position: "absolute", inset: 0, padding: "0 8px",
-      display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+      display: "flex", flexDirection: "column", justifyContent: "center", gap: 14 }}>
 
       {/* Cuadros (2×2) con palabra central — alto fijo */}
-      <div style={{ position: "relative", height: 230, marginTop: 4 }}>
+      <div style={{ position: "relative", height: 210 }}>
         {renderSlot("definicion", { left: "8%",  top: 0 })}
         {renderSlot("oracion",    { right: "8%", top: 0 })}
         {renderSlot("sinonimo",   { left: "8%",  bottom: 0 })}
@@ -1135,13 +1158,12 @@ function OrganizadorCard({ pick, pieces, placed, picked, verified, onPickPiece, 
         </div>
       </div>
 
-      {/* Bandeja con piezas (sólo las no colocadas) — arriba de los slots para que sea visible */}
+      {/* Bandeja con piezas (sólo las no colocadas) — pegada a los slots, sin gap muerto */}
       <div data-qa="bandeja" style={{
         background: "rgba(10,6,35,0.45)",
         border: "1px dashed rgba(252,233,168,0.3)",
         borderRadius: 12,
         padding: "10px 8px",
-        marginBottom: 6,
         display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap",
         minHeight: 56,
       }}>
@@ -1188,35 +1210,20 @@ function BurbujasCard({ data, picked, locked, onToggle }) {
     if (locked) return;
     onToggle && onToggle(word);
   }
-  // 7 burbujas distribuidas en 3 filas alrededor del centro (sin huecos visibles).
+  // 7 burbujas distribuidas alrededor del centro: 1 arriba · 2 medio · 2 medio · 2 abajo.
   const positions = [
-    { left: "8%",  top: "6%"  },
-    { left: "62%", top: "6%"  },
-    { left: "2%",  top: "44%" },
-    { left: "75%", top: "44%" },
-    { left: "10%", top: "82%" },
-    { left: "42%", top: "82%" },
-    { left: "72%", top: "82%" },
+    { left: "40%", top: "2%"  },  // arriba centro
+    { left: "5%",  top: "30%" },  // medio-izq
+    { left: "75%", top: "30%" },  // medio-der
+    { left: "5%",  top: "65%" },  // abajo-izq
+    { left: "75%", top: "65%" },  // abajo-der
+    { left: "20%", top: "92%" },  // base-izq
+    { left: "60%", top: "92%" },  // base-der
   ];
 
   return (
-    <div style={{ position: "absolute", inset: 0, padding: "0 8px",
-      display: "flex", flexDirection: "column" }}>
-      {/* Enunciado: el QUÉ hacer. Sin caja, tipográfico limpio. */}
-      <div style={{
-        textAlign: "center",
-        color: "#fce9a8",
-        fontFamily: "var(--ed-font-display)",
-        fontWeight: 800,
-        fontSize: 18,
-        letterSpacing: "0.02em",
-        marginTop: 6,
-        textShadow: "0 2px 6px rgba(0,0,0,0.5)",
-      }}>
-        {data.consigna}
-      </div>
-
-      <div style={{ position: "relative", flex: 1, marginTop: 4 }}>
+    <div style={{ position: "absolute", inset: 0, padding: "0 8px" }}>
+      <div style={{ position: "relative", height: "100%" }}>
         {/* Burbuja central */}
         <div style={{
           position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
@@ -1426,19 +1433,25 @@ function PoeticaGame({ app, setApp, go, onRestart }) {
     }
   }
 
+  const enunciado =
+    ronda === 0 ? "¿Qué función cumple esta oración?" :
+    ronda === 1 ? "Une cada refrán con su significado" :
+    "Encuentra las figuras literarias del poema";
+
   const bocadillo =
-    ronda === 0 ? "Lee la oración y elige una opción. Después ¡VERIFICA!" :
-    ronda === 1 ? "Toca un refrán y luego su significado. Después ¡VERIFICA!" :
-    "Toca los versos con figuras literarias y luego ¡VERIFICA!";
+    ronda === 0 ? "Lee y elige. Después ¡VERIFICA!" :
+    ronda === 1 ? "Toca un refrán y luego su significado." :
+    "Toca los versos con figuras y ¡VERIFICA!";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
       <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} app={app} setApp={setApp} />
 
       <CharacterCorner char={char} message={bocadillo} />
+      <GameEnunciado text={enunciado} />
 
       <div data-qa="zona-central" style={{
-        position: "absolute", top: 100, left: 240, right: 168, bottom: 14,
+        position: "absolute", top: 128, left: 240, right: 168, bottom: 14,
       }}>
         {ronda === 0 && (
           <PoeticaTriviaCard pick={r1Pick}
@@ -1509,9 +1522,6 @@ function PoeticaTriviaCard({ pick, selected, locked, onSelect }) {
         textAlign: "center", fontStyle: "italic",
       }}>
         "{pick.oracion}"
-      </div>
-      <div style={{ fontFamily: "var(--ed-font-display)", color: "#fce9a8", fontSize: 15, fontWeight: 700 }}>
-        ¿Qué función cumple esta oración?
       </div>
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
         {[
@@ -1832,19 +1842,25 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
     }
   }
 
+  const enunciado =
+    ronda === 0 ? "Ordena las partes del informe (1 a 6)" :
+    ronda === 1 ? "Elige el conector correcto" :
+    "Encuentra las palabras con error";
+
   const bocadillo =
-    ronda === 0 ? "Arrastra cada parte a su orden (1-6) y luego ¡VERIFICA!" :
-    ronda === 1 ? "Elige el conector correcto. Después ¡VERIFICA!" :
-    "Toca las palabras con error y luego ¡VERIFICA!";
+    ronda === 0 ? "Arrastra cada parte y ¡VERIFICA!" :
+    ronda === 1 ? "Elige y ¡VERIFICA!" :
+    "Toca las palabras con error y ¡VERIFICA!";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
       <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} app={app} setApp={setApp} />
 
       <CharacterCorner char={char} message={bocadillo} />
+      <GameEnunciado text={enunciado} />
 
       <div data-qa="zona-central" style={{
-        position: "absolute", top: 100, left: 240, right: 168, bottom: 14,
+        position: "absolute", top: 128, left: 240, right: 168, bottom: 14,
       }}>
         {ronda === 0 && (
           <OrdenInformeCard contexto={r1Pick}
@@ -2247,19 +2263,25 @@ function EnriquecimientoGame({ app, setApp, go, onRestart }) {
     }
   }
 
+  const enunciado =
+    ronda === 0 ? "¿Qué palabra conecta las imágenes?" :
+    ronda === 1 ? "Elige la letra correcta" :
+    "Completa el párrafo con los verbos correctos";
+
   const bocadillo =
-    ronda === 0 ? "Mira las imágenes y elige la palabra. Después ¡VERIFICA!" :
-    ronda === 1 ? "Lee la pista y elige la letra. Después ¡VERIFICA!" :
-    "Arrastra cada verbo a su hueco y luego ¡VERIFICA!";
+    ronda === 0 ? "Mira las imágenes y elige. ¡VERIFICA!" :
+    ronda === 1 ? "Lee la pista y elige. ¡VERIFICA!" :
+    "Arrastra cada verbo a su hueco y ¡VERIFICA!";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
       <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} app={app} setApp={setApp} />
 
       <CharacterCorner char={char} message={bocadillo} />
+      <GameEnunciado text={enunciado} />
 
       <div data-qa="zona-central" style={{
-        position: "absolute", top: 100, left: 240, right: 168, bottom: 14,
+        position: "absolute", top: 128, left: 240, right: 168, bottom: 14,
       }}>
         {ronda === 0 && (
           <PolisemiasCard pick={r1Pick} opciones={r1Opciones}
@@ -2336,9 +2358,6 @@ function PolisemiasCard({ pick, opciones, selected, locked, onSelect }) {
             </div>
           </div>
         ))}
-      </div>
-      <div style={{ fontFamily: "var(--ed-font-display)", color: "#fce9a8", fontSize: 14, fontWeight: 700 }}>
-        ¿Qué palabra conecta estas imágenes?
       </div>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
         {opciones.map((opt, i) => (
