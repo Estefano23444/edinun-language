@@ -212,7 +212,7 @@ function HomeScreen({ app, setApp, go }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 18, maxWidth: 520 }}>
           <div>
             <div className="ed-label" style={{ color: "#4fd8ff", marginBottom: 8 }}>
-              EDINUN · Letras y textos
+              Del sonido al sentido
             </div>
             <h1 className="ed-h1" style={{ fontSize: 40, lineHeight: 1.05 }}>
               ¡Bienvenido/a,{" "}

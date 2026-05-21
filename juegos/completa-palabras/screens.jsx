@@ -206,7 +206,7 @@ function HomeScreen({ app, setApp, go }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 520 }}>
           <div>
             <div className="ed-label" style={{ color: "#4fd8ff", marginBottom: 6 }}>
-              El país de las palabras de tierra
+              El taller de las letras
             </div>
             <h1 className="ed-h1" style={{ fontSize: 36, lineHeight: 1.05 }}>
               ¡Bienvenido/a,{" "}
