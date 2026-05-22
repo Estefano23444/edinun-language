@@ -197,66 +197,78 @@ const REFRANES_BANK = [
   { id: "busca",   refran: "Quien busca, encuentra",            significado: "Si te esfuerzas, lograrás lo que quieres." },
 ];
 
-// R3 — Encerrar figuras literarias en poemas
+// R3 — Encerrar figuras literarias en poemas (6-7 versos cada uno)
 const POEMAS_BANK = [
   {
     id: "fuertes",
     titulo: "Gloria Fuertes",
     versos: [
-      { texto: "En el árbol de mi pecho",           figura: true  },
-      { texto: "hay un pájaro encarnado.",          figura: true  },
-      { texto: "Cuando te veo se asusta,",          figura: false },
-      { texto: "aletea, lanza saltos.",             figura: false },
+      { texto: "En el árbol de mi pecho",                 figura: true  },
+      { texto: "hay un pájaro encarnado.",                figura: true  },
+      { texto: "Cuando te veo se asusta,",                figura: false },
+      { texto: "aletea, lanza saltos.",                   figura: false },
+      { texto: "Mi corazón es un nido",                   figura: true  },
+      { texto: "que se abre al verte pasar.",             figura: true  },
     ],
   },
   {
     id: "dario",
     titulo: "Rubén Darío",
     versos: [
-      { texto: "Las princesas primorosas",          figura: true  },
-      { texto: "se parecen mucho a ti.",            figura: true  },
-      { texto: "Cortan lirios, cortan rosas,",      figura: false },
-      { texto: "cortan astros. Son así.",           figura: true  },
+      { texto: "Las princesas primorosas",                figura: true  },
+      { texto: "se parecen mucho a ti.",                  figura: true  },
+      { texto: "Cortan lirios, cortan rosas,",            figura: false },
+      { texto: "cortan astros. Son así.",                 figura: true  },
+      { texto: "Son perfumes y son luz,",                 figura: true  },
+      { texto: "son la voz de un colibrí.",               figura: true  },
     ],
   },
   {
     id: "calderon",
     titulo: "Calderón",
     versos: [
-      { texto: "¿Qué es la vida? Un frenesí.",      figura: true  },
-      { texto: "¿Qué es la vida? Una ilusión,",     figura: true  },
-      { texto: "una sombra, una ficción.",          figura: true  },
-      { texto: "Y los sueños, sueños son.",         figura: false },
+      { texto: "¿Qué es la vida? Un frenesí.",            figura: true  },
+      { texto: "¿Qué es la vida? Una ilusión,",           figura: true  },
+      { texto: "una sombra, una ficción.",                figura: true  },
+      { texto: "Y el mayor bien es pequeño,",             figura: false },
+      { texto: "que toda la vida es sueño",               figura: true  },
+      { texto: "y los sueños, sueños son.",               figura: true  },
     ],
   },
   {
     id: "luceros",
     titulo: "Anónimo",
     versos: [
-      { texto: "Tus ojos son dos luceros",          figura: true  },
-      { texto: "que iluminan mi camino.",           figura: true  },
-      { texto: "Tu sonrisa es primavera",           figura: true  },
-      { texto: "y yo soy tu peregrino.",            figura: false },
+      { texto: "Tus ojos son dos luceros",                figura: true  },
+      { texto: "que iluminan mi camino.",                 figura: true  },
+      { texto: "Tu sonrisa es primavera",                 figura: true  },
+      { texto: "y yo soy tu peregrino.",                  figura: false },
+      { texto: "Tu voz es música suave",                  figura: true  },
+      { texto: "que despierta al colibrí.",               figura: true  },
     ],
   },
   {
     id: "rio",
     titulo: "Río",
     versos: [
-      { texto: "El río canta mientras corre,",      figura: true  },
-      { texto: "acaricia las piedras del lecho.",   figura: true  },
-      { texto: "Lleva las hojas del otoño,",        figura: false },
-      { texto: "y un secreto viejo en su pecho.",   figura: true  },
+      { texto: "El río canta mientras corre,",            figura: true  },
+      { texto: "acaricia las piedras del lecho.",         figura: true  },
+      { texto: "Lleva las hojas del otoño,",              figura: false },
+      { texto: "y un secreto viejo en su pecho.",         figura: true  },
+      { texto: "Susurra cuentos al viento",               figura: true  },
+      { texto: "y se ríe bajo el techo.",                 figura: true  },
     ],
   },
   {
     id: "lorca",
     titulo: "Federico (adaptado)",
     versos: [
-      { texto: "Verde que te quiero verde.",        figura: true  },
-      { texto: "Verde viento, verdes ramas.",       figura: true  },
-      { texto: "El barco sobre la mar",             figura: false },
-      { texto: "y el caballo en la montaña.",       figura: false },
+      { texto: "Verde que te quiero verde.",              figura: true  },
+      { texto: "Verde viento, verdes ramas.",             figura: true  },
+      { texto: "El barco sobre la mar",                   figura: false },
+      { texto: "y el caballo en la montaña.",             figura: false },
+      { texto: "Verde carne, pelo verde,",                figura: true  },
+      { texto: "con ojos de fría plata.",                 figura: true  },
     ],
   },
 ];
@@ -730,11 +742,13 @@ function CharacterCorner({ char, message }) {
       pointerEvents: "none", textAlign: "center",
     }}>
       <div data-qa="bocadillo" style={{
-        position: "absolute", left: 6, top: -82, width: 208,
+        position: "absolute", left: 0, right: 0, top: -82,
+        display: "flex", justifyContent: "center",
         pointerEvents: "none",
       }}>
         <div style={{
           position: "relative",
+          maxWidth: 208,
           background: "linear-gradient(180deg, rgba(20,12,55,0.95), rgba(10,6,35,0.95))",
           border: "1.5px solid rgba(242,194,96,0.65)",
           borderRadius: 16, padding: "10px 14px",
@@ -745,7 +759,7 @@ function CharacterCorner({ char, message }) {
         }}>
           {message}
           <div style={{
-            position: "absolute", bottom: -10, left: 70,
+            position: "absolute", bottom: -10, left: "50%", transform: "translateX(-50%)",
             width: 0, height: 0,
             borderLeft: "9px solid transparent", borderRight: "9px solid transparent",
             borderTop: "10px solid rgba(20,12,55,0.95)",
@@ -1363,7 +1377,19 @@ function PoeticaGame({ app, setApp, go, onRestart }) {
   // States levantados de las cards
   const [r1Selected, setR1Selected] = useStateG(null);
   const [r1Locked, setR1Locked] = useStateG(false);
-  const [r2RightOrder] = useStateG(() => shuffle(r2Pairs.map((p, i) => ({ origIdx: i, sig: p.significado }))));
+  // r2: 3 refranes a la izq + 4 significados a la derecha (1 distractor). origIdx === -1 → distractor.
+  const [r2RightOrder] = useStateG(() => {
+    const correct = r2Pairs.map((p, i) => ({ origIdx: i, sig: p.significado }));
+    const usedIds = new Set(r2Pairs.map((p) => p.id));
+    const distractorPool = REFRANES_BANK.filter((b) => !usedIds.has(b.id));
+    const distractor = distractorPool.length > 0
+      ? distractorPool[Math.floor(Math.random() * distractorPool.length)]
+      : null;
+    const items = distractor
+      ? [...correct, { origIdx: -1, sig: distractor.significado }]
+      : correct;
+    return shuffle(items);
+  });
   const [r2SelectedLeft, setR2SelectedLeft] = useStateG(null);
   const [r2Connections, setR2Connections] = useStateG({});
   const [r2Verified, setR2Verified] = useStateG(false);
@@ -1596,9 +1622,9 @@ function RefranesCard({ pairs, rightOrder, selectedLeft, connections, verified, 
   return (
     <div style={{ position: "absolute", inset: 0, padding: "8px 8px" }}>
       <div style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 14px 1fr", gap: 12, height: "100%", alignItems: "center" }}>
-          {/* Columna izquierda — refranes */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 14px 1fr", gap: 12, height: "100%", alignItems: "stretch" }}>
+          {/* Columna izquierda — refranes (3) */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, justifyContent: "space-around" }}>
             {pairs.map((p, i) => {
               const isSel = selectedLeft === i;
               const isConnected = connections[i] !== undefined;
@@ -1623,8 +1649,8 @@ function RefranesCard({ pairs, rightOrder, selectedLeft, connections, verified, 
               );
             })}
           </div>
-          {/* Columna central — indicadores */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "center", justifyContent: "center" }}>
+          {/* Columna central — indicadores (mismo count que pairs) */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "center", justifyContent: "space-around" }}>
             {pairs.map((_, i) => {
               const has = connections[i] !== undefined;
               return <div key={i} style={{
@@ -1634,8 +1660,8 @@ function RefranesCard({ pairs, rightOrder, selectedLeft, connections, verified, 
               }} />;
             })}
           </div>
-          {/* Columna derecha — significados */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {/* Columna derecha — significados (4, con 1 distractor) */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, justifyContent: "space-around" }}>
             {rightOrder.map((r, j) => {
               const usedBy = Object.entries(connections).find(([_, v]) => v === j);
               const isConnected = !!usedBy;
@@ -1908,6 +1934,15 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
           <OrdenInformeCard contexto={r1Pick}
             pieces={r1Pieces} placed={r1Placed} picked={r1Picked} verified={r1Verified}
             onPickPiece={(text) => { if (r1Verified) return; if (r1Placed.includes(text)) return; setR1Picked(r1Picked === text ? null : text); }}
+            onPickFromSlot={(idx) => {
+              if (r1Verified) return;
+              const text = r1Placed[idx];
+              if (!text) return;
+              const next = [...r1Placed];
+              next[idx] = null;
+              setR1Placed(next);
+              setR1Picked(text);
+            }}
             onPlaceAt={(idx, explicitText) => {
               if (r1Verified) return;
               const text = explicitText !== undefined ? explicitText : r1Picked;
@@ -1953,11 +1988,12 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
   );
 }
 
-function OrdenInformeCard({ contexto, pieces, placed, picked, verified, onPickPiece, onPlaceAt }) {
-  // Soporta DRAG (HTML5) y tap-to-place.
+function OrdenInformeCard({ contexto, pieces, placed, picked, verified, onPickPiece, onPickFromSlot, onPlaceAt }) {
+  // Soporta DRAG (HTML5) y tap-to-place. Slot lleno también es pickeable/draggable.
   const [dragText, setDragText] = React.useState(null);
   const [dragOverIdx, setDragOverIdx] = React.useState(null);
   const pickPiece = (text) => onPickPiece && onPickPiece(text);
+  const pickFromSlot = (idx) => onPickFromSlot && onPickFromSlot(idx);
   const placeAt = (idx, explicitText) => onPlaceAt && onPlaceAt(idx, explicitText);
 
   return (
@@ -1971,16 +2007,31 @@ function OrdenInformeCard({ contexto, pieces, placed, picked, verified, onPickPi
         {contexto.titulo}
       </div>
 
-      <div style={{ display: "flex", gap: 14, flex: 1, minHeight: 0 }}>
+      <div style={{ display: "flex", gap: 14, flex: 1, minHeight: 0, justifyContent: "center" }}>
         {/* Slots numerados (izquierda) */}
-        <div style={{ flex: "0 0 230px", display: "flex", flexDirection: "column", gap: 6, overflow: "auto" }}>
+        <div style={{ flex: "0 0 240px", display: "flex", flexDirection: "column", gap: 6, overflow: "auto" }}>
           {placed.map((t, i) => {
             const correct = verified && t === INFORME_PARTES[i];
             const wrong = verified && t !== INFORME_PARTES[i];
             const isHover = dragOverIdx === i;
+            const isDragSource = t && dragText === t;
             return (
               <div key={i}
-                onClick={() => { if (!verified) placeAt(i); }}
+                // Tap: si tiene pieza y nada en mano → la levanta. Si no, intenta placeAt.
+                onClick={() => {
+                  if (verified) return;
+                  if (t && picked === null) { pickFromSlot(i); return; }
+                  placeAt(i);
+                }}
+                // Drag-source: pieza colocada se puede arrastrar a otro slot.
+                draggable={!verified && !!t}
+                onDragStart={(e) => {
+                  if (verified || !t) return;
+                  e.dataTransfer.effectAllowed = "move";
+                  e.dataTransfer.setData("text/plain", t);
+                  setDragText(t);
+                }}
+                onDragEnd={() => { setDragText(null); setDragOverIdx(null); }}
                 onDragOver={(e) => { if (!verified) { e.preventDefault(); setDragOverIdx(i); } }}
                 onDragLeave={() => setDragOverIdx((x) => x === i ? null : x)}
                 onDrop={(e) => {
@@ -1998,10 +2049,12 @@ function OrdenInformeCard({ contexto, pieces, placed, picked, verified, onPickPi
                   color: t ? "#3a2608" : "rgba(252,233,168,0.5)",
                   border: `2px dashed ${correct ? "#2ecc8f" : wrong ? "#ff6b6b" : isHover ? "#4fd8ff" : "rgba(252,233,168,0.45)"}`,
                   fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12,
-                  textAlign: "left", cursor: verified ? "default" : "pointer",
+                  textAlign: "left", cursor: verified ? "default" : (t ? "grab" : "pointer"),
+                  userSelect: "none",
                   width: "100%", minHeight: 38,
+                  opacity: isDragSource ? 0.4 : 1,
                   boxShadow: isHover ? "0 0 12px rgba(79,216,255,0.5)" : "none",
-                  transition: "background 0.15s, border-color 0.15s",
+                  transition: "background 0.15s, border-color 0.15s, opacity 0.15s",
                 }}>
                 <span style={{ fontWeight: 800, fontSize: 14, color: t ? "#3a2608" : "#a78bfa" }}>{i + 1}.</span>
                 <span style={{ flex: 1 }}>{t || "(vacío)"}</span>
@@ -2010,14 +2063,14 @@ function OrdenInformeCard({ contexto, pieces, placed, picked, verified, onPickPi
           })}
         </div>
 
-        {/* Bandeja de piezas (derecha) */}
+        {/* Bandeja de piezas (derecha) — ancho ajustado al contenido (no full) */}
         <div style={{
-          flex: 1, minWidth: 0,
+          flex: "0 1 auto", maxWidth: 220, minWidth: 160,
           background: "rgba(10,6,35,0.45)",
           border: "1px dashed rgba(252,233,168,0.3)",
           borderRadius: 12,
           padding: 10,
-          display: "flex", flexWrap: "wrap", alignContent: "flex-start", gap: 8,
+          display: "flex", flexWrap: "wrap", alignContent: "flex-start", justifyContent: "center", gap: 8,
         }}>
           {pieces.map((p, i) => {
             if (placed.includes(p.text)) return null;
@@ -2069,11 +2122,12 @@ function ConectoresCard({ pick, opciones, selected, locked, onSelect }) {
       justifyContent: "center", height: "100%", gap: 18, padding: "0 8px",
     }}>
       <div style={{
-        background: "rgba(167,139,250,0.18)",
-        border: "1px solid rgba(167,139,250,0.6)",
-        borderRadius: 999, padding: "4px 14px",
-        fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 11,
-        color: "#a78bfa", letterSpacing: "0.04em", textTransform: "uppercase",
+        background: "linear-gradient(180deg, rgba(195,156,255,0.95), rgba(167,139,250,0.95))",
+        border: "1px solid rgba(255,255,255,0.55)",
+        borderRadius: 999, padding: "6px 18px",
+        fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
+        color: "#1a0a3a", letterSpacing: "0.05em", textTransform: "uppercase",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
       }}>
         Tipo: {pick.funcion}
       </div>
@@ -2122,12 +2176,12 @@ function ErroresCard({ pick, tokens, picked, locked, onToggle }) {
     <div style={{ position: "absolute", inset: 0, padding: "0 8px",
       display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{
-        margin: "0 auto", maxWidth: 480,
+        margin: "0 auto", maxWidth: 360,
         background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(245,238,225,0.95))",
         border: "3px solid #f2c260", borderRadius: 14,
-        padding: "16px 18px",
+        padding: "18px 22px",
         boxShadow: "0 10px 24px rgba(0,0,0,0.45)",
-        color: "#3a2608", fontFamily: "var(--ed-font-display)", fontSize: 14, lineHeight: 1.6,
+        color: "#3a2608", fontFamily: "var(--ed-font-display)", fontSize: 14, lineHeight: 1.8,
       }}>
         {tokens.map((t, i) => {
           if (t.type === "space") return <span key={i}>{t.text}</span>;
@@ -2385,25 +2439,25 @@ function PolisemiasCard({ pick, opciones, selected, locked, onSelect }) {
       display: "flex", flexDirection: "column", alignItems: "center",
       justifyContent: "center", height: "100%", gap: 22, padding: "0 4px",
     }}>
-      {/* 2 emojis lado a lado arriba */}
-      <div style={{ display: "flex", gap: 14, alignItems: "center", justifyContent: "center" }}>
+      {/* 2 emojis lado a lado arriba — mismo ancho total que los botones */}
+      <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center", width: "100%", maxWidth: 240 }}>
         {[{ emoji: pick.emoji1, label: pick.label1 }, { emoji: pick.emoji2, label: pick.label2 }].map((it, i) => (
           <div key={i} style={{
-            width: 130, height: 120,
+            flex: 1, height: 115,
             background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(245,238,225,0.95))",
             border: "3px solid #f2c260", borderRadius: 14,
             boxShadow: "0 8px 18px rgba(0,0,0,0.45)",
             display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
             color: "#3a2608",
           }}>
-            <div style={{ fontSize: 56, lineHeight: 1 }}>{it.emoji}</div>
-            <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12, marginTop: 4 }}>
+            <div style={{ fontSize: 52, lineHeight: 1 }}>{it.emoji}</div>
+            <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 11, marginTop: 4, textAlign: "center", padding: "0 4px" }}>
               {it.label}
             </div>
           </div>
         ))}
       </div>
-      {/* Opciones apiladas en columna debajo */}
+      {/* Opciones apiladas en columna debajo — mismo ancho que la fila de emojis */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "stretch", width: "100%", maxWidth: 240 }}>
         {opciones.map((opt, i) => (
           <button key={i} onClick={() => choose(opt)} disabled={locked}
@@ -2434,11 +2488,12 @@ function HomofonasCard({ pick, selected, locked, onSelect }) {
       justifyContent: "center", height: "100%", gap: 22, padding: "0 8px",
     }}>
       <div style={{
-        background: "rgba(195,156,255,0.18)",
-        border: "1px solid rgba(195,156,255,0.6)",
-        borderRadius: 12, padding: "8px 18px",
-        color: "#c39cff", fontFamily: "var(--ed-font-display)", fontSize: 14, fontWeight: 700,
+        background: "linear-gradient(180deg, rgba(195,156,255,0.95), rgba(167,139,250,0.95))",
+        border: "1px solid rgba(255,255,255,0.55)",
+        borderRadius: 12, padding: "10px 20px",
+        color: "#1a0a3a", fontFamily: "var(--ed-font-display)", fontSize: 14, fontWeight: 800,
         maxWidth: 460, textAlign: "center", lineHeight: 1.3,
+        boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
       }}>
         PISTA: {pick.pista}
       </div>
@@ -2533,10 +2588,10 @@ function CondicionalCard({ pick, opciones, placed, picked, verified, onPickWord,
       <div style={{
         background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(245,238,225,0.95))",
         border: "3px solid #f2c260", borderRadius: 14,
-        padding: "16px 20px", boxShadow: "0 10px 24px rgba(0,0,0,0.45)",
+        padding: "18px 22px", boxShadow: "0 10px 24px rgba(0,0,0,0.45)",
         color: "#3a2608",
-        fontFamily: "var(--ed-font-display)", fontSize: 14, lineHeight: 1.9,
-        textAlign: "left", maxWidth: 480, margin: "0 auto",
+        fontFamily: "var(--ed-font-display)", fontSize: 14, lineHeight: 2.0,
+        textAlign: "left", maxWidth: 360, margin: "0 auto",
       }}>
         {fragments}
       </div>
@@ -2546,8 +2601,8 @@ function CondicionalCard({ pick, opciones, placed, picked, verified, onPickWord,
         border: "1px dashed rgba(195,156,255,0.4)",
         borderRadius: 12,
         padding: "10px 8px",
-        display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap",
-        minHeight: 50,
+        display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8, justifyItems: "center",
+        maxWidth: 360, margin: "0 auto",
       }}>
         {opciones.map((w, i) => {
           if (placed.includes(w)) return null;
