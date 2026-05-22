@@ -973,43 +973,51 @@ const CONECTORES_BANK = [
 const ERRORES_BANK = [
   {
     id: "uv",
-    tokens: "En este estudio, se [investigo] el impacto de la luz UV en las plantas de tomate. La [ipotesis] era que la luz UV podría afectar negativamente su [crezimiento]. Por eso, las plantas fueron [obserbadas] durante todo el verano por estudiantes del colegio.",
-    correctos: { investigo: "investigó", ipotesis: "hipótesis", crezimiento: "crecimiento", obserbadas: "observadas" },
+    titulo: "Informe: La luz UV en plantas de tomate",
+    tokens: "En este estudio, se [investigo] el impacto de la luz UV en las plantas de tomate. La [ipotesis] era que la luz UV podría afectar negativamente su [crezimiento]. Por eso, las plantas fueron [obserbadas] durante todo el verano por estudiantes del colegio. Los resultados nos [enseñaran] que la luz fuerte sí puede perjudicarlas.",
+    correctos: { investigo: "investigó", ipotesis: "hipótesis", crezimiento: "crecimiento", obserbadas: "observadas", enseñaran: "enseñaron" },
   },
   {
     id: "plantas",
-    tokens: "Las plantas se [espusieron] a cuatro niveles de luz: control, bajo, medio y alto. [avia] 20 plantas en total y fueron [monitorisadas] durante 30 días. Cada semana se [tomava] una fotografía para ver los cambios.",
-    correctos: { espusieron: "expusieron", avia: "había", monitorisadas: "monitorizadas", tomava: "tomaba" },
+    titulo: "Informe: Resultados del experimento",
+    tokens: "Las plantas se [espusieron] a cuatro niveles de luz: control, bajo, medio y alto. [avia] 20 plantas en total y fueron [monitorisadas] durante 30 días. Cada semana se [tomava] una fotografía para ver los cambios. Los datos [an] sido revisados por la profesora y por dos alumnos [boluntarios] del curso.",
+    correctos: { espusieron: "expusieron", avia: "había", monitorisadas: "monitorizadas", tomava: "tomaba", an: "han", boluntarios: "voluntarios" },
   },
   {
     id: "noticia_lectura",
-    tokens: "Los adolescentes leen cada vez menos libros. Una [encuezta] del Ministerio [rebeló] que el 40% de jóvenes no [a] tomado un libro fuera del colegio en el último año. El [problemma] preocupa a maestros y familias.",
-    correctos: { encuezta: "encuesta", rebeló: "reveló", a: "ha", problemma: "problema" },
+    titulo: "Noticia: Los adolescentes leen menos",
+    tokens: "Los adolescentes leen cada vez menos libros. Una [encuezta] del Ministerio [rebeló] que el 40% de jóvenes no [a] tomado un libro fuera del colegio en el último año. El [problemma] preocupa a maestros y familias. Para muchos expertos, el celular [ase] que los chicos prefieran videos cortos antes que [istorias] largas.",
+    correctos: { encuezta: "encuesta", rebeló: "reveló", a: "ha", problemma: "problema", ase: "hace", istorias: "historias" },
   },
   {
     id: "carta_amigo",
-    tokens: "Querido Andrés: te [escrivo] desde Quito porque [estube] pensando en ti. [Ojala] vengas pronto a visitarme. Mi mamá [ase] arroz con pollo los domingos y siempre te [estraño].",
-    correctos: { escrivo: "escribo", estube: "estuve", Ojala: "Ojalá", ase: "hace", estraño: "extraño" },
+    titulo: "Carta a un amigo",
+    tokens: "Querido Andrés: te [escrivo] desde Quito porque [estube] pensando en ti. [Ojala] vengas pronto a visitarme. Mi mamá [ase] arroz con pollo los domingos y siempre te [estraño]. La semana pasada [fuy] a la feria del libro y compré uno que te va a [encantal]. Espero tu respuesta. Un abrazo, Mateo.",
+    correctos: { escrivo: "escribo", estube: "estuve", Ojala: "Ojalá", ase: "hace", estraño: "extraño", fuy: "fui", encantal: "encantar" },
   },
   {
     id: "noticia_clima",
-    tokens: "El [Insituto] Geofísico anunció [aller] que el volcán [esta] activo. Se pide a la población [aser] caso a las recomendaciones de seguridad y mantener la calma.",
-    correctos: { Insituto: "Instituto", aller: "ayer", esta: "está", aser: "hacer" },
+    titulo: "Noticia: Alerta volcánica",
+    tokens: "El [Insituto] Geofísico anunció [aller] que el volcán [esta] activo. Se pide a la población [aser] caso a las recomendaciones de seguridad y mantener la calma. Los técnicos [diseron] que la actividad podría durar varias semanas. Las clases en los colegios cercanos [an] sido suspendidas por precaución.",
+    correctos: { Insituto: "Instituto", aller: "ayer", esta: "está", aser: "hacer", diseron: "dijeron", an: "han" },
   },
   {
     id: "carta_profe",
-    tokens: "Estimada profesora: le [escrivo] para [desirle] que mi hijo no [pudó] entregar la tarea porque [estubo] enfermo toda la semana. Adjunto el certificado médico.",
-    correctos: { escrivo: "escribo", desirle: "decirle", "pudó": "pudo", estubo: "estuvo" },
+    titulo: "Carta a la profesora",
+    tokens: "Estimada profesora: le [escrivo] para [desirle] que mi hijo no [pudó] entregar la tarea porque [estubo] enfermo toda la semana. Adjunto el certificado médico. Le [agradesco] su comprensión y le pido por favor que [tubiera] la bondad de darle unos días más. Atentamente, la mamá de Tomás.",
+    correctos: { escrivo: "escribo", desirle: "decirle", "pudó": "pudo", estubo: "estuvo", agradesco: "agradezco", tubiera: "tuviera" },
   },
   {
     id: "noticia_bar",
-    tokens: "El bar del colegio [cambio] sus productos este año. Ya no se [bende] comida chatarra y los estudiantes [an] notado la diferencia. Sin embargo, algunos [exijen] que vuelvan las gaseosas.",
-    correctos: { cambio: "cambió", bende: "vende", an: "han", exijen: "exigen" },
+    titulo: "Noticia: Cambios en el bar del colegio",
+    tokens: "El bar del colegio [cambio] sus productos este año. Ya no se [bende] comida chatarra y los estudiantes [an] notado la diferencia. Sin embargo, algunos [exijen] que vuelvan las gaseosas. La directora [esplicó] que la decisión busca cuidar la salud de todos. Los padres apoyan la medida y [piensam] que es positiva.",
+    correctos: { cambio: "cambió", bende: "vende", an: "han", exijen: "exigen", esplicó: "explicó", piensam: "piensan" },
   },
   {
     id: "diario",
-    tokens: "Hoy fue un día raro. Me [levante] tarde, [perdi] el bus y [yegué] al colegio sin desayunar. Por suerte, mi amiga Lucía [conpartio] su sándwich [con migo].",
-    correctos: { levante: "levanté", perdi: "perdí", yegué: "llegué", conpartio: "compartió", "con migo": "conmigo" },
+    titulo: "Diario personal: Un día raro",
+    tokens: "Hoy fue un día raro. Me [levante] tarde, [perdi] el bus y [yegué] al colegio sin desayunar. Por suerte, mi amiga Lucía [conpartio] su sándwich [con migo]. En el recreo nos [reimos] mucho porque el profe se cayó en el patio. Al regresar a casa, mi mamá [iso] galletas. ¡Mañana espero que traiga mejor suerte!",
+    correctos: { levante: "levanté", perdi: "perdí", yegué: "llegué", conpartio: "compartió", "con migo": "conmigo", reimos: "reímos", iso: "hizo" },
   },
 ];
 
@@ -1045,38 +1053,68 @@ const HOMOFONAS_BANK = [
 const CONDICIONAL_BANK = [
   {
     id: "viaje",
-    texto: ["Si yo fuera tú, ", null, " ayuda a mis padres. Me ", null, " acompañarte al viaje, pero no ", null, " los pasajes."],
-    correctas: ["pediría", "encantaría", "podría"],
+    texto: [
+      "Si yo fuera tú, ", null, " ayuda a mis padres con los pasajes. Me ", null,
+      " acompañarte al viaje, pero no ", null, " pagarlos ahora mismo. ", null,
+      " conseguir el dinero ahorrando cada mes y ", null, " feliz de ir contigo el año que viene.",
+    ],
+    correctas: ["pediría", "encantaría", "podría", "trataría", "estaría"],
     distractores: ["comeré", "iba"],
   },
   {
     id: "libro",
-    texto: ["Si tuviera más tiempo, ", null, " ese libro. ", null, " pagar 200 dólares por él, pero no lo encuentro. ", null, " ir a la librería del centro."],
-    correctas: ["compraría", "valdría", "debería"],
+    texto: [
+      "Si tuviera más tiempo, ", null, " ese libro de aventuras. ", null,
+      " pagar 200 dólares por él, pero no lo encuentro en ninguna parte. ", null,
+      " ir a la librería del centro este sábado. Mi profesor dijo que ", null,
+      " un buen regalo para mi hermana y que también ", null, " enseñarme cosas nuevas.",
+    ],
+    correctas: ["compraría", "valdría", "debería", "sería", "podría"],
     distractores: ["compré", "valgo"],
   },
   {
     id: "mar",
-    texto: ["Me ", null, " vivir cerca del mar. ", null, " todos los días a la playa y ", null, " a nadar al amanecer."],
-    correctas: ["gustaría", "iría", "saldría"],
+    texto: [
+      "Me ", null, " mucho vivir cerca del mar. ", null,
+      " todos los días a la playa con mis primos y ", null,
+      " a nadar al amanecer con ellos. ", null,
+      " conchas y caracoles para hacer collares y ", null,
+      " fotos del atardecer cada noche.",
+    ],
+    correctas: ["gustaría", "iría", "saldría", "buscaría", "tomaría"],
     distractores: ["gustaba", "iba"],
   },
   {
     id: "invisible",
-    texto: ["Si fuera invisible, ", null, " a todos los museos gratis. ", null, " junto a las obras sin que nadie me viera. ", null, " muy emocionante."],
-    correctas: ["entraría", "estaría", "sería"],
+    texto: [
+      "Si fuera invisible, ", null, " a todos los museos gratis del país. ", null,
+      " junto a las obras sin que nadie me viera. ", null,
+      " muy emocionante andar por los pasillos en silencio. También ", null,
+      " escuchar las conversaciones de los guías y ", null, " todo lo que cuentan.",
+    ],
+    correctas: ["entraría", "estaría", "sería", "podría", "aprendería"],
     distractores: ["entré", "estuve"],
   },
   {
     id: "loteria",
-    texto: ["Si me ganara la lotería, ", null, " una casa grande. ", null, " un viaje a mi familia. No ", null, " que trabajar más."],
-    correctas: ["compraría", "regalaría", "tendría"],
+    texto: [
+      "Si me ganara la lotería, ", null, " una casa grande con jardín. ", null,
+      " un viaje a toda mi familia para conocer la sierra. No ", null,
+      " que trabajar más por unos meses y ", null,
+      " ayudar a un colegio rural del Ecuador. Además, ", null, " un poco para emergencias.",
+    ],
+    correctas: ["compraría", "regalaría", "tendría", "podría", "ahorraría"],
     distractores: ["compré", "regalé"],
   },
   {
     id: "estudio",
-    texto: ["Si hubiera estudiado más, ", null, " aprobado. ", null, " podido entrar a la universidad. Mi mamá ", null, " orgullosa."],
-    correctas: ["habría", "habría", "estaría"],
+    texto: [
+      "Si hubiera estudiado más para el examen, ", null, " aprobado con muy buena nota. ", null,
+      " entrar a la universidad sin ningún problema. Mi mamá ", null,
+      " orgullosa y mis profesores también. ", null,
+      " un orgullo para toda mi familia y yo me ", null, " menos preocupado este año.",
+    ],
+    correctas: ["habría", "podría", "estaría", "sería", "sentiría"],
     distractores: ["he", "estuve"],
   },
 ];
@@ -1724,6 +1762,11 @@ function TiposTriviaCard({ pick, selected, locked, onSelect }) {
     if (locked) return;
     onSelect && onSelect(tipo);
   }
+  const optionsShuffled = React.useMemo(() => shuffle([
+    { id: "literario",   label: "LITERARIO",   color: "#ffc06e" },
+    { id: "informativo", label: "INFORMATIVO", color: "#ffe97a" },
+    { id: "funcional",   label: "FUNCIONAL",   color: "#7ab8ff" },
+  ]), [pick.id]);
 
   return (
     <div style={{
@@ -1745,13 +1788,9 @@ function TiposTriviaCard({ pick, selected, locked, onSelect }) {
         </div>
         <div style={{ fontSize: 13.5, lineHeight: 1.4, fontStyle: "italic" }}>"{pick.fragmento}"</div>
       </div>
-      {/* Opciones apiladas en columna debajo, mismo eje vertical */}
+      {/* Opciones apiladas en columna debajo, mismo eje vertical — orden aleatorio */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "stretch", width: "100%", maxWidth: 280 }}>
-        {[
-          { id: "literario",   label: "LITERARIO",   color: "#ffc06e" },
-          { id: "informativo", label: "INFORMATIVO", color: "#ffe97a" },
-          { id: "funcional",   label: "FUNCIONAL",   color: "#7ab8ff" },
-        ].map((opt) => (
+        {optionsShuffled.map((opt) => (
           <button key={opt.id} onClick={() => choose(opt.id)}
             disabled={locked}
             style={{
@@ -1927,16 +1966,34 @@ function BurbujasCard({ data, picked, locked, onToggle }) {
     if (locked) return;
     onToggle && onToggle(word);
   }
-  // 7 burbujas distribuidas alrededor del centro: 1 arriba · 2 medio · 2 medio · 2 abajo.
-  const positions = [
-    { left: "40%", top: "2%"  },  // arriba centro
-    { left: "5%",  top: "30%" },  // medio-izq
-    { left: "75%", top: "30%" },  // medio-der
-    { left: "5%",  top: "65%" },  // abajo-izq
-    { left: "75%", top: "65%" },  // abajo-der
-    { left: "20%", top: "92%" },  // base-izq
-    { left: "60%", top: "92%" },  // base-der
-  ];
+  // 7 burbujas en CÍRCULO equidistante (tipo reloj) alrededor del centro.
+  // Ellipse rx=40 / ry=44 sobre zona-central 440×398. Cada burbuja con
+  // translate(-50%,-50%) → posición = centro real de la burbuja.
+  const RX = 40, RY = 44;
+  const circlePositions = Array.from({ length: 7 }).map((_, i) => {
+    const ang = (i / 7) * 2 * Math.PI; // 0 = top, clockwise
+    return {
+      left: `${50 + Math.sin(ang) * RX}%`,
+      top: `${50 - Math.cos(ang) * RY}%`,
+    };
+  });
+  // Asignación por longitud para no chocar con personaje/ActionRail:
+  //   los textos más cortos van a posiciones laterales (clock 3 y 9, más expuestas),
+  //   los más largos a top/bottom donde hay ancho disponible.
+  //   rank 0 (corto) → clock 3   |  rank 4 → 12 (top)
+  //   rank 1         → clock 9   |  rank 5 → 5  (bot-der)
+  //   rank 2         → clock 1.5 |  rank 6 (largo) → 7 (bot-izq)
+  //   rank 3         → clock 10.5
+  const RANK_TO_POS = [2, 5, 1, 6, 0, 3, 4];
+  // Shuffle primero → sort por longitud (estable) → empates quedan en orden random.
+  // Así dos palabras del mismo largo intercambian posiciones entre rondas.
+  const wordToPos = React.useMemo(() => {
+    const shuffled = shuffle([...data.burbujas]);
+    const sorted = shuffled.sort((a, b) => a.length - b.length);
+    const m = new Map();
+    sorted.forEach((w, rank) => m.set(w, circlePositions[RANK_TO_POS[rank]]));
+    return m;
+  }, [data.id]);
 
   return (
     <div style={{ position: "absolute", inset: 0, padding: "0 8px" }}>
@@ -1956,7 +2013,7 @@ function BurbujasCard({ data, picked, locked, onToggle }) {
 
         {/* Burbujas exteriores */}
         {data.burbujas.map((w, i) => {
-          const pos = positions[i] || { left: "50%", top: "90%" };
+          const pos = wordToPos.get(w) || circlePositions[i] || { left: "50%", top: "90%" };
           const isPicked = picked.has(w);
           const isCorrect = data.correctos.includes(w);
           const showResult = locked;
@@ -1970,7 +2027,7 @@ function BurbujasCard({ data, picked, locked, onToggle }) {
           return (
             <button key={i} onClick={() => toggle(w)} disabled={locked}
               style={{
-                position: "absolute", ...pos,
+                position: "absolute", ...pos, transform: "translate(-50%,-50%)",
                 padding: "10px 16px", borderRadius: 999,
                 background: bg, color: "#3a2608", border: `2px solid ${border}`,
                 fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12,
@@ -2586,7 +2643,7 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
 
   const bocadillo =
     ronda === 0 ? "Arrastra cada parte." :
-    ronda === 1 ? "Selecciona." :
+    ronda === 1 ? "Lee y elige." :
     "Toca las palabras con error.";
 
   return (
@@ -2666,7 +2723,7 @@ function OrdenInformeCard({ contexto, pieces, placed, picked, verified, onPickPi
   const placeAt = (idx, explicitText) => onPlaceAt && onPlaceAt(idx, explicitText);
 
   return (
-    <div style={{ position: "absolute", inset: 0, padding: "4px 8px", display: "flex", flexDirection: "column", gap: 8 }}>
+    <div style={{ position: "absolute", inset: 0, padding: "4px 8px", display: "flex", flexDirection: "column", justifyContent: "center", gap: 10 }}>
       <div style={{
         textAlign: "center",
         fontFamily: "var(--ed-font-display)",
@@ -2676,7 +2733,7 @@ function OrdenInformeCard({ contexto, pieces, placed, picked, verified, onPickPi
         {contexto.titulo}
       </div>
 
-      <div style={{ display: "flex", gap: 12, flex: 1, minHeight: 0, justifyContent: "center", alignItems: "flex-start" }}>
+      <div style={{ display: "flex", gap: 12, justifyContent: "center", alignItems: "flex-start" }}>
         {/* Slots numerados (izquierda) */}
         <div style={{ flex: "0 0 220px", display: "flex", flexDirection: "column", gap: 6, overflow: "auto" }}>
           {placed.map((t, i) => {
@@ -2789,7 +2846,7 @@ function ConectoresCard({ pick, opciones, selected, locked, onSelect }) {
   return (
     <div style={{
       display: "flex", flexDirection: "column", alignItems: "center",
-      justifyContent: "flex-start", height: "100%", gap: 18, padding: "8px 8px 0",
+      justifyContent: "center", height: "100%", gap: 16, padding: "0 8px",
     }}>
       <div style={{
         background: "linear-gradient(180deg, rgba(195,156,255,0.95), rgba(167,139,250,0.95))",
@@ -2812,8 +2869,12 @@ function ConectoresCard({ pick, opciones, selected, locked, onSelect }) {
         {parts[0]}
         <span style={{
           display: "inline-block", padding: "2px 12px", margin: "0 4px",
-          borderBottom: "3px solid #a78bfa", color: "#a78bfa", fontWeight: 800, minWidth: 60,
-        }}>___</span>
+          borderBottom: `3px solid ${selected ? "#d9a441" : "#a78bfa"}`,
+          color: selected ? "#3a2608" : "#a78bfa",
+          fontWeight: 800, minWidth: 60,
+          background: selected ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "transparent",
+          borderRadius: selected ? 8 : 0,
+        }}>{selected || "___"}</span>
         {parts[1]}
       </div>
       {/* Opciones apiladas en columna debajo */}
@@ -2843,17 +2904,72 @@ function ErroresCard({ pick, tokens, picked, locked, onToggle }) {
   }
 
   return (
-    <div style={{ position: "absolute", inset: 0, padding: "0 8px",
-      display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ position: "absolute", inset: 0, padding: "24px 4px 6px",
+      display: "flex", alignItems: "flex-start", justifyContent: "center" }}>
+      {/* Hoja de cuaderno */}
       <div style={{
-        margin: "0 auto", maxWidth: 360,
-        background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(245,238,225,0.95))",
-        border: "3px solid #f2c260", borderRadius: 14,
-        padding: "18px 22px",
-        boxShadow: "0 10px 24px rgba(0,0,0,0.45)",
-        color: "#3a2608", fontFamily: "var(--ed-font-display)", fontSize: 14, lineHeight: 1.8,
+        position: "relative",
+        width: "100%", maxWidth: 480, height: 360,
+        transform: "rotate(-0.6deg)",
       }}>
-        {tokens.map((t, i) => {
+        {/* Cinta adhesiva con título — nowrap para no envolver y empujar texto */}
+        <div style={{
+          position: "absolute", left: "50%", top: -10,
+          transform: "translateX(-50%) rotate(-2deg)",
+          background: "rgba(252,233,168,0.82)",
+          border: "1px solid rgba(217,164,65,0.45)",
+          padding: "4px 20px",
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12, color: "#3a2608",
+          boxShadow: "0 3px 8px rgba(0,0,0,0.25)",
+          zIndex: 3,
+          letterSpacing: "0.02em",
+          whiteSpace: "nowrap",
+          maxWidth: "92%", overflow: "hidden", textOverflow: "ellipsis",
+        }}>
+          {pick.titulo}
+        </div>
+
+        {/* Hoja rayada */}
+        <div style={{
+          position: "absolute", inset: 0,
+          background: "#fffef0",
+          backgroundImage: "repeating-linear-gradient(transparent, transparent 24px, rgba(120,150,200,0.32) 24px, rgba(120,150,200,0.32) 25px)",
+          borderRadius: 6,
+          boxShadow: "0 10px 24px rgba(0,0,0,0.45), 0 0 0 1px rgba(0,0,0,0.08)",
+          overflow: "hidden",
+        }}>
+          {/* Línea roja de margen */}
+          <div style={{
+            position: "absolute", left: 46, top: 0, bottom: 0,
+            width: 1, background: "rgba(200,80,80,0.55)",
+          }} />
+
+          {/* Agujeros de espiral */}
+          <div style={{
+            position: "absolute", left: 8, top: 18, bottom: 18, width: 26,
+            display: "flex", flexDirection: "column", justifyContent: "space-around",
+            alignItems: "center",
+          }}>
+            {[0,1,2,3,4,5,6,7].map((i) => (
+              <div key={i} style={{
+                width: 12, height: 12, borderRadius: "50%",
+                background: "radial-gradient(circle at 30% 30%, #1a4a4a, #0a1e1e)",
+                boxShadow: "inset 0 1px 2px rgba(0,0,0,0.7), 0 1px 0 rgba(255,255,255,0.08)",
+              }} />
+            ))}
+          </div>
+
+          {/* Texto rayado — paddingTop 42 deja sitio bajo la cinta */}
+          <div style={{
+            position: "absolute", inset: 0,
+            paddingLeft: 58, paddingRight: 20, paddingTop: 42, paddingBottom: 16,
+            color: "#2a2010",
+            fontFamily: "var(--ed-font-handwriting, var(--ed-font-display))",
+            fontSize: 14, lineHeight: "25px",
+            textAlign: "left",
+            overflow: "hidden",
+          }}>
+            {tokens.map((t, i) => {
           if (t.type === "space") return <span key={i}>{t.text}</span>;
           const tokenIsErr = t.type === "err";
           const isPicked = picked.has(i);
@@ -2875,7 +2991,9 @@ function ErroresCard({ pick, tokens, picked, locked, onToggle }) {
               {t.text}
             </span>
           );
-        })}
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -2940,7 +3058,7 @@ function EnriquecimientoGame({ app, setApp, go, onRestart }) {
   const [r2Selected, setR2Selected] = useStateG(null);
   const [r2Locked, setR2Locked] = useStateG(false);
   const [r3Opciones] = useStateG(() => shuffle([...r3Pick.correctas, ...r3Pick.distractores]));
-  const [r3Placed, setR3Placed] = useStateG([null, null, null]);
+  const [r3Placed, setR3Placed] = useStateG(() => Array(r3Pick.correctas.length).fill(null));
   const [r3Picked, setR3Picked] = useStateG(null);
   const [r3Verified, setR3Verified] = useStateG(false);
 
@@ -3025,7 +3143,7 @@ function EnriquecimientoGame({ app, setApp, go, onRestart }) {
   function handleErase() {
     if (ronda === 2) {
       if (r3Verified) return;
-      setR3Placed([null, null, null]);
+      setR3Placed(Array(r3Pick.correctas.length).fill(null));
       setR3Picked(null);
     }
   }
@@ -3066,6 +3184,15 @@ function EnriquecimientoGame({ app, setApp, go, onRestart }) {
           <CondicionalCard pick={r3Pick} opciones={r3Opciones}
             placed={r3Placed} picked={r3Picked} verified={r3Verified}
             onPickWord={(w) => { if (r3Verified) return; if (r3Placed.includes(w)) return; setR3Picked(r3Picked === w ? null : w); }}
+            onPickFromSlot={(holeIdx) => {
+              if (r3Verified) return;
+              const w = r3Placed[holeIdx];
+              if (!w) return;
+              const next = [...r3Placed];
+              next[holeIdx] = null;
+              setR3Placed(next);
+              setR3Picked(w);
+            }}
             onPlaceAt={(holeIdx, explicitWord) => {
               if (r3Verified) return;
               const w = explicitWord !== undefined ? explicitWord : r3Picked;
@@ -3152,18 +3279,19 @@ function HomofonasCard({ pick, selected, locked, onSelect }) {
     if (locked) return;
     onSelect && onSelect(letter);
   }
+  const opcionesShuffled = React.useMemo(() => shuffle([...pick.opciones]), [pick.id]);
   return (
     <div style={{
       display: "flex", flexDirection: "column", alignItems: "center",
-      justifyContent: "flex-start", height: "100%", gap: 22, padding: "8px 8px 0",
+      justifyContent: "center", height: "100%", gap: 20, padding: "0 8px",
     }}>
       <div style={{
-        background: "linear-gradient(180deg, rgba(195,156,255,0.95), rgba(167,139,250,0.95))",
-        border: "1px solid rgba(255,255,255,0.55)",
+        background: "linear-gradient(180deg, #ffe097, #f2c260)",
+        border: "1px solid rgba(255,255,255,0.65)",
         borderRadius: 12, padding: "10px 20px",
-        color: "#1a0a3a", fontFamily: "var(--ed-font-display)", fontSize: 14, fontWeight: 800,
+        color: "#3a2608", fontFamily: "var(--ed-font-display)", fontSize: 14, fontWeight: 800,
         maxWidth: 420, textAlign: "center", lineHeight: 1.3,
-        boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.35)",
       }}>
         PISTA: {pick.pista}
       </div>
@@ -3178,13 +3306,19 @@ function HomofonasCard({ pick, selected, locked, onSelect }) {
         {pick.pre.split("").map((c, i) => <span key={i}>{c}</span>)}
         <span style={{
           display: "inline-block", width: 60, height: 56, borderRadius: 8,
-          border: "3px dashed #c39cff", color: "#c39cff", textAlign: "center", lineHeight: "50px",
-          background: locked ? (selected === pick.correcta ? "rgba(46,204,143,0.3)" : "rgba(255,107,107,0.3)") : "transparent",
-        }}>{locked ? selected : "?"}</span>
+          border: `3px ${selected ? "solid" : "dashed"} ${
+            locked ? (selected === pick.correcta ? "#2ecc8f" : "#ff6b6b") : (selected ? "#d9a441" : "#c39cff")
+          }`,
+          color: selected ? "#3a2608" : "#c39cff",
+          textAlign: "center", lineHeight: "50px",
+          background: locked
+            ? (selected === pick.correcta ? "rgba(46,204,143,0.3)" : "rgba(255,107,107,0.3)")
+            : (selected ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "transparent"),
+        }}>{selected || "?"}</span>
         {pick.post.split("").map((c, i) => <span key={i}>{c}</span>)}
       </div>
       <div style={{ display: "flex", gap: 14 }}>
-        {pick.opciones.map((opt) => (
+        {opcionesShuffled.map((opt) => (
           <button key={opt} onClick={() => choose(opt)} disabled={locked}
             style={{
               width: 84, height: 84, borderRadius: 16,
@@ -3202,7 +3336,7 @@ function HomofonasCard({ pick, selected, locked, onSelect }) {
   );
 }
 
-function CondicionalCard({ pick, opciones, placed, picked, verified, onPickWord, onPlaceAt }) {
+function CondicionalCard({ pick, opciones, placed, picked, verified, onPickWord, onPickFromSlot, onPlaceAt }) {
   // Soporta DRAG (HTML5) y tap-to-place.
   const [dragWord, setDragWord] = React.useState(null);
   const [dragOverIdx, setDragOverIdx] = React.useState(null);
@@ -3239,9 +3373,23 @@ function CondicionalCard({ pick, opciones, placed, picked, verified, onPickWord,
       const correct = verified && filled === pick.correctas[slotIdx];
       const wrong = verified && filled !== pick.correctas[slotIdx];
       const isHover = dragOverIdx === slotIdx;
+      const isDragSource = filled && dragWord === filled;
       fragments.push(
         <span key={`h${slotIdx}`}
-          onClick={() => { if (!verified) placeAt(slotIdx); }}
+          onClick={() => {
+            if (verified) return;
+            // Si el slot tiene palabra y nada en mano → levantarla para reubicar.
+            if (filled && picked === null) { onPickFromSlot && onPickFromSlot(slotIdx); return; }
+            placeAt(slotIdx);
+          }}
+          draggable={!verified && !!filled}
+          onDragStart={(e) => {
+            if (verified || !filled) return;
+            e.dataTransfer.effectAllowed = "move";
+            e.dataTransfer.setData("text/plain", filled);
+            setDragWord(filled);
+          }}
+          onDragEnd={() => { setDragWord(null); setDragOverIdx(null); }}
           onDragOver={(e) => { if (!verified) { e.preventDefault(); setDragOverIdx(slotIdx); } }}
           onDragLeave={() => setDragOverIdx((x) => x === slotIdx ? null : x)}
           onDrop={(e) => {
@@ -3252,16 +3400,20 @@ function CondicionalCard({ pick, opciones, placed, picked, verified, onPickWord,
             if (raw) placeAt(slotIdx, raw);
           }}
           style={{
-            display: "inline-block",
-            padding: "2px 10px", margin: "0 3px",
+            display: "inline-block", verticalAlign: "middle",
+            padding: "3px 12px", margin: "0 3px",
             background: filled ? "linear-gradient(180deg,#fce9a8,#d9a441)"
               : isHover ? "rgba(79,216,255,0.25)" : "rgba(195,156,255,0.18)",
             color: filled ? "#3a2608" : "#c39cff",
             border: `2px dashed ${correct ? "#2ecc8f" : wrong ? "#ff6b6b" : isHover ? "#4fd8ff" : "#c39cff"}`,
-            borderRadius: 8, minWidth: 80,
+            borderRadius: 8, minWidth: 90,
             fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13,
-            cursor: verified ? "default" : "pointer",
-            transition: "background 0.15s, border-color 0.15s",
+            cursor: verified ? "default" : (filled ? "grab" : "pointer"),
+            whiteSpace: "nowrap",
+            textAlign: "center",
+            userSelect: "none",
+            opacity: isDragSource ? 0.4 : 1,
+            transition: "background 0.15s, border-color 0.15s, opacity 0.15s",
           }}>
           {display || "___"}
         </span>
@@ -3274,14 +3426,14 @@ function CondicionalCard({ pick, opciones, placed, picked, verified, onPickWord,
 
   return (
     <div style={{ position: "absolute", inset: 0, padding: "0 8px",
-      display: "flex", flexDirection: "column", justifyContent: "center", gap: 14 }}>
+      display: "flex", flexDirection: "column", justifyContent: "center", gap: 12 }}>
       <div style={{
         background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(245,238,225,0.95))",
         border: "3px solid #f2c260", borderRadius: 14,
-        padding: "18px 22px", boxShadow: "0 10px 24px rgba(0,0,0,0.45)",
+        padding: "14px 18px", boxShadow: "0 10px 24px rgba(0,0,0,0.45)",
         color: "#3a2608",
-        fontFamily: "var(--ed-font-display)", fontSize: 14, lineHeight: 2.0,
-        textAlign: "left", maxWidth: 360, margin: "0 auto",
+        fontFamily: "var(--ed-font-display)", fontSize: 13, lineHeight: 1.7,
+        textAlign: "left", maxWidth: 420, margin: "0 auto",
       }}>
         {fragments}
       </div>
@@ -3290,9 +3442,9 @@ function CondicionalCard({ pick, opciones, placed, picked, verified, onPickWord,
         background: "rgba(10,6,35,0.45)",
         border: "1px dashed rgba(195,156,255,0.4)",
         borderRadius: 12,
-        padding: "10px 8px",
-        display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8, justifyItems: "center",
-        maxWidth: 360, margin: "0 auto",
+        padding: "8px 8px",
+        display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 6, justifyItems: "center",
+        maxWidth: 420, margin: "0 auto",
       }}>
         {opciones.map((w, i) => {
           if (placed.includes(w)) return null;
@@ -3310,11 +3462,11 @@ function CondicionalCard({ pick, opciones, placed, picked, verified, onPickWord,
               onDragEnd={() => { setDragWord(null); setDragOverIdx(null); }}
               onClick={() => { if (!verified) pickWord(w); }}
               style={{
-                padding: "8px 14px", borderRadius: 10,
+                padding: "6px 10px", borderRadius: 10,
                 background: isPicked ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.92)",
                 color: "#3a2608",
                 border: `2px solid ${isPicked ? "#4fd8ff" : "#c39cff"}`,
-                fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13,
+                fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12,
                 cursor: verified ? "default" : "grab", userSelect: "none",
                 opacity: isDragging ? 0.4 : 1,
                 boxShadow: isPicked ? "0 0 14px rgba(79,216,255,0.6)" : "0 4px 10px rgba(0,0,0,0.3)",
