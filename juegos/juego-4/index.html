@@ -973,33 +973,43 @@ const CONECTORES_BANK = [
 const ERRORES_BANK = [
   {
     id: "uv",
-    tokens: "En este estudio, se [investigo] el impacto de la luz UV en las plantas de tomate. La [ipotesis] era que la luz UV podría afectar negativamente su [crezimiento].",
-    correctos: { investigo: "investigó", ipotesis: "hipótesis", crezimiento: "crecimiento" },
+    tokens: "En este estudio, se [investigo] el impacto de la luz UV en las plantas de tomate. La [ipotesis] era que la luz UV podría afectar negativamente su [crezimiento]. Por eso, las plantas fueron [obserbadas] durante todo el verano por estudiantes del colegio.",
+    correctos: { investigo: "investigó", ipotesis: "hipótesis", crezimiento: "crecimiento", obserbadas: "observadas" },
   },
   {
     id: "plantas",
-    tokens: "Las plantas se [espusieron] a cuatro niveles de luz: control, bajo, medio y alto. [avia] 20 plantas en total y fueron [monitorisadas] durante 30 días.",
-    correctos: { espusieron: "expusieron", avia: "había", monitorisadas: "monitorizadas" },
+    tokens: "Las plantas se [espusieron] a cuatro niveles de luz: control, bajo, medio y alto. [avia] 20 plantas en total y fueron [monitorisadas] durante 30 días. Cada semana se [tomava] una fotografía para ver los cambios.",
+    correctos: { espusieron: "expusieron", avia: "había", monitorisadas: "monitorizadas", tomava: "tomaba" },
   },
   {
-    id: "analisis",
-    tokens: "El [analisis] mostró que las plantas con luz [intenza] crecieron menos. La [conclucion] es clara: la luz UV es perjudicial.",
-    correctos: { analisis: "análisis", intenza: "intensa", conclucion: "conclusión" },
+    id: "noticia_lectura",
+    tokens: "Los adolescentes leen cada vez menos libros. Una [encuezta] del Ministerio [rebeló] que el 40% de jóvenes no [a] tomado un libro fuera del colegio en el último año. El [problemma] preocupa a maestros y familias.",
+    correctos: { encuezta: "encuesta", rebeló: "reveló", a: "ha", problemma: "problema" },
   },
   {
-    id: "bar",
-    tokens: "Marcelo Jiménez [redacto] un informe [cientifico] sobre los bares del colegio. [Acia] falta más variedad de productos saludables.",
-    correctos: { redacto: "redactó", cientifico: "científico", Acia: "Hacía" },
+    id: "carta_amigo",
+    tokens: "Querido Andrés: te [escrivo] desde Quito porque [estube] pensando en ti. [Ojala] vengas pronto a visitarme. Mi mamá [ase] arroz con pollo los domingos y siempre te [estraño].",
+    correctos: { escrivo: "escribo", estube: "estuve", Ojala: "Ojalá", ase: "hace", estraño: "extraño" },
   },
   {
-    id: "tabla",
-    tokens: "Los resultados [estan] en la tabla. Se [resive] la información del bar y se [clacifica] por categorías.",
-    correctos: { estan: "están", resive: "recibe", clacifica: "clasifica" },
+    id: "noticia_clima",
+    tokens: "El [Insituto] Geofísico anunció [aller] que el volcán [esta] activo. Se pide a la población [aser] caso a las recomendaciones de seguridad y mantener la calma.",
+    correctos: { Insituto: "Instituto", aller: "ayer", esta: "está", aser: "hacer" },
   },
   {
-    id: "trabaco",
-    tokens: "El [trabaco] de [invetigacion] [tubo] como objetivo comparar dos métodos de estudio.",
-    correctos: { trabaco: "trabajo", invetigacion: "investigación", tubo: "tuvo" },
+    id: "carta_profe",
+    tokens: "Estimada profesora: le [escrivo] para [desirle] que mi hijo no [pudó] entregar la tarea porque [estubo] enfermo toda la semana. Adjunto el certificado médico.",
+    correctos: { escrivo: "escribo", desirle: "decirle", "pudó": "pudo", estubo: "estuvo" },
+  },
+  {
+    id: "noticia_bar",
+    tokens: "El bar del colegio [cambio] sus productos este año. Ya no se [bende] comida chatarra y los estudiantes [an] notado la diferencia. Sin embargo, algunos [exijen] que vuelvan las gaseosas.",
+    correctos: { cambio: "cambió", bende: "vende", an: "han", exijen: "exigen" },
+  },
+  {
+    id: "diario",
+    tokens: "Hoy fue un día raro. Me [levante] tarde, [perdi] el bus y [yegué] al colegio sin desayunar. Por suerte, mi amiga Lucía [conpartio] su sándwich [con migo].",
+    correctos: { levante: "levanté", perdi: "perdí", yegué: "llegué", conpartio: "compartió", "con migo": "conmigo" },
   },
 ];
 
@@ -1649,7 +1659,7 @@ function TiposDeTextoGame({ app, setApp, go, onRestart }) {
 
       {/* Zona central — varía por ronda. right:168 deja sitio al ActionRail. */}
       <div data-qa="zona-central" style={{
-        position: "absolute", top: 128, left: 240, right: 168, bottom: 14,
+        position: "absolute", top: 128, left: "50%", transform: "translateX(-50%)", width: 440, bottom: 14,
       }}>
         {ronda === 0 && (
           <TiposTriviaCard pick={r1Pick}
@@ -2170,7 +2180,7 @@ function PoeticaGame({ app, setApp, go, onRestart }) {
       <GameEnunciado text={enunciado} />
 
       <div data-qa="zona-central" style={{
-        position: "absolute", top: 128, left: 240, right: 168, bottom: 14,
+        position: "absolute", top: 128, left: "50%", transform: "translateX(-50%)", width: 440, bottom: 14,
       }}>
         {ronda === 0 && (
           <PoeticaTriviaCard pick={r1Pick}
@@ -2361,7 +2371,7 @@ function FigurasCard({ poema, picked, locked, onToggle }) {
     <div style={{ position: "absolute", inset: 0, padding: "0 8px",
       display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{
-        margin: "0 auto", maxWidth: 480,
+        margin: "0 auto", maxWidth: 420,
         background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(245,238,225,0.95))",
         border: "3px solid #f2c260", borderRadius: 14,
         padding: "12px 18px",
@@ -2576,7 +2586,7 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
 
   const bocadillo =
     ronda === 0 ? "Arrastra cada parte." :
-    ronda === 1 ? "Elige." :
+    ronda === 1 ? "Selecciona." :
     "Toca las palabras con error.";
 
   return (
@@ -2587,7 +2597,7 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
       <GameEnunciado text={enunciado} />
 
       <div data-qa="zona-central" style={{
-        position: "absolute", top: 128, left: 240, right: 168, bottom: 14,
+        position: "absolute", top: 128, left: "50%", transform: "translateX(-50%)", width: 440, bottom: 14,
       }}>
         {ronda === 0 && (
           <OrdenInformeCard contexto={r1Pick}
@@ -2666,9 +2676,9 @@ function OrdenInformeCard({ contexto, pieces, placed, picked, verified, onPickPi
         {contexto.titulo}
       </div>
 
-      <div style={{ display: "flex", gap: 14, flex: 1, minHeight: 0, justifyContent: "center" }}>
+      <div style={{ display: "flex", gap: 12, flex: 1, minHeight: 0, justifyContent: "center", alignItems: "flex-start" }}>
         {/* Slots numerados (izquierda) */}
-        <div style={{ flex: "0 0 240px", display: "flex", flexDirection: "column", gap: 6, overflow: "auto" }}>
+        <div style={{ flex: "0 0 220px", display: "flex", flexDirection: "column", gap: 6, overflow: "auto" }}>
           {placed.map((t, i) => {
             const correct = verified && t === INFORME_PARTES[i];
             const wrong = verified && t !== INFORME_PARTES[i];
@@ -2722,9 +2732,10 @@ function OrdenInformeCard({ contexto, pieces, placed, picked, verified, onPickPi
           })}
         </div>
 
-        {/* Bandeja de piezas (derecha) — ancho ajustado al contenido (no full) */}
+        {/* Bandeja de piezas (derecha) — ancho ajustado al contenido, alto solo lo necesario */}
         <div style={{
-          flex: "0 1 auto", maxWidth: 220, minWidth: 160,
+          flex: "0 1 auto", maxWidth: 200, minWidth: 160,
+          alignSelf: "flex-start",
           background: "rgba(10,6,35,0.45)",
           border: "1px dashed rgba(252,233,168,0.3)",
           borderRadius: 12,
@@ -2778,7 +2789,7 @@ function ConectoresCard({ pick, opciones, selected, locked, onSelect }) {
   return (
     <div style={{
       display: "flex", flexDirection: "column", alignItems: "center",
-      justifyContent: "center", height: "100%", gap: 18, padding: "0 8px",
+      justifyContent: "flex-start", height: "100%", gap: 18, padding: "8px 8px 0",
     }}>
       <div style={{
         background: "linear-gradient(180deg, rgba(195,156,255,0.95), rgba(167,139,250,0.95))",
@@ -2794,7 +2805,7 @@ function ConectoresCard({ pick, opciones, selected, locked, onSelect }) {
         background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(245,238,225,0.95))",
         border: "3px solid #f2c260", borderRadius: 18,
         padding: "16px 22px", boxShadow: "0 10px 24px rgba(0,0,0,0.45)",
-        maxWidth: 460, color: "#3a2608",
+        maxWidth: 420, color: "#3a2608",
         fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 16, lineHeight: 1.4,
         textAlign: "center",
       }}>
@@ -3027,7 +3038,7 @@ function EnriquecimientoGame({ app, setApp, go, onRestart }) {
   const bocadillo =
     ronda === 0 ? "Mira las imágenes y elige." :
     ronda === 1 ? "Lee la pista y elige." :
-    "Arrastra cada verbo a su hueco.";
+    "Arrastra cada verbo.";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
@@ -3037,7 +3048,7 @@ function EnriquecimientoGame({ app, setApp, go, onRestart }) {
       <GameEnunciado text={enunciado} />
 
       <div data-qa="zona-central" style={{
-        position: "absolute", top: 128, left: 240, right: 168, bottom: 14,
+        position: "absolute", top: 128, left: "50%", transform: "translateX(-50%)", width: 440, bottom: 14,
       }}>
         {ronda === 0 && (
           <PolisemiasCard pick={r1Pick} opciones={r1Opciones}
@@ -3144,14 +3155,14 @@ function HomofonasCard({ pick, selected, locked, onSelect }) {
   return (
     <div style={{
       display: "flex", flexDirection: "column", alignItems: "center",
-      justifyContent: "center", height: "100%", gap: 22, padding: "0 8px",
+      justifyContent: "flex-start", height: "100%", gap: 22, padding: "8px 8px 0",
     }}>
       <div style={{
         background: "linear-gradient(180deg, rgba(195,156,255,0.95), rgba(167,139,250,0.95))",
         border: "1px solid rgba(255,255,255,0.55)",
         borderRadius: 12, padding: "10px 20px",
         color: "#1a0a3a", fontFamily: "var(--ed-font-display)", fontSize: 14, fontWeight: 800,
-        maxWidth: 460, textAlign: "center", lineHeight: 1.3,
+        maxWidth: 420, textAlign: "center", lineHeight: 1.3,
         boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
       }}>
         PISTA: {pick.pista}
@@ -3198,13 +3209,33 @@ function CondicionalCard({ pick, opciones, placed, picked, verified, onPickWord,
   const pickWord = (w) => onPickWord && onPickWord(w);
   const placeAt = (holeIdx, explicitWord) => onPlaceAt && onPlaceAt(holeIdx, explicitWord);
 
+  // Detecta si el item de texto anterior termina en "." (con o sin espacio),
+  // para capitalizar la primera letra de la palabra que se coloque en ese hueco.
+  function shouldCapitalize(idx) {
+    if (idx === 0) return true; // primer hueco al inicio del párrafo → mayúscula
+    let i = idx - 1;
+    // Buscar hacia atrás el primer texto no vacío
+    while (i >= 0) {
+      const prev = pick.texto[i];
+      if (typeof prev === "string" && prev.trim().length > 0) {
+        return /[.!?]\s*$/.test(prev);
+      }
+      i--;
+    }
+    return false;
+  }
+
   // Renderizar el párrafo intercalando texto y huecos
   const fragments = [];
   let holeIdx = 0;
-  for (const item of pick.texto) {
+  for (let texIdx = 0; texIdx < pick.texto.length; texIdx++) {
+    const item = pick.texto[texIdx];
     if (item === null) {
       const slotIdx = holeIdx;
       const filled = placed[slotIdx];
+      const display = filled && shouldCapitalize(texIdx)
+        ? filled.charAt(0).toUpperCase() + filled.slice(1)
+        : filled;
       const correct = verified && filled === pick.correctas[slotIdx];
       const wrong = verified && filled !== pick.correctas[slotIdx];
       const isHover = dragOverIdx === slotIdx;
@@ -3232,7 +3263,7 @@ function CondicionalCard({ pick, opciones, placed, picked, verified, onPickWord,
             cursor: verified ? "default" : "pointer",
             transition: "background 0.15s, border-color 0.15s",
           }}>
-          {filled || "___"}
+          {display || "___"}
         </span>
       );
       holeIdx++;
