@@ -122,7 +122,7 @@ Mezcla de los 2 temas: `C S Z á é í ó ú -azo -ito -oso ✏ 🌍 💬 # 📱
 - Hero: "De la letra al pensamiento"
 - Label chips: "Selecciona un tema para jugar"
 - Descripción dinámica:
-  - csz: "Aprende cuándo se escribe con C, con S y con Z."
+  - csz: "Aprende a escribir con C, S y Z."
   - lenguaPensamiento: "Cosmovisión, globalización, prejuicios y estereotipos."
 
 ### CharacterScreen

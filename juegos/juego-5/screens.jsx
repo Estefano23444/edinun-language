@@ -141,7 +141,7 @@ const LEVELS_CFG = [
     label: "Reglas C, S, Z",
     grad: "linear-gradient(180deg, #ffc06e, #e4881a)",
     ink: "#3a2608",
-    description: "Aprende cuándo se escribe con C, con S y con Z.",
+    description: "Aprende a escribir con C, S y Z.",
     catLabel: "Reglas C, S, Z",
   },
   {

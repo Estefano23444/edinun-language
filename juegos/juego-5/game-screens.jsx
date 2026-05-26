@@ -55,10 +55,10 @@ function getRecent(key) {
   } catch { return []; }
 }
 
-function pushRecent(key, item) {
+function pushRecent(key, item, limit) {
   const arr = getRecent(key).filter((k) => k !== item);
   arr.unshift(item);
-  const trimmed = arr.slice(0, RECENT_LIMIT);
+  const trimmed = arr.slice(0, limit || RECENT_LIMIT);
   try { localStorage.setItem(RECENT_KEYS[key] || key, JSON.stringify(trimmed)); } catch {}
 }
 
@@ -172,6 +172,30 @@ const CSZ_MAL = [
   "cabesaso",                         // cabezazo mal
   "timides",                          // timidez mal
 ];
+
+// Mapping MAL → BIEN para que el shooter respete la anti-repetición cross-ronda
+// usando la palabra base correctamente escrita como clave.
+const CSZ_MAL_TO_BIEN = (() => {
+  const m = {};
+  CSZ_BIEN.forEach((bien, i) => { m[CSZ_MAL[i]] = bien; });
+  return m;
+})();
+
+// Anti-repetición CSZ por sesión (no por ronda): si "hermoso" salió en R0,
+// no vuelve a salir en R1 ni R2 dentro de la misma partida.
+function normalizeCszWord(w) {
+  return (w || "").toLowerCase()
+    .replace(/[áàä]/g, "a").replace(/[éèë]/g, "e").replace(/[íìï]/g, "i")
+    .replace(/[óòö]/g, "o").replace(/[úùü]/g, "u").replace(/ñ/g, "n");
+}
+function getCszSessionWords() {
+  if (!window.__juego5_csz_words) window.__juego5_csz_words = new Set();
+  return window.__juego5_csz_words;
+}
+function addCszSessionWord(w) { getCszSessionWords().add(normalizeCszWord(w)); }
+function hasCszSessionWord(w) { return getCszSessionWords().has(normalizeCszWord(w)); }
+function clearCszSessionWords() { window.__juego5_csz_words = new Set(); }
+
 
 // ─────────────────────────────────────────────────────────────
 // DATA — NIVEL 2: Lengua y pensamiento (13 años)
@@ -847,7 +871,7 @@ function CSZGame({ app, setApp, go, onRestart }) {
           }}>
             {ronda === 0 && hintMsg}
             {ronda === 1 && <>Solo una está<br/>bien escrita.</>}
-            {ronda === 2 && <>Caza solo las<br/>MAL escritas 🎯</>}
+            {ronda === 2 && <>Caza solo las<br/>palabras mal escritas.</>}
             <div style={{
               position: "absolute", bottom: -10, left: "50%", transform: "translateX(-50%)",
               width: 0, height: 0,
@@ -959,11 +983,15 @@ function CSZGame({ app, setApp, go, onRestart }) {
 // ─────────────────────────────────────────────────────────────
 function CSZ_CompletaCard({ onAnswer, verifyRef, setVerifyReady, clearRef, setClearReady, setHintMsg }) {
   const problem = useMemoG(() => {
+    // R0 es la primera ronda del nivel CSZ → limpia el Set de palabras de la
+    // sesión para que el anti-repetición cross-ronda arranque desde cero.
+    clearCszSessionWords();
     const recent = new Set(getRecent("csz_r0"));
     let candidates = CSZ_COMPLETA_POOL.filter((p) => !recent.has(p.id));
     if (candidates.length === 0) candidates = CSZ_COMPLETA_POOL;
     const pick = candidates[Math.floor(Math.random() * candidates.length)];
     pushRecent("csz_r0", pick.id);
+    addCszSessionWord(pick.word);
     return pick;
   }, []);
   const [picked, setPicked] = useStateG(null);
@@ -1068,10 +1096,20 @@ function CSZ_CompletaCard({ onAnswer, verifyRef, setVerifyReady, clearRef, setCl
 function CSZ_TriviaCard({ onAnswer, verifyRef, setVerifyReady, clearRef, setClearReady }) {
   const problem = useMemoG(() => {
     const recent = new Set(getRecent("csz_r1"));
-    let candidates = CSZ_TRIVIA_POOL.filter((p) => !recent.has(p.id));
+    // Excluir IDs recientes Y ejercicios cuya palabra correcta ya salió en R0.
+    let candidates = CSZ_TRIVIA_POOL.filter((p) => {
+      if (recent.has(p.id)) return false;
+      const correctWord = p.opciones[p.correctIdx];
+      return !hasCszSessionWord(correctWord);
+    });
+    if (candidates.length === 0) {
+      // Si la sesión bloqueó todo, ignorar el filtro cross-ronda.
+      candidates = CSZ_TRIVIA_POOL.filter((p) => !recent.has(p.id));
+    }
     if (candidates.length === 0) candidates = CSZ_TRIVIA_POOL;
     const pick = candidates[Math.floor(Math.random() * candidates.length)];
     pushRecent("csz_r1", pick.id);
+    addCszSessionWord(pick.opciones[pick.correctIdx]);
     return pick;
   }, []);
   const [picked, setPicked] = useStateG(null);
@@ -1158,14 +1196,26 @@ function CSZ_ShooterCard({ onFinish }) {
   function pickWord(useMal) {
     const pool = useMal ? CSZ_MAL : CSZ_BIEN;
     const used = useMal ? usedMalRef.current : usedBienRef.current;
-    let available = pool.filter((w) => !used.has(w));
+    // Filtro doble: no repetir intra-ronda Y respetar las palabras que ya
+    // salieron en R0/R1 dentro de la misma sesión.
+    let available = pool.filter((w) => {
+      if (used.has(w)) return false;
+      const base = useMal ? CSZ_MAL_TO_BIEN[w] : w;
+      return !hasCszSessionWord(base);
+    });
     if (available.length === 0) {
-      // Pool agotado, reiniciar (caso raro en 15s pero por si acaso)
+      // Si nos quedamos sin palabras frescas, relajamos el filtro cross-ronda
+      // antes que el intra-ronda (preferimos no repetir en la misma ronda).
+      available = pool.filter((w) => !used.has(w));
+    }
+    if (available.length === 0) {
       used.clear();
       available = pool;
     }
     const word = available[Math.floor(Math.random() * available.length)];
     used.add(word);
+    const base = useMal ? CSZ_MAL_TO_BIEN[word] : word;
+    addCszSessionWord(base);
     return word;
   }
 
@@ -1423,9 +1473,9 @@ function LenguaGame({ app, setApp, go, onRestart }) {
             boxShadow: "0 10px 24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08)",
             maxWidth: "100%",
           }}>
-            {ronda === 0 && <>Arrastra cada frase a<br/>su carril correcto 🏎</>}
-            {ronda === 1 && <>Elige la respuesta<br/>más empática 💬</>}
-            {ronda === 2 && <>Gira la ruleta y<br/>clasifica el caso 🎰</>}
+            {ronda === 0 && <>Arrastra cada frase a<br/>su carril correcto.</>}
+            {ronda === 1 && <>Elige la respuesta<br/>más empática.</>}
+            {ronda === 2 && <>Gira la ruleta y<br/>clasifica el caso.</>}
             <div style={{
               position: "absolute", bottom: -10, left: "50%", transform: "translateX(-50%)",
               width: 0, height: 0,
@@ -1463,8 +1513,8 @@ function LenguaGame({ app, setApp, go, onRestart }) {
             clearRef={clearRef}
             setClearReady={setClearReady}
             onFinish={(stats) => {
-              const isCorrect = stats.aciertos >= 4;
-              recordRound(isCorrect, `${stats.aciertos}/${stats.total} frases dirigidas bien`, "Arrastrar 4+ frases al carril correcto", "🏎", "🛣");
+              const isCorrect = stats.aciertos >= 2;
+              recordRound(isCorrect, `${stats.aciertos}/${stats.total} frases dirigidas bien`, "Arrastrar 2+ frases al carril correcto", "🏎", "🛣");
             }}
           />
         )}
@@ -1487,8 +1537,8 @@ function LenguaGame({ app, setApp, go, onRestart }) {
             clearRef={clearRef}
             setClearReady={setClearReady}
             onFinish={(stats) => {
-              const isCorrect = stats.aciertos >= 2;
-              recordRound(isCorrect, `${stats.aciertos}/3 acertados`, "Clasificar 2+ casos de la ruleta", "🎯", "🎰");
+              const isCorrect = stats.aciertos === 1;
+              recordRound(isCorrect, isCorrect ? "Caso clasificado correctamente" : "Caso mal clasificado", "Clasificar el caso de la ruleta", "🎯", "🎰");
             }}
           />
         )}
@@ -1536,14 +1586,31 @@ function LenguaGame({ app, setApp, go, onRestart }) {
 // Correcto si aciertos ≥ 4.
 // ─────────────────────────────────────────────────────────────
 function LP_CarreraCard({ onFinish, verifyRef, setVerifyReady, clearRef, setClearReady }) {
-  const TOTAL_FRASES = 6;
+  const TOTAL_FRASES = 3;
+  const SEGUNDOS_POR_FRASE = 6;
   const META_PX = 280;          // distancia desde la base hasta la meta
-  const VELOCIDAD_PX_TICK = 0.55; // px que sube por tick (30ms)
-  // Elegir 6 frases distintas balanceadas entre prejuicios y estereotipos.
+  const TICK_MS = 30;
+  // px que sube por tick para que cada frase llegue a la meta en SEGUNDOS_POR_FRASE.
+  const VELOCIDAD_PX_TICK = META_PX / (SEGUNDOS_POR_FRASE * 1000 / TICK_MS);
+  // FIFO grande para que la próxima sesión nunca arranque con frases repetidas.
+  const LP_R0_FIFO = 12;
+  // Elegir 3 frases: 2 de un tipo + 1 del otro al azar, evitando frases que ya
+  // salieron en sesiones recientes (localStorage).
   const queueInit = useMemoG(() => {
-    const prej = shuffle(LP_PE_POOL.filter((p) => p.correct === "PREJUICIO")).slice(0, 3);
-    const este = shuffle(LP_PE_POOL.filter((p) => p.correct === "ESTEREOTIPO")).slice(0, 3);
-    return shuffle([...prej, ...este]);
+    const recent = new Set(getRecent("lp_r0"));
+    const allPrej = LP_PE_POOL.filter((p) => p.correct === "PREJUICIO");
+    const allEste = LP_PE_POOL.filter((p) => p.correct === "ESTEREOTIPO");
+    const freshPrej = allPrej.filter((p) => !recent.has(p.id));
+    const freshEste = allEste.filter((p) => !recent.has(p.id));
+    const prejPool = freshPrej.length >= 2 ? freshPrej : allPrej;
+    const estePool = freshEste.length >= 2 ? freshEste : allEste;
+    // Balance variable: 2+1 o 1+2 al azar para que no siempre haya más de un tipo.
+    const moreP = Math.random() < 0.5;
+    const prej = shuffle(prejPool).slice(0, moreP ? 2 : 1);
+    const este = shuffle(estePool).slice(0, moreP ? 1 : 2);
+    const chosen = shuffle([...prej, ...este]);
+    chosen.forEach((p) => pushRecent("lp_r0", p.id, LP_R0_FIFO));
+    return chosen;
   }, []);
   const [queue, setQueue] = useStateG(queueInit);
   const [placed, setPlaced] = useStateG([]); // [{ id, text, correct, side, isCorrect }]
@@ -1662,14 +1729,22 @@ function LP_CarreraCard({ onFinish, verifyRef, setVerifyReady, clearRef, setClea
       borderRadius: 14, background: "linear-gradient(180deg, rgba(11,32,58,0.6), rgba(8,20,40,0.6))",
       border: "2px solid rgba(122,184,255,0.4)",
     }}>
-      {/* Marcador local — centrado */}
+      {/* Marcador local — centrado + cronómetro por frase */}
       <div style={{
         position: "absolute", top: 4, left: 0, right: 0,
-        display: "flex", alignItems: "center", justifyContent: "center",
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 14,
         fontFamily: "var(--ed-font-display)", color: "#fce9a8", fontSize: 12, fontWeight: 700,
         zIndex: 10, pointerEvents: "none",
       }}>
         <div>📦 {placedCount}/{TOTAL_FRASES}</div>
+        {current && !allDone && (
+          <div style={{
+            color: autoY > META_PX * 0.7 ? "#ff9b9b" : "#fce9a8",
+            transition: "color 0.2s",
+          }}>
+            ⏱ {Math.max(0, Math.ceil((META_PX - autoY) / META_PX * SEGUNDOS_POR_FRASE))}s
+          </div>
+        )}
       </div>
 
       {/* Etiquetas de carril */}
@@ -2034,9 +2109,9 @@ function LP_RuletaCard({ onFinish, verifyRef, setVerifyReady, clearRef, setClear
       setPicked(null);
       setCurrentCat(null);
       setCurrentCase("");
-      if (newGiro >= 3) {
+      if (newGiro >= 1) {
         finishedRef.current = true;
-        setTimeout(() => onFinish({ aciertos: newAciertos, total: 3 }), 250);
+        setTimeout(() => onFinish({ aciertos: newAciertos, total: 1 }), 250);
       }
     }, 1400);
   }
@@ -2126,7 +2201,7 @@ function LP_RuletaCard({ onFinish, verifyRef, setVerifyReady, clearRef, setClear
           fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 14,
           color: "#fce9a8", letterSpacing: "0.04em", textShadow: "0 2px 4px rgba(0,0,0,0.5)",
         }}>
-          Giro {Math.min(giro + (ready ? 1 : 0), 3)}/3 &nbsp;·&nbsp; ✅ {aciertos}
+          Giro {Math.min(giro + (ready ? 1 : 0), 1)}/1 &nbsp;·&nbsp; ✅ {aciertos}
         </div>
       </div>
 
