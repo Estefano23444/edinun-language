@@ -2619,9 +2619,13 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
       r3Tokens.forEach((t, i) => { if (t.type === "err") correctSet.add(i); });
       let ok = correctSet.size === r3Picked.size;
       if (ok) for (const i of r3Picked) if (!correctSet.has(i)) { ok = false; break; }
+      // Delay largo: el usuario debe poder leer el texto y ver qué marcó bien/mal
+      // (verde = acertó error, amarillo = error que no detectó, rojo = palabra
+      // correcta que marcó por error) antes de que el overlay tape la pantalla.
+      const reviewDelay = ok ? 2500 : 4000;
       setTimeout(() => answer(ok,
         Array.from(r3Picked).map((i) => r3Tokens[i].text).join(", "),
-        r3Tokens.filter((t) => t.type === "err").map((t) => t.text).join(", "), "✗"), 400);
+        r3Tokens.filter((t) => t.type === "err").map((t) => t.text).join(", "), "✗"), reviewDelay);
     }
   }
 
