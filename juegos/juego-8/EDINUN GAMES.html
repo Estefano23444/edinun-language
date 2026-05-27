@@ -1,0 +1,3368 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b0826">
+<meta name="description" content="EDINUN GAMES — Juegos de lenguaje educativos para estudiantes.">
+<title>EDINUN GAMES — Planificar y narrar</title>
+
+<link rel="icon" type="image/png" href="assets/edinun-logo.png">
+<link rel="apple-touch-icon" href="assets/edinun-logo.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="styles.css">
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin></script>
+</head>
+<body>
+<div id="root"></div>
+<noscript style="position:fixed;inset:0;display:grid;place-items:center;background:#0b0826;color:#fce9a8;font-family:sans-serif;text-align:center;padding:24px;">EDINUN GAMES requiere JavaScript habilitado.</noscript>
+
+<script type="text/babel" data-presets="react">
+// logo.jsx — Logo EDINUN usando el PNG oficial dorado.
+// Nada de reconstruir en SVG: mantenemos el asset original impecable.
+
+function EdinunLogo({ size = 180, glow = true }) {
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        position: "relative",
+        filter: glow
+          ? "drop-shadow(0 0 28px rgba(242,194,96,0.45)) drop-shadow(0 6px 12px rgba(0,0,0,0.45))"
+          : "drop-shadow(0 2px 4px rgba(0,0,0,0.3))",
+      }}
+    >
+      {glow && (
+        <div
+          style={{
+            position: "absolute",
+            inset: "-6%",
+            borderRadius: "50%",
+            background:
+              "radial-gradient(circle, rgba(242,194,96,0.22) 0%, rgba(242,194,96,0.08) 45%, transparent 75%)",
+            pointerEvents: "none",
+          }}
+        />
+      )}
+      <img
+        src="assets/edinun-logo.png"
+        alt="EDINUN — Ediciones Nacionales Unidas"
+        style={{ width: "100%", height: "100%", objectFit: "contain", position: "relative", display: "block" }}
+      />
+    </div>
+  );
+}
+
+// Versión compacta (HUD) — mismo PNG, tamaño pequeño
+function EdinunLogoMini({ size = 40 }) {
+  return (
+    <img
+      src="assets/edinun-logo.png"
+      alt="EDINUN"
+      style={{
+        width: size,
+        height: size,
+        objectFit: "contain",
+        filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.35))",
+      }}
+    />
+  );
+}
+
+Object.assign(window, { EdinunLogo, EdinunLogoMini });
+
+
+// characters.jsx — Personajes EDINUN GAMES · Juegos de lenguaje.
+// Renderizan los PNG de assets/char-<id>.png. Misma API que la versión
+// SVG (props `size`, `floating`) para no romper a los consumidores
+// (GameScreen, CharacterScreen, ResultsScreen, CharacterAvatar).
+
+// ─────────────────────────────────────────────────────────────
+// Sparkles — chispas animadas alrededor del personaje. Refuerzan
+// la estética cósmica heredada del shell.
+// ─────────────────────────────────────────────────────────────
+function Sparkles({ color = "#fce9a8", count = 6, seed = 1 }) {
+  const pts = Array.from({ length: count }, (_, i) => {
+    const a = (i * 360) / count + seed * 37;
+    const r = 70 + (i % 3) * 8;
+    const x = 100 + Math.cos((a * Math.PI) / 180) * r;
+    const y = 100 + Math.sin((a * Math.PI) / 180) * r;
+    const s = 2 + (i % 3);
+    return { x, y, s, delay: i * 0.35 };
+  });
+  return (
+    <g>
+      {pts.map((p, i) => (
+        <g key={i} transform={`translate(${p.x} ${p.y})`}>
+          <circle r={p.s} fill={color} opacity="0.9">
+            <animate attributeName="opacity" values="0.3;1;0.3" dur="2.4s" begin={`${p.delay}s`} repeatCount="indefinite" />
+          </circle>
+        </g>
+      ))}
+    </g>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Fábrica de componentes — cada personaje es un PNG con sparkles
+// superpuestos. Identidad: escritor / explorador / poeta / narrador.
+// ─────────────────────────────────────────────────────────────
+function makeCharacter(id, sparkleColor, sparkleSeed) {
+  return function Character({ size = 200, floating = true }) {
+    return (
+      <div
+        className={floating ? "ed-float-soft" : ""}
+        style={{
+          width: size, height: size,
+          position: "relative",
+          display: "inline-block",
+          lineHeight: 0,
+        }}
+      >
+        <img
+          src={`assets/char-${id}.png`}
+          alt=""
+          draggable="false"
+          style={{
+            width: "100%", height: "100%",
+            objectFit: "contain",
+            display: "block",
+            filter: "drop-shadow(0 6px 14px rgba(0,0,0,0.35))",
+            userSelect: "none",
+            pointerEvents: "none",
+          }}
+        />
+        <svg
+          viewBox="0 0 200 200"
+          aria-hidden="true"
+          style={{
+            position: "absolute", inset: 0,
+            width: "100%", height: "100%",
+            pointerEvents: "none",
+            overflow: "visible",
+          }}
+        >
+          <Sparkles color={sparkleColor} count={6} seed={sparkleSeed} />
+        </svg>
+      </div>
+    );
+  };
+}
+
+const EscritorCharacter = makeCharacter("escritor", "#e89a4e", 1);
+const PoetaCharacter = makeCharacter("poeta", "#a78bfa", 2);
+const ExploradorCharacter = makeCharacter("explorador", "#5fb878", 3);
+const NarradorCharacter = makeCharacter("narrador", "#ef6f6f", 4);
+
+// ─────────────────────────────────────────────────────────────
+// Avatar compacto (HUD / cards). Marco circular dorado/violeta.
+// ─────────────────────────────────────────────────────────────
+function CharacterAvatar({ char, size = 56 }) {
+  const map = {
+    escritor: EscritorCharacter,
+    poeta: PoetaCharacter,
+    explorador: ExploradorCharacter,
+    narrador: NarradorCharacter,
+  };
+  const C = map[char] || EscritorCharacter;
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: "50%",
+      background: "radial-gradient(circle at 30% 30%, rgba(138,90,242,.8), rgba(18,10,55,.95))",
+      boxShadow: "inset 0 0 0 2px rgba(242,194,96,.8), 0 0 14px rgba(138,90,242,.45)",
+      display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden",
+    }}>
+      <div style={{ transform: `translateY(${size * 0.06}px) scale(1.15)` }}>
+        <C size={size} floating={false} />
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Catálogo — nombres cortos, profesiones literarias claras,
+// quotes evocadoras para 6-8 años.
+// ─────────────────────────────────────────────────────────────
+const CHARACTERS = [
+  {
+    id: "escritor",
+    name: "Rolli",
+    title: "La Escritora",
+    specialty: "Maestra de las palabras",
+    quote: "Escribir es como hacer magia con un lápiz.",
+    Component: EscritorCharacter,
+  },
+  {
+    id: "explorador",
+    name: "Verne",
+    title: "El Explorador",
+    specialty: "Buscador de palabras",
+    quote: "Cada libro es una aventura por descubrir.",
+    Component: ExploradorCharacter,
+  },
+  {
+    id: "poeta",
+    name: "Gaby",
+    title: "La Poeta",
+    specialty: "Tejedora de versos",
+    quote: "Los poemas saben bailar y hacer cosquillas.",
+    Component: PoetaCharacter,
+  },
+  {
+    id: "narrador",
+    name: "Márquez",
+    title: "El Cuentacuentos",
+    specialty: "Guardián de las historias",
+    quote: "Cierra los ojos: te cuento un cuento.",
+    Component: NarradorCharacter,
+  },
+];
+
+Object.assign(window, {
+  EscritorCharacter,
+  PoetaCharacter,
+  ExploradorCharacter,
+  NarradorCharacter,
+  CharacterAvatar,
+  CHARACTERS,
+});
+
+
+// screens.jsx — HomeScreen + CharacterScreen + CosmosBg para "Juego 8".
+// Dos niveles del libro EDINUN:
+//   1. El escritor (9 años)  — sujeto/predicado, modificadores, comillas y dos puntos
+//   2. El narrador (10 años) — palabras mágicas, elementos del relato, ordenar la historia
+
+const { useState, useEffect, useRef, useMemo } = React;
+
+// ─────────────────────────────────────────────────────────────
+// Fondo cósmico + glifos.
+// ─────────────────────────────────────────────────────────────
+function CosmosBg({ variant = "cosmic", glyphSize }) {
+  const glyphsStyle = glyphSize ? { fontSize: glyphSize + "px" } : undefined;
+  if (variant === "chalkboard") {
+    const glyphs = (typeof window !== "undefined" && window.__currentChalkGlyphs) || [
+      { c: "✍",  l: "6%",  t: "12%", r: "-8deg" },
+      { c: "📖", l: "82%", t: "16%", r: "6deg",  s: "0.62em" },
+      { c: "💬", l: "10%", t: "78%", r: "12deg", s: "0.7em" },
+      { c: "🗣", l: "88%", t: "72%", r: "-10deg", s: "0.55em" },
+      { c: "S",  l: "45%", t: "8%",  r: "4deg",  s: "0.5em" },
+      { c: "P",  l: "3%",  t: "45%", r: "-4deg", s: "0.55em" },
+      { c: ":",  l: "92%", t: "45%", r: "8deg",  s: "0.6em" },
+      { c: '"',  l: "30%", t: "55%", r: "-6deg", s: "0.6em" },
+      { c: "…",  l: "70%", t: "62%", r: "8deg",  s: "0.55em" },
+      { c: "✨", l: "55%", t: "30%", r: "-4deg", s: "0.5em" },
+    ];
+    return (
+      <div
+        style={{
+          position: "absolute", inset: 0,
+          background: "radial-gradient(ellipse at center, #3a9b7a 0%, #1d6b53 55%, #0b3a2d 100%)",
+          overflow: "hidden",
+        }}
+      >
+        <div className="ed-glyphs" style={{ color: "rgba(255,255,255,0.10)", ...glyphsStyle }}>
+          {glyphs.map((g, i) => (
+            <span key={i} style={{ left: g.l, top: g.t, "--rot": g.r, fontSize: g.s }}>{g.c}</span>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  // Cosmic (home / character / results) — glifos de escritura y narración
+  return (
+    <>
+      <div className="ed-cosmos" />
+      <div className="ed-glyphs" style={glyphsStyle}>
+        <span style={{ left: "5%",  top: "10%", "--rot": "-8deg" }}>✍</span>
+        <span style={{ left: "84%", top: "6%",  "--rot": "6deg",  fontSize: "0.78em" }}>📖</span>
+        <span style={{ left: "92%", top: "72%", "--rot": "-12deg", fontSize: "0.74em" }}>💬</span>
+        <span style={{ left: "3%",  top: "82%", "--rot": "12deg", fontSize: "0.91em" }}>🗣</span>
+        <span style={{ left: "46%", top: "4%",  "--rot": "-4deg", fontSize: "0.42em" }}>S</span>
+        <span style={{ left: "7%",  top: "46%", "--rot": "-4deg", fontSize: "0.42em" }}>P</span>
+        <span style={{ left: "88%", top: "40%", "--rot": "8deg",  fontSize: "0.42em" }}>MD</span>
+        <span style={{ left: "22%", top: "22%", "--rot": "10deg", fontSize: "0.46em" }}>"</span>
+        <span style={{ left: "70%", top: "24%", "--rot": "-6deg", fontSize: "0.46em" }}>:</span>
+        <span style={{ left: "32%", top: "70%", "--rot": "8deg",  fontSize: "0.42em" }}>MI</span>
+        <span style={{ left: "62%", top: "78%", "--rot": "-10deg", fontSize: "0.5em" }}>✨</span>
+        <span style={{ left: "18%", top: "58%", "--rot": "14deg", fontSize: "0.48em" }}>¿</span>
+        <span style={{ left: "78%", top: "56%", "--rot": "-8deg", fontSize: "0.52em" }}>¡</span>
+        <span style={{ left: "50%", top: "88%", "--rot": "4deg",  fontSize: "0.42em" }}>…</span>
+        <span style={{ left: "40%", top: "38%", "--rot": "-6deg", fontSize: "0.42em" }}>,</span>
+      </div>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Visitas (compartido con el resto del repo)
+// ─────────────────────────────────────────────────────────────
+function useVisitorCount() {
+  const KEY = "edinun_visitors_v1";
+  const [n, setN] = useState(() => {
+    const raw = localStorage.getItem(KEY);
+    const v = raw ? parseInt(raw, 10) : 0;
+    return isNaN(v) ? 0 : v;
+  });
+  useEffect(() => {
+    function onUpdate() {
+      const raw = localStorage.getItem(KEY);
+      const v = raw ? parseInt(raw, 10) : 0;
+      if (!isNaN(v)) setN(v);
+    }
+    window.addEventListener("edinun:visitors-updated", onUpdate);
+    return () => window.removeEventListener("edinun:visitors-updated", onUpdate);
+  }, []);
+  return n;
+}
+
+function markFirstAttempt() {
+  const KEY = "edinun_visitors_v1";
+  const SESSION_FLAG = "edinun_visit_counted_v1";
+  if (sessionStorage.getItem(SESSION_FLAG) === "1") return;
+  const raw = localStorage.getItem(KEY);
+  const current = raw ? parseInt(raw, 10) : 0;
+  const next = (isNaN(current) ? 0 : current) + 1;
+  localStorage.setItem(KEY, String(next));
+  sessionStorage.setItem(SESSION_FLAG, "1");
+  window.dispatchEvent(new Event("edinun:visitors-updated"));
+}
+
+function incrementGamesCompleted() {
+  const KEY = "edinun_games_completed_v1";
+  const raw = localStorage.getItem(KEY);
+  const next = (raw ? parseInt(raw, 10) : 0) + 1;
+  localStorage.setItem(KEY, String(next));
+  window.dispatchEvent(new Event("edinun:games-updated"));
+  return next;
+}
+
+function PeopleIcon({ size = 18, color = "#fce9a8" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="8" cy="7" r="3" fill={color} />
+      <circle cx="16" cy="7" r="3" fill={color} opacity="0.85" />
+      <path d="M2 20c0-3.3 2.7-6 6-6s6 2.7 6 6v1H2v-1z" fill={color} />
+      <path d="M14 20c0-2 -.7-3.8-1.8-5.2 1-.5 2.1-.8 3.3-.8 3.3 0 6 2.7 6 6v1H14v-1z" fill={color} opacity="0.85" />
+    </svg>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Configuración de los 2 niveles temáticos.
+// ─────────────────────────────────────────────────────────────
+const LEVELS_CFG = [
+  {
+    id: "escritor",
+    label: "El escritor",
+    grad: "linear-gradient(180deg, #ffc06e, #e4881a)",
+    ink: "#3a2608",
+    description: "Sujeto, modificadores y comillas. (9 años)",
+    catLabel: "El escritor",
+  },
+  {
+    id: "narrador",
+    label: "El narrador",
+    grad: "linear-gradient(180deg, #b9e3ff, #4f9ee0)",
+    ink: "#0a2540",
+    description: "Palabras mágicas y partes de un cuento. (10 años)",
+    catLabel: "El narrador",
+  },
+];
+
+// ─────────────────────────────────────────────────────────────
+// 1. HomeScreen — logo + saludo + 2 botones de tema + nombre
+// ─────────────────────────────────────────────────────────────
+function HomeScreen({ app, setApp, go }) {
+  const visitors = useVisitorCount();
+  const [name, setName] = useState(app.studentName || "");
+  const [level, setLevel] = useState(app.level || null);
+
+  const canStart = !!name.trim() && !!level;
+
+  function start() {
+    if (!canStart) return;
+    setApp((s) => ({
+      ...s,
+      studentName: name.trim(),
+      level,
+      sessionStart: Date.now(),
+    }));
+    go("character");
+  }
+
+  const currentCfg = LEVELS_CFG.find((l) => l.id === level) || null;
+
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+      {/* Contador de visitantes */}
+      <div style={{
+        position: "absolute", bottom: 18, right: 22,
+        display: "flex", alignItems: "center", gap: 8,
+        background: "rgba(10,6,35,0.55)",
+        border: "1px solid rgba(242,194,96,0.3)",
+        borderRadius: 999, padding: "6px 12px",
+        backdropFilter: "blur(8px)",
+      }}>
+        <PeopleIcon size={16} color="#fce9a8" />
+        <div style={{ fontFamily: "var(--ed-font-mono)", fontSize: 11, color: "#f2c260", letterSpacing: "0.06em" }}>
+          {visitors.toLocaleString("es-EC")}
+          <span style={{ color: "rgba(246,241,255,0.55)", marginLeft: 6 }}>visitas</span>
+        </div>
+      </div>
+
+      <div style={{
+        position: "absolute", inset: 0,
+        display: "grid", gridTemplateColumns: "1fr 1.25fr",
+        alignItems: "center",
+        padding: "32px 48px", gap: 36,
+      }}>
+        {/* Logo grande izq */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+          <EdinunLogo size={280} />
+        </div>
+
+        {/* Formulario der */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 540 }}>
+          <div>
+            <div className="ed-label" style={{ color: "#4fd8ff", marginBottom: 6 }}>
+              Planifica y narra
+            </div>
+            <h1 className="ed-h1" style={{ fontSize: 34, lineHeight: 1.05 }}>
+              ¡Bienvenido/a,{" "}
+              <span style={{
+                background: "linear-gradient(180deg,#fce9a8,#d9a441)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                fontWeight: 600,
+              }}>
+                Estudiante!
+              </span>
+            </h1>
+          </div>
+
+          {/* 2 botones de tema en fila */}
+          <div>
+            <div className="ed-label" style={{ marginBottom: 8 }}>
+              Selecciona un tema para jugar
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              {LEVELS_CFG.map((lv) => {
+                const active = level === lv.id;
+                return (
+                  <button
+                    key={lv.id}
+                    onClick={() => setLevel(lv.id)}
+                    style={{
+                      padding: "16px 10px",
+                      borderRadius: 14,
+                      background: lv.grad,
+                      color: lv.ink,
+                      fontFamily: "var(--ed-font-display)",
+                      fontWeight: 700, fontSize: 15,
+                      letterSpacing: "0.02em",
+                      lineHeight: 1.1,
+                      border: "none",
+                      boxShadow: active
+                        ? "inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -3px 0 rgba(0,0,0,0.2), 0 0 0 3px rgba(255,255,255,0.85), 0 0 24px rgba(255,255,255,0.32)"
+                        : "inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.18), 0 6px 14px -4px rgba(0,0,0,0.45)",
+                      transform: active ? "translateY(-2px)" : "none",
+                      transition: "all 0.18s ease",
+                      textShadow: "0 1px 0 rgba(255,255,255,0.25)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {lv.label}
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{
+              marginTop: 8,
+              padding: "8px 14px",
+              borderRadius: 12,
+              background: "rgba(10,6,35,0.55)",
+              border: `1px solid ${currentCfg ? "rgba(148,120,255,0.3)" : "rgba(148,120,255,0.18)"}`,
+              fontFamily: "var(--ed-font-display)", fontWeight: 600,
+              fontSize: 13, lineHeight: 1.3,
+              color: currentCfg ? "#fce9a8" : "rgba(252,233,168,0.5)",
+              textAlign: "center",
+              fontStyle: currentCfg ? "normal" : "italic",
+            }}>
+              {currentCfg ? currentCfg.description : "Elige un tema para empezar."}
+            </div>
+          </div>
+
+          {/* Nombre + ENTRAR */}
+          <div>
+            <div className="ed-label" style={{ marginBottom: 6 }}>
+              Escribe tu nombre y entra
+            </div>
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <div style={{ flex: 1, position: "relative" }}>
+                <input
+                  className="ed-input"
+                  placeholder="Escribe tu nombre"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && start()}
+                />
+              </div>
+              <button className="ed-btn ed-btn-primary" onClick={start} disabled={!canStart}
+                title={!name.trim() ? "Escribe tu nombre" : !level ? "Selecciona un tema" : ""}
+                style={{ height: 48, padding: "0 22px", fontSize: 14, opacity: canStart ? 1 : 0.5, cursor: canStart ? "pointer" : "not-allowed" }}>
+                ENTRAR →
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// 2. CharacterScreen — mapea el nivel al catLabel + lanza el juego.
+// ─────────────────────────────────────────────────────────────
+function CharacterScreen({ app, setApp, go }) {
+  const suggested = app.level === "narrador" ? "narrador" : "escritor";
+  const [sel, setSel] = useState(app.character || suggested);
+  const current = CHARACTERS.find((c) => c.id === sel) || CHARACTERS[0];
+
+  function choose() {
+    const lvCfg = LEVELS_CFG.find((l) => l.id === (app.level || "escritor")) || LEVELS_CFG[0];
+    setApp((s) => ({
+      ...s,
+      character: sel,
+      currentCategory: lvCfg.id,
+      currentCatLabel: lvCfg.catLabel,
+    }));
+    go("game");
+  }
+
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+      <div style={{ position: "absolute", top: 18, left: 24, right: 24, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <button className="ed-btn ed-btn-ghost" onClick={() => go("home")} style={{ padding: "8px 14px" }}>
+          ← VOLVER
+        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 700, color: "#fce9a8", fontSize: 20, textShadow: "0 2px 6px rgba(0,0,0,0.45)" }}>
+            Hola, {app.studentName || "Estudiante"} 👋
+          </div>
+          <EdinunLogoMini size={64} />
+        </div>
+      </div>
+
+      <div style={{
+        position: "absolute", inset: "92px 32px 24px 32px",
+        display: "grid", gridTemplateColumns: "1fr 1.05fr", gap: 24, alignItems: "center",
+      }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+          <div style={{ position: "relative" }}>
+            <div style={{
+              position: "absolute", bottom: 4, left: "50%", transform: "translateX(-50%)",
+              width: 220, height: 28, borderRadius: "50%",
+              background: "radial-gradient(ellipse, rgba(242,194,96,0.45), transparent 70%)",
+              filter: "blur(5px)",
+            }} />
+            <current.Component size={280} floating />
+          </div>
+          <div style={{ textAlign: "center", marginTop: 4 }}>
+            <h2 className="ed-h1" style={{ fontSize: 28, lineHeight: 1 }}>{current.name}</h2>
+            <div className="ed-label" style={{ color: "#fce9a8", marginTop: 2, fontSize: 10 }}>{current.title}</div>
+            <div className="ed-body" style={{ marginTop: 6, maxWidth: 320, fontStyle: "italic", fontSize: 13, lineHeight: 1.35 }}>
+              "{current.quote}"
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div className="ed-label" style={{ marginBottom: 10 }}>Elige tu guía de palabras</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            {CHARACTERS.map((c) => {
+              const active = sel === c.id;
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => setSel(c.id)}
+                  className="ed-card"
+                  style={{
+                    padding: 12,
+                    textAlign: "left",
+                    cursor: "pointer",
+                    transform: active ? "translateY(-2px)" : "none",
+                    boxShadow: active
+                      ? "var(--ed-shadow-card), 0 0 0 2px rgba(79,216,255,0.7), 0 0 30px rgba(79,216,255,0.35)"
+                      : "var(--ed-shadow-card)",
+                    transition: "all 0.18s ease",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 68, height: 68, flexShrink: 0 }}>
+                      <c.Component size={68} floating={false} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 18 }}>
+                        {c.name}
+                      </div>
+                      <div className="ed-label" style={{ fontSize: 10, color: "#4fd8ff" }}>
+                        {c.specialty}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <button
+            onClick={choose}
+            className="ed-btn ed-btn-primary"
+            style={{ marginTop: 20, width: "100%", height: 52, fontSize: 17 }}
+          >
+            ¡VAMOS, {current.name.toUpperCase()}! →
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { HomeScreen, CharacterScreen, CosmosBg, incrementGamesCompleted, useVisitorCount, markFirstAttempt, LEVELS_CFG });
+
+
+// game-screens.jsx — Juego 8. Dos niveles de lenguaje con mecánicas distintas:
+//   1. El escritor  (9 años)  — caza S/P · pintor de modificadores · sastre de citas
+//   2. El narrador  (10 años) — palabras mágicas · partes del cuento · ordena el cuento
+//
+// GameScreen delega al sub-componente según app.currentCategory.
+
+const { useState: useStateG, useEffect: useEffectG, useRef: useRefG, useMemo: useMemoG } = React;
+
+function PortalToBody({ children }) {
+  return ReactDOM.createPortal(children, document.body);
+}
+
+// ─────────────────────────────────────────────────────────────
+// Utilidades comunes
+// ─────────────────────────────────────────────────────────────
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function makeDragHandler({ item, ghostHtml, onTap, onDrop, disabled }) {
+  return function onPointerDown(e) {
+    if (disabled) return;
+    if (e.button !== undefined && e.button !== 0) return;
+    e.preventDefault();
+    const startX = e.clientX, startY = e.clientY;
+    let started = false;
+    let ghost = null;
+    let currentZoneId = null;
+    let lastX = startX, lastY = startY;
+    const highlights = new Set();
+
+    function clearHighlights() {
+      for (const el of highlights) el.classList.remove("ed-drop-hover");
+      highlights.clear();
+    }
+    function findZoneAt(x, y) {
+      let prevVis = null;
+      if (ghost) { prevVis = ghost.style.visibility; ghost.style.visibility = "hidden"; }
+      const under = document.elementFromPoint(x, y);
+      if (ghost) ghost.style.visibility = prevVis || "";
+      if (!under || !under.closest) return null;
+      const zone = under.closest("[data-dropzone]");
+      return zone || null;
+    }
+    function onMove(ev) {
+      const x = ev.clientX, y = ev.clientY;
+      lastX = x; lastY = y;
+      if (!started && Math.hypot(x - startX, y - startY) > 6) {
+        started = true;
+        ghost = document.createElement("div");
+        ghost.style.cssText = "position:fixed;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:none;left:" + x + "px;top:" + y + "px;";
+        ghost.innerHTML = ghostHtml || `<div style="background:#fce9a8;color:#3a2608;padding:6px 12px;border-radius:10px;font-family:Fredoka,Nunito,sans-serif;font-weight:800;font-size:12px;border:2px solid #4fd8ff;box-shadow:0 6px 18px rgba(0,0,0,0.5);">${String(item).slice(0,60)}</div>`;
+        document.body.appendChild(ghost);
+        document.body.style.cursor = "grabbing";
+      }
+      if (started && ghost) {
+        ghost.style.left = x + "px";
+        ghost.style.top = y + "px";
+        clearHighlights();
+        const zone = findZoneAt(x, y);
+        if (zone) { zone.classList.add("ed-drop-hover"); highlights.add(zone); currentZoneId = zone.dataset.dropzone; }
+        else { currentZoneId = null; }
+      }
+    }
+    function onUp(ev) {
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+      document.removeEventListener("pointercancel", onCancel);
+      let finalZone = currentZoneId;
+      if (started && !finalZone) {
+        const x = (ev && ev.clientX != null) ? ev.clientX : lastX;
+        const y = (ev && ev.clientY != null) ? ev.clientY : lastY;
+        const zone = findZoneAt(x, y);
+        if (zone) finalZone = zone.dataset.dropzone;
+      }
+      if (ghost) { ghost.remove(); ghost = null; }
+      document.body.style.cursor = "";
+      clearHighlights();
+      if (!started) { if (onTap) onTap(item); }
+      else if (finalZone && onDrop) { onDrop(finalZone, item); }
+    }
+    function onCancel() {
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+      document.removeEventListener("pointercancel", onCancel);
+      if (ghost) { ghost.remove(); ghost = null; }
+      document.body.style.cursor = "";
+      clearHighlights();
+    }
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+    document.addEventListener("pointercancel", onCancel);
+  };
+}
+
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const ss = s % 60;
+  return `${String(m).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
+}
+
+function calcStars(isCorrect, exerciseSec) {
+  return isCorrect ? Math.max(1, 10 - Math.floor(exerciseSec / 3)) : 0;
+}
+
+const ENCOURAGEMENTS = [
+  "¡Casi! Sigue intentándolo.",
+  "¡La próxima es tuya!",
+  "Equivocarse también es aprender.",
+  "¡Vamos a la siguiente!",
+  "Cada error te acerca al acierto.",
+];
+
+const RECENT_KEYS = {
+  escritor: "edinun_juego8_escritor_recientes_v1",
+  narrador: "edinun_juego8_narrador_recientes_v1",
+};
+const RECENT_LIMIT = 4;
+
+function getRecent(level) {
+  try {
+    const raw = localStorage.getItem(RECENT_KEYS[level]);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch { return []; }
+}
+function pushRecent(level, key) {
+  const arr = getRecent(level).filter((k) => k !== key);
+  arr.unshift(key);
+  const trimmed = arr.slice(0, RECENT_LIMIT);
+  try { localStorage.setItem(RECENT_KEYS[level], JSON.stringify(trimmed)); } catch {}
+}
+
+// ─────────────────────────────────────────────────────────────
+// BANCOS — N1 · El escritor (9 años)
+// ─────────────────────────────────────────────────────────────
+
+// R1 — Sujeto / Predicado: palabras-ficha que se asignan a cada columna.
+//   Tomadas del libro EDINUN (TEMA 5, oración bimembre).
+const SP_BANK = [
+  {
+    id: "tomates",
+    oracion: [
+      { w: "Cecilia",  parte: "S" },
+      { w: "y",        parte: "S" },
+      { w: "Miguel",   parte: "S" },
+      { w: "picaron",  parte: "P" },
+      { w: "los",      parte: "P" },
+      { w: "tomates",  parte: "P" },
+    ],
+  },
+  {
+    id: "alpinista",
+    oracion: [
+      { w: "El",        parte: "S" },
+      { w: "alpinista", parte: "S" },
+      { w: "escaló",    parte: "P" },
+      { w: "una",       parte: "P" },
+      { w: "montaña",   parte: "P" },
+      { w: "imponente", parte: "P" },
+    ],
+  },
+  {
+    id: "basquet",
+    oracion: [
+      { w: "Maximiliano", parte: "S" },
+      { w: "y",           parte: "S" },
+      { w: "yo",          parte: "S" },
+      { w: "jugamos",     parte: "P" },
+      { w: "básquet",     parte: "P" },
+      { w: "en",          parte: "P" },
+      { w: "la",          parte: "P" },
+      { w: "escuela",     parte: "P" },
+    ],
+  },
+];
+
+// R2 — Pintor de modificadores: 1 frase con núcleo prefijado en rojo.
+//   md = modificador directo (artículo/adjetivo, palabra suelta)
+//   n  = núcleo (sustantivo, fijo en rojo, no se toca)
+//   mi = modificador indirecto (bloque con preposición)
+const MOD_BANK = [
+  {
+    id: "restaurante",
+    tokens: [
+      { w: "El",                 tipo: "md" },
+      { w: "pequeño",            tipo: "md" },
+      { w: "restaurante",        tipo: "n"  },
+      { w: "de la otra calle",   tipo: "mi" },
+    ],
+  },
+  {
+    id: "mariposa",
+    tokens: [
+      { w: "La",            tipo: "md" },
+      { w: "pequeña",       tipo: "md" },
+      { w: "mariposa",      tipo: "n"  },
+      { w: "del jardín",    tipo: "mi" },
+    ],
+  },
+  {
+    id: "perro",
+    tokens: [
+      { w: "Ese",           tipo: "md" },
+      { w: "perro",         tipo: "n"  },
+      { w: "de mi vecino",  tipo: "mi" },
+    ],
+  },
+  {
+    id: "libros",
+    tokens: [
+      { w: "Esos",            tipo: "md" },
+      { w: "libros",          tipo: "n"  },
+      { w: "de aventuras",    tipo: "mi" },
+    ],
+  },
+];
+
+// R3 — Sastre de citas: frase con huecos para dos puntos + comillas + punto.
+//   Estructura: partes[] alterna entre texto fijo (t) y slot (s).
+//   Para slot, "correcto" indica qué símbolo va y el banco tiene los 4 disponibles.
+const CITAS_BANK = [
+  {
+    id: "profesor",
+    partes: [
+      { t: "Entonces el profesor dijo" },
+      { s: ":" },
+      { s: '"' },
+      { t: "Para mañana la lección siguiente" },
+      { s: '"' },
+      { s: "." },
+    ],
+    bandeja: [":", '"', '"', "."],
+  },
+  {
+    id: "presidente",
+    partes: [
+      { t: "El presidente aseguró" },
+      { s: ":" },
+      { s: '"' },
+      { t: "Arranca una nueva etapa mejor" },
+      { s: '"' },
+      { s: "." },
+    ],
+    bandeja: [":", '"', '"', "."],
+  },
+  {
+    id: "novio",
+    partes: [
+      { t: "Cuando el novio dijo" },
+      { s: ":" },
+      { s: '"' },
+      { t: "Sí, acepto" },
+      { s: '"' },
+      { s: "." },
+    ],
+    bandeja: [":", '"', '"', "."],
+  },
+];
+
+// ─────────────────────────────────────────────────────────────
+// BANCOS — N2 · El narrador (10 años)
+// ─────────────────────────────────────────────────────────────
+
+// R1 — Palabras mágicas: frase con 1 hueco, 4 opciones.
+const MAGICAS_BANK = [
+  {
+    id: "bosque",
+    titulo: "En el bosque",
+    huecos: [
+      { id: "h1", frase: "El bosque parecía  ___  y silencioso.",   correcta: "misterioso",  opciones: ["misterioso", "ruidoso", "rápido", "alegre"] },
+      { id: "h2", frase: " ___ , se escuchó un crujido entre las hojas.", correcta: "De repente", opciones: ["Más tarde", "De repente", "Despacio", "Siempre"] },
+      { id: "h3", frase: "Una voz  ___  algo, pero nadie pudo entenderlo.", correcta: "susurró",   opciones: ["gritó", "cantó", "susurró", "olvidó"] },
+    ],
+  },
+  {
+    id: "cabana",
+    titulo: "La cabaña oculta",
+    huecos: [
+      { id: "h1", frase: "Al mirar bien, María  ___  una pequeña cabaña.", correcta: "descubrió", opciones: ["perdió", "descubrió", "rompió", "lavó"] },
+      { id: "h2", frase: "La cabaña estaba  ___  de árboles altísimos.",   correcta: "rodeada",  opciones: ["rodeada", "vacía", "sucia", "abierta"] },
+      { id: "h3", frase: "Una luz  ___  salió desde la ventana.",          correcta: "misteriosa", opciones: ["aburrida", "lenta", "misteriosa", "rota"] },
+    ],
+  },
+  {
+    id: "barco",
+    titulo: "El barco escondido",
+    huecos: [
+      { id: "h1", frase: "El capitán  ___  un viejo mapa en el cajón.", correcta: "descubrió", opciones: ["olvidó", "descubrió", "rompió", "ignoró"] },
+      { id: "h2", frase: "El mar estaba  ___  de niebla espesa.",        correcta: "rodeado",  opciones: ["lleno", "vacío", "rodeado", "alegre"] },
+      { id: "h3", frase: " ___ , una ola enorme golpeó el barco.",       correcta: "De repente", opciones: ["Despacio", "De repente", "Suavemente", "Luego"] },
+    ],
+  },
+];
+
+// R2 — Partes de la narración: 5 etiquetas, 5 fragmentos para clasificar
+const PARTES_BANK = [
+  {
+    id: "alicia",
+    titulo: "El bosque sin nombre",
+    fragmentos: [
+      { id: "f1", texto: "En un bosque mágico, oscuro y silencioso.",                     parte: "lugar" },
+      { id: "f2", texto: "Alicia y un pequeño cervato caminaban juntos.",                  parte: "personajes" },
+      { id: "f3", texto: "El cervato no podía recordar su nombre.",                        parte: "conflicto" },
+      { id: "f4", texto: "Caminaron hasta el final del bosque, hablando en voz baja.",     parte: "acciones" },
+      { id: "f5", texto: "Al salir del bosque, el cervato recordó: ¡soy un cervato!",      parte: "resolucion" },
+    ],
+  },
+  {
+    id: "gatitos",
+    titulo: "Niños salvan a gatitos",
+    fragmentos: [
+      { id: "f1", texto: "En el patio del Centro Educativo Las Cimas.",                    parte: "lugar" },
+      { id: "f2", texto: "María Elena, Camilo y otros niños de 5to de básica.",            parte: "personajes" },
+      { id: "f3", texto: "Encontraron una camada de gatitos abandonados.",                 parte: "conflicto" },
+      { id: "f4", texto: "Envolvieron a cada gatito en su uniforme con cuidado.",          parte: "acciones" },
+      { id: "f5", texto: "Los padres adoptaron a los ocho gatitos en sus casas.",          parte: "resolucion" },
+    ],
+  },
+  {
+    id: "tesoro",
+    titulo: "El tesoro del abuelo",
+    fragmentos: [
+      { id: "f1", texto: "En la casa antigua junto al río.",                              parte: "lugar" },
+      { id: "f2", texto: "Lucía y su abuelo Aníbal, gran cuentacuentos.",                  parte: "personajes" },
+      { id: "f3", texto: "El abuelo no recordaba dónde había guardado un tesoro.",         parte: "conflicto" },
+      { id: "f4", texto: "Buscaron juntos por el jardín, el desván y la cocina.",          parte: "acciones" },
+      { id: "f5", texto: "Encontraron una caja con fotos viejas: el verdadero tesoro.",    parte: "resolucion" },
+    ],
+  },
+];
+
+// R3 — Ordena el cuento: 5 escenas con emoji + texto, hay que ordenarlas tap-tap
+const ORDEN_BANK = [
+  {
+    id: "alicia",
+    titulo: "Alicia y el cervato",
+    escenas: [
+      { n: 1, emoji: "🌲", texto: "Alicia entró a un bosque silencioso." },
+      { n: 2, emoji: "🦌", texto: "Encontró a un pequeño cervato perdido." },
+      { n: 3, emoji: "❓", texto: "Ninguno recordaba su propio nombre." },
+      { n: 4, emoji: "🚶", texto: "Caminaron juntos buscando la salida." },
+      { n: 5, emoji: "✨", texto: "Al salir, recordaron quiénes eran." },
+    ],
+  },
+  {
+    id: "gatitos",
+    titulo: "El rescate de los gatitos",
+    escenas: [
+      { n: 1, emoji: "🏫", texto: "Era un día normal en la escuela." },
+      { n: 2, emoji: "🐱", texto: "Los niños encontraron gatitos abandonados." },
+      { n: 3, emoji: "🤔", texto: "Pensaron qué hacer para ayudarlos." },
+      { n: 4, emoji: "🧥", texto: "Los envolvieron en sus uniformes." },
+      { n: 5, emoji: "🏠", texto: "Cada familia adoptó un gatito." },
+    ],
+  },
+  {
+    id: "abuelo",
+    titulo: "El tesoro del abuelo",
+    escenas: [
+      { n: 1, emoji: "🏚️", texto: "Lucía visitó la casa antigua del abuelo." },
+      { n: 2, emoji: "💭", texto: "El abuelo le contó de un tesoro perdido." },
+      { n: 3, emoji: "🔎", texto: "Buscaron por toda la casa." },
+      { n: 4, emoji: "📦", texto: "Hallaron una caja vieja en el desván." },
+      { n: 5, emoji: "📷", texto: "Adentro había fotos: el verdadero tesoro." },
+    ],
+  },
+];
+
+// ─────────────────────────────────────────────────────────────
+// GameScreen — delega al sub-componente según el nivel elegido
+// ─────────────────────────────────────────────────────────────
+function GameScreen({ app, setApp, go }) {
+  const cat = app.currentCategory || "escritor";
+  const [restartTick, setRestartTick] = useStateG(0);
+  const restart = () => setRestartTick((t) => t + 1);
+  return (
+    <>
+      <style>{`
+        .ed-drop-hover {
+          outline: 3px dashed #4fd8ff !important;
+          outline-offset: 2px;
+          box-shadow: 0 0 22px rgba(79,216,255,0.7) !important;
+          background-color: rgba(79,216,255,0.18) !important;
+          transition: all 0.12s ease;
+        }
+        .ed-draggable {
+          touch-action: none;
+          user-select: none;
+          -webkit-user-select: none;
+        }
+      `}</style>
+      {cat === "narrador"
+        ? <NarradorGame key={`nar-${restartTick}`} app={app} setApp={setApp} go={go} onRestart={restart} />
+        : <EscritorGame key={`esc-${restartTick}`} app={app} setApp={setApp} go={go} onRestart={restart} />}
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Shell común: HUD, modales, action rail, feedback, personaje
+// ─────────────────────────────────────────────────────────────
+function GameEnunciado({ text }) {
+  if (!text) return null;
+  return (
+    <div style={{
+      position: "absolute", top: 84, left: 244, width: 488,
+      textAlign: "center",
+      fontFamily: "var(--ed-font-display)", fontWeight: 700,
+      fontSize: 17, lineHeight: 1.2,
+      color: "#fff",
+      textShadow: "0 2px 6px rgba(0,0,0,0.6)",
+      pointerEvents: "none",
+      zIndex: 5,
+    }}>
+      {text}
+    </div>
+  );
+}
+
+function GameHUD({ elapsed, stars, attempted, solved, total = 3, app, setApp }) {
+  const levels = (typeof LEVELS_CFG !== "undefined" && LEVELS_CFG) || (window.LEVELS_CFG || []);
+  const currentId = app && app.currentCategory ? app.currentCategory : "escritor";
+  const [pendingLevel, setPendingLevel] = useStateG(null);
+
+  function requestSwitch(lvId) {
+    if (lvId === currentId) return;
+    setPendingLevel(lvId);
+  }
+  function confirmSwitch() {
+    if (!pendingLevel) return;
+    const cfg = levels.find((l) => l.id === pendingLevel);
+    if (!cfg) { setPendingLevel(null); return; }
+    setApp((s) => ({
+      ...s,
+      level: cfg.id,
+      currentCategory: cfg.id,
+      currentCatLabel: cfg.catLabel,
+    }));
+    setPendingLevel(null);
+  }
+
+  return (
+    <>
+      <div data-qa="hud" style={{
+        position: "absolute", top: 10, left: 16, right: 16,
+        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <EdinunLogoMini size={56} />
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 6,
+            background: "rgba(0,0,0,0.35)", borderRadius: 999, padding: "6px 12px",
+            border: "1px solid rgba(242,194,96,0.4)", fontFamily: "var(--ed-font-mono)", fontSize: 13, color: "#fce9a8",
+          }}>
+            ⏱ {formatTime(elapsed)}
+          </div>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 6,
+            background: "rgba(0,0,0,0.35)", borderRadius: 999, padding: "6px 12px",
+            border: "1px solid rgba(242,194,96,0.4)", fontFamily: "var(--ed-font-display)", fontWeight: 600, color: "#fce9a8",
+          }}>
+            ⭐ {stars}
+          </div>
+        </div>
+      </div>
+
+      <div data-qa="hud-temas" style={{
+        position: "absolute", top: 22, left: "50%", transform: "translateX(-50%)",
+        display: "flex", alignItems: "center", gap: 5,
+      }}>
+        {levels.map((lv) => {
+          const active = lv.id === currentId;
+          return (
+            <button
+              key={lv.id}
+              onClick={() => requestSwitch(lv.id)}
+              title={active ? "Tema actual" : `Cambiar a "${lv.label}"`}
+              style={{
+                padding: "4px 12px",
+                borderRadius: 999,
+                background: active ? lv.grad : "rgba(0,0,0,0.35)",
+                color: active ? lv.ink : "rgba(252,233,168,0.85)",
+                fontFamily: "var(--ed-font-display)",
+                fontWeight: 700, fontSize: 11, letterSpacing: "0.02em",
+                border: active ? "1px solid rgba(255,255,255,0.55)" : "1px solid rgba(242,194,96,0.35)",
+                boxShadow: active
+                  ? "inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -2px 0 rgba(0,0,0,0.18), 0 0 12px rgba(255,255,255,0.18)"
+                  : "none",
+                cursor: active ? "default" : "pointer",
+                transition: "all 0.18s ease",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {lv.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div style={{
+        position: "absolute", top: 58, left: "50%", transform: "translateX(-50%)",
+        display: "flex", alignItems: "center", gap: 8,
+      }}>
+        <span className="ed-label" style={{ color: "rgba(255,255,255,0.7)" }}>Ronda {Math.min(attempted + 1, total)} de {total}</span>
+        <div style={{ display: "flex", gap: 4 }}>
+          {Array.from({ length: total }).map((_, i) => (
+            <div key={i} style={{
+              width: 10, height: 10, borderRadius: "50%",
+              background: i < attempted ? (i < solved ? "#fce9a8" : "#ff6b6b") : "rgba(255,255,255,0.2)",
+              boxShadow: i < attempted ? "0 0 10px currentColor" : "none",
+              color: i < solved ? "#fce9a8" : "#ff6b6b",
+            }} />
+          ))}
+        </div>
+      </div>
+
+      <SwitchLevelModal
+        pendingLevel={pendingLevel}
+        levels={levels}
+        attempted={attempted}
+        total={total}
+        onCancel={() => setPendingLevel(null)}
+        onConfirm={confirmSwitch}
+      />
+    </>
+  );
+}
+
+function SwitchLevelModal({ pendingLevel, levels, attempted, total, onCancel, onConfirm }) {
+  if (!pendingLevel) return null;
+  const cfg = levels.find((l) => l.id === pendingLevel);
+  if (!cfg) return null;
+  return (
+    <PortalToBody>
+      <div onClick={onCancel} style={{
+        position: "fixed", inset: 0, zIndex: 1000,
+        background: "rgba(0,0,0,0.62)", backdropFilter: "blur(4px)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        animation: "ed-pop-in 0.18s", padding: 16,
+      }}>
+        <div onClick={(e) => e.stopPropagation()} className="ed-card"
+          style={{ padding: 24, maxWidth: 460, textAlign: "center", boxShadow: "var(--ed-shadow-card), 0 0 40px rgba(148,120,255,0.3)" }}>
+          <div className="ed-label" style={{ color: "#a78bfa", marginBottom: 6 }}>Cambiar de tema</div>
+          <h2 className="ed-h1" style={{ fontSize: 22, lineHeight: 1.15, marginBottom: 8 }}>
+            ¿Ir a "{cfg.label}"?
+          </h2>
+          <p className="ed-body" style={{ marginBottom: 16, fontSize: 14 }}>
+            Vas a perder el progreso de esta ronda ({attempted}/{total}). No habrá reporte de esta sesión.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <button className="ed-btn ed-btn-ghost" onClick={onCancel} style={{ height: 44, fontWeight: 800, letterSpacing: "0.04em" }}>
+              SEGUIR JUGANDO
+            </button>
+            <button className="ed-btn ed-btn-primary" onClick={onConfirm} style={{ height: 44, fontWeight: 800, letterSpacing: "0.04em" }}>
+              SÍ, CAMBIAR
+            </button>
+          </div>
+        </div>
+      </div>
+    </PortalToBody>
+  );
+}
+
+function RestartModal({ confirmingExit, setConfirmingExit, attempted, total, onRestart }) {
+  if (!confirmingExit) return null;
+  return (
+    <PortalToBody>
+      <div onClick={() => setConfirmingExit(false)} style={{
+        position: "fixed", inset: 0, zIndex: 1000,
+        background: "rgba(0,0,0,0.62)", backdropFilter: "blur(4px)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        animation: "ed-pop-in 0.18s", padding: 16,
+      }}>
+        <div onClick={(e) => e.stopPropagation()} className="ed-card"
+          style={{ padding: 24, maxWidth: 440, textAlign: "center", boxShadow: "var(--ed-shadow-card), 0 0 40px rgba(255,107,107,0.3)" }}>
+          <div className="ed-label" style={{ color: "#ff8b8b", marginBottom: 6 }}>Reiniciar juego</div>
+          <h2 className="ed-h1" style={{ fontSize: 22, lineHeight: 1.15, marginBottom: 8 }}>¿Empezar de nuevo?</h2>
+          <p className="ed-body" style={{ marginBottom: 16, fontSize: 14 }}>
+            Vas a perder el progreso de esta ronda ({attempted}/{total}) y volverás a la primera.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingExit(false)} style={{ height: 44, fontWeight: 800, letterSpacing: "0.04em" }}>
+              SEGUIR JUGANDO
+            </button>
+            <button className="ed-btn ed-btn-primary" onClick={() => { setConfirmingExit(false); onRestart && onRestart(); }} style={{ height: 44, fontWeight: 800, letterSpacing: "0.04em" }}>
+              SÍ, REINICIAR
+            </button>
+          </div>
+        </div>
+      </div>
+    </PortalToBody>
+  );
+}
+
+function ExitModal({ confirmingExit, setConfirmingExit, attempted, total, onExit }) {
+  if (!confirmingExit) return null;
+  return (
+    <PortalToBody>
+      <div onClick={() => setConfirmingExit(false)} style={{
+        position: "fixed", inset: 0, zIndex: 1000,
+        background: "rgba(0,0,0,0.62)", backdropFilter: "blur(4px)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        animation: "ed-pop-in 0.18s", padding: 16,
+      }}>
+        <div onClick={(e) => e.stopPropagation()} className="ed-card"
+          style={{ padding: 24, maxWidth: 440, textAlign: "center", boxShadow: "var(--ed-shadow-card), 0 0 40px rgba(255,138,76,0.3)" }}>
+          <div className="ed-label" style={{ color: "#ff8b4c", marginBottom: 6 }}>Volver al inicio</div>
+          <h2 className="ed-h1" style={{ fontSize: 22, lineHeight: 1.15, marginBottom: 8 }}>¿Volver al inicio?</h2>
+          <p className="ed-body" style={{ marginBottom: 16, fontSize: 14 }}>
+            Vas a perder el progreso de esta ronda ({attempted}/{total}). No habrá reporte de esta sesión.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingExit(false)} style={{ height: 44, fontWeight: 800, letterSpacing: "0.04em" }}>
+              SEGUIR JUGANDO
+            </button>
+            <button className="ed-btn ed-btn-primary" onClick={() => { setConfirmingExit(false); onExit && onExit(); }} style={{ height: 44, fontWeight: 800, letterSpacing: "0.04em" }}>
+              SÍ, SALIR
+            </button>
+          </div>
+        </div>
+      </div>
+    </PortalToBody>
+  );
+}
+
+function ActionRail({ canVerify, onVerify, showErase, onErase, onRestart, onExit }) {
+  return (
+    <div data-qa="acciones" style={{
+      position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
+      display: "flex", flexDirection: "column", gap: 10, width: 148,
+    }}>
+      <button className="ed-btn ed-btn-verify"
+        onClick={() => { if (canVerify && onVerify) onVerify(); }}
+        disabled={!canVerify}
+        style={{
+          fontSize: 13, padding: "0 8px", height: 48, fontWeight: 800, letterSpacing: "0.04em",
+          opacity: canVerify ? 1 : 0.45, cursor: canVerify ? "pointer" : "not-allowed",
+        }}>
+        ¡VERIFICAR!
+      </button>
+      {showErase && (
+        <button className="ed-btn ed-btn-erase" onClick={onErase}
+          style={{ fontSize: 13, padding: "0 8px", height: 48, fontWeight: 800, letterSpacing: "0.04em" }}>
+          BORRAR
+        </button>
+      )}
+      <button className="ed-btn ed-btn-restart" onClick={onRestart}
+        style={{ fontSize: 13, padding: "0 8px", height: 48, fontWeight: 800, letterSpacing: "0.04em" }}>
+        REINICIAR
+      </button>
+      <button className="ed-btn ed-btn-ghost" onClick={onExit}
+        style={{ fontSize: 13, padding: "0 8px", height: 48, fontWeight: 800, letterSpacing: "0.04em" }}>
+        SALIR
+      </button>
+    </div>
+  );
+}
+
+function FeedbackOverlay({ feedback, feedbackMsg, charName }) {
+  if (!feedback) return null;
+  return (
+    <PortalToBody>
+      <div style={{
+        position: "fixed", inset: 0, zIndex: 1000,
+        pointerEvents: "none",
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        gap: 14,
+        background: "rgba(0,0,0,0.62)", backdropFilter: "blur(3px)",
+        animation: "ed-pop-in 0.3s",
+      }}>
+        <div style={{
+          fontFamily: "'Fredoka','Baloo 2',system-ui,sans-serif",
+          fontWeight: 700, fontSize: "clamp(60px, 11vmin, 120px)",
+          color: feedback === "ok" ? "#2ecc8f" : "#ff6b6b",
+          textShadow: "0 4px 0 rgba(0,0,0,0.45), 0 0 60px currentColor",
+        }}>
+          {feedback === "ok" ? "¡EXCELENTE!" : "¡UPS!"}
+        </div>
+        {feedbackMsg && (
+          <div style={{
+            fontFamily: "'Fredoka','Baloo 2',system-ui,sans-serif",
+            fontWeight: 700, fontSize: "clamp(18px, 2.6vmin, 30px)",
+            color: feedback === "ok" ? "#fce9a8" : "#fff",
+            background: "rgba(0,0,0,0.55)",
+            padding: "8px 26px", borderRadius: 999,
+            textShadow: "0 2px 6px rgba(0,0,0,0.6)",
+            textAlign: "center", maxWidth: "80vw",
+          }}>
+            {feedback === "ok" ? feedbackMsg : `${feedbackMsg} — ${charName}`}
+          </div>
+        )}
+      </div>
+    </PortalToBody>
+  );
+}
+
+function CharacterCorner({ char, message }) {
+  return (
+    <div data-qa="personaje" style={{
+      position: "absolute", left: 8, bottom: 76, width: 220,
+      pointerEvents: "none", textAlign: "center",
+    }}>
+      <div data-qa="bocadillo" style={{
+        position: "absolute", left: 0, right: 0, top: -82,
+        display: "flex", justifyContent: "center",
+        pointerEvents: "none",
+      }}>
+        <div style={{
+          position: "relative",
+          maxWidth: 208,
+          background: "linear-gradient(180deg, rgba(20,12,55,0.95), rgba(10,6,35,0.95))",
+          border: "1.5px solid rgba(242,194,96,0.65)",
+          borderRadius: 16, padding: "10px 14px",
+          fontFamily: "var(--ed-font-display)",
+          fontWeight: 700, fontSize: 13, lineHeight: 1.25,
+          color: "#fce9a8", textAlign: "center",
+          boxShadow: "0 10px 24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08)",
+        }}>
+          {message}
+          <div style={{
+            position: "absolute", bottom: -10, left: "50%", transform: "translateX(-50%)",
+            width: 0, height: 0,
+            borderLeft: "9px solid transparent", borderRight: "9px solid transparent",
+            borderTop: "10px solid rgba(20,12,55,0.95)",
+            filter: "drop-shadow(0 1px 0 rgba(242,194,96,0.55))",
+          }} />
+        </div>
+      </div>
+      <div style={{ position: "relative", display: "flex", justifyContent: "center" }}>
+        <div style={{
+          position: "absolute", bottom: 14, left: "50%", transform: "translateX(-50%)",
+          width: 130, height: 14, borderRadius: "50%",
+          background: "radial-gradient(ellipse, rgba(242,194,96,0.45), transparent 70%)",
+          filter: "blur(5px)",
+        }} />
+        <char.Component size={170} floating />
+      </div>
+      <div style={{
+        marginTop: -4,
+        fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13,
+        color: "#fce9a8", letterSpacing: "0.04em",
+        textShadow: "0 2px 6px rgba(0,0,0,0.6)",
+      }}>{char.name}</div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// N1 · El escritor — 3 rondas distintas
+// ─────────────────────────────────────────────────────────────
+function EscritorGame({ app, setApp, go, onRestart }) {
+  const char = CHARACTERS.find((c) => c.id === app.character) || CHARACTERS[0];
+  const catLabel = app.currentCatLabel || "El escritor";
+
+  const [ronda, setRonda] = useStateG(0);
+
+  // R1 state — sujeto/predicado: { tokenIdx: "S" | "P" }
+  const [r1Assigned, setR1Assigned] = useStateG({});
+  const [r1Locked, setR1Locked] = useStateG(false);
+
+  // R2 state — pintor modificadores: { tokenIdx: "md" | "mi" }
+  const [r2Colors, setR2Colors] = useStateG({});
+  const [r2Locked, setR2Locked] = useStateG(false);
+  const [r2Selected, setR2Selected] = useStateG(null);
+
+  // R3 state — sastre de citas: { slotIdx: signo }
+  const [r3Placed, setR3Placed] = useStateG({});
+  const [r3Picked, setR3Picked] = useStateG(null);
+  const [r3Locked, setR3Locked] = useStateG(false);
+
+  // Picks
+  const [r1Pick] = useStateG(() => {
+    const recent = new Set(getRecent("escritor"));
+    let pool = SP_BANK.filter((p) => !recent.has("sp:" + p.id));
+    if (pool.length === 0) pool = SP_BANK;
+    const p = pool[Math.floor(Math.random() * pool.length)];
+    pushRecent("escritor", "sp:" + p.id);
+    return p;
+  });
+  const [r1Tokens] = useStateG(() => r1Pick.oracion.map((tk, i) => ({ ...tk, idx: i })));
+
+  const [r2Pick] = useStateG(() => {
+    const recent = new Set(getRecent("escritor"));
+    let pool = MOD_BANK.filter((p) => !recent.has("mod:" + p.id));
+    if (pool.length === 0) pool = MOD_BANK;
+    const p = pool[Math.floor(Math.random() * pool.length)];
+    pushRecent("escritor", "mod:" + p.id);
+    return p;
+  });
+
+  const [r3Pick] = useStateG(() => {
+    const recent = new Set(getRecent("escritor"));
+    let pool = CITAS_BANK.filter((p) => !recent.has("cit:" + p.id));
+    if (pool.length === 0) pool = CITAS_BANK;
+    const p = pool[Math.floor(Math.random() * pool.length)];
+    pushRecent("escritor", "cit:" + p.id);
+    return p;
+  });
+
+  // Lista plana de slots para R3 (con su signo correcto e índice)
+  const r3Slots = r3Pick.partes.map((pt, i) => pt.s != null ? { idx: i, signo: pt.s } : null).filter(Boolean);
+
+  // Shell state
+  const [elapsed, setElapsed] = useStateG(0);
+  const [stars, setStars] = useStateG(0);
+  const [solved, setSolved] = useStateG(0);
+  const [attempted, setAttempted] = useStateG(0);
+  const [starsSession, setStarsSession] = useStateG(0);
+  const [feedback, setFeedback] = useStateG(null);
+  const [feedbackMsg, setFeedbackMsg] = useStateG("");
+  const [confirmingRestart, setConfirmingRestart] = useStateG(false);
+  const [confirmingExit, setConfirmingExit] = useStateG(false);
+  const [log, setLog] = useStateG([]);
+  const started = useRefG(Date.now());
+  const exerciseStart = useRefG(Date.now());
+
+  useEffectG(() => {
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - started.current) / 1000)), 500);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffectG(() => {
+    window.__currentChalkGlyphs = [
+      { c: "✍",  l: "6%",  t: "12%", r: "-8deg" },
+      { c: "S",  l: "82%", t: "16%", r: "6deg",  s: "0.6em" },
+      { c: "P",  l: "10%", t: "78%", r: "12deg", s: "0.6em" },
+      { c: "MD", l: "88%", t: "72%", r: "-10deg", s: "0.5em" },
+      { c: ":",  l: "45%", t: "8%",  r: "4deg",  s: "0.6em" },
+      { c: '"',  l: "3%",  t: "45%", r: "-4deg", s: "0.65em" },
+      { c: ",",  l: "92%", t: "45%", r: "8deg",  s: "0.7em" },
+      { c: "MI", l: "30%", t: "55%", r: "-6deg", s: "0.5em" },
+      { c: "📖", l: "70%", t: "62%", r: "8deg",  s: "0.55em" },
+      { c: "✨", l: "55%", t: "30%", r: "-4deg", s: "0.45em" },
+    ];
+    return () => { window.__currentChalkGlyphs = null; };
+  }, []);
+
+  // Verificación
+  const r1AllAssigned = r1Tokens.every((t) => r1Assigned[t.idx]);
+  // R2: cada token md/mi debe estar pintado; los "n" (núcleo) no se pintan
+  const r2Targets = r2Pick.tokens.map((t, i) => ({ ...t, idx: i })).filter((t) => t.tipo !== "n");
+  const r2AllPainted = r2Targets.every((t) => r2Colors[t.idx]);
+  // R3: todos los slots llenos
+  const r3AllPlaced = r3Slots.every((s) => r3Placed[s.idx]);
+
+  const canVerify =
+    ronda === 0 ? (r1AllAssigned && !r1Locked) :
+    ronda === 1 ? (r2AllPainted && !r2Locked) :
+    ronda === 2 ? (r3AllPlaced && !r3Locked) :
+    false;
+  const showErase = true;
+
+  function handleVerify() {
+    if (!canVerify) return;
+    if (ronda === 0) {
+      setR1Locked(true);
+      let correct = true;
+      for (const t of r1Tokens) {
+        if (r1Assigned[t.idx] !== t.parte) { correct = false; break; }
+      }
+      const userText = r1Tokens.map((t) => `${t.w}=${r1Assigned[t.idx] || "?"}`).join(" ");
+      const correctText = r1Tokens.map((t) => `${t.w}=${t.parte}`).join(" ");
+      setTimeout(() => answer(correct, userText, correctText, "📝"), 350);
+    } else if (ronda === 1) {
+      setR2Locked(true);
+      let correct = true;
+      for (const t of r2Targets) {
+        if (r2Colors[t.idx] !== t.tipo) { correct = false; break; }
+      }
+      const userText = r2Targets.map((t) => `${t.w}=${r2Colors[t.idx] || "?"}`).join(" ");
+      const correctText = r2Targets.map((t) => `${t.w}=${t.tipo}`).join(" ");
+      setTimeout(() => answer(correct, userText, correctText, "🎨"), 350);
+    } else if (ronda === 2) {
+      setR3Locked(true);
+      let correct = true;
+      for (const s of r3Slots) {
+        if (r3Placed[s.idx] !== s.signo) { correct = false; break; }
+      }
+      const userText = r3Slots.map((s) => `${r3Placed[s.idx] || "?"}`).join(" ");
+      const correctText = r3Slots.map((s) => s.signo).join(" ");
+      setTimeout(() => answer(correct, userText, correctText, "✂"), 350);
+    }
+  }
+
+  function handleErase() {
+    if (ronda === 0) { if (r1Locked) return; setR1Assigned({}); }
+    else if (ronda === 1) { if (r2Locked) return; setR2Colors({}); setR2Selected(null); }
+    else if (ronda === 2) { if (r3Locked) return; setR3Placed({}); setR3Picked(null); }
+  }
+
+  function answer(isCorrect, userText, correctText, opIcon) {
+    if (typeof window.markFirstAttempt === "function") window.markFirstAttempt();
+    const exerciseSec = Math.max(0, Math.floor((Date.now() - exerciseStart.current) / 1000));
+    const earned = calcStars(isCorrect, exerciseSec);
+    const newAttempted = attempted + 1;
+    const newSolved = solved + (isCorrect ? 1 : 0);
+    const newStarsTotal = stars + earned;
+    const newStarsSession = starsSession + earned;
+
+    const entry = {
+      idx: newAttempted,
+      a: correctText, b: userText, op: opIcon || "·",
+      correctAnswer: correctText, userAnswer: userText,
+      isCorrect, time: exerciseSec, earned,
+    };
+    const newLog = [...log, entry];
+
+    setFeedback(isCorrect ? "ok" : "err");
+    setFeedbackMsg(isCorrect ? `+${earned} ⭐` : ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)]);
+    setAttempted(newAttempted);
+    setSolved(newSolved);
+    setStars(newStarsTotal);
+    setStarsSession(newStarsSession);
+    setLog(newLog);
+
+    const wait = isCorrect ? 950 : 1400;
+    setTimeout(() => {
+      setFeedback(null);
+      setFeedbackMsg("");
+      if (newAttempted >= 3) {
+        setApp((s) => ({
+          ...s, stars: newStarsTotal,
+          lastResult: { category: catLabel, solved: newSolved, total: 3, time: elapsed, starsEarned: newStarsSession, log: newLog },
+        }));
+        window.incrementGamesCompleted && window.incrementGamesCompleted();
+        go("results");
+      } else {
+        setRonda((r) => r + 1);
+        exerciseStart.current = Date.now();
+      }
+    }, wait);
+  }
+
+  const enunciado =
+    ronda === 0 ? "Manda cada palabra a SUJETO o PREDICADO" :
+    ronda === 1 ? "Pinta cada palabra: AZUL (MD) o VERDE (MI)" :
+    "Coloca los signos en los huecos de la cita";
+
+  const bocadillo =
+    ronda === 0 ? "Toca una palabra y luego SUJETO o PREDICADO." :
+    ronda === 1 ? "1 toque = AZUL · 2 toques = VERDE · 3 = borrar." :
+    "Toca un signo y luego el hueco donde va.";
+
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+      <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} app={app} setApp={setApp} />
+      <CharacterCorner char={char} message={bocadillo} />
+      <GameEnunciado text={enunciado} />
+
+      <div data-qa="zona-central" style={{
+        position: "absolute", top: 116, left: 244, width: 488, bottom: 14,
+      }}>
+        {ronda === 0 && (
+          <SujetoPredicadoCard
+            tokens={r1Tokens}
+            assigned={r1Assigned}
+            locked={r1Locked}
+            onAssign={(idx, parte) => {
+              if (r1Locked) return;
+              const next = { ...r1Assigned };
+              if (next[idx] === parte) delete next[idx];
+              else next[idx] = parte;
+              setR1Assigned(next);
+            }}
+          />
+        )}
+        {ronda === 1 && (
+          <PintorModCard
+            pick={r2Pick}
+            colors={r2Colors}
+            locked={r2Locked}
+            onCycle={(idx) => {
+              if (r2Locked) return;
+              const cur = r2Colors[idx];
+              const next = cur === undefined ? "md" : cur === "md" ? "mi" : undefined;
+              const newColors = { ...r2Colors };
+              if (next === undefined) delete newColors[idx]; else newColors[idx] = next;
+              setR2Colors(newColors);
+            }}
+          />
+        )}
+        {ronda === 2 && (
+          <SastreCitasCard
+            pick={r3Pick}
+            placed={r3Placed}
+            picked={r3Picked}
+            locked={r3Locked}
+            onPickLabel={(s) => { if (r3Locked) return; setR3Picked(r3Picked === s ? null : s); }}
+            onPlaceIn={(slotIdx) => {
+              if (r3Locked) return;
+              if (r3Picked === null) {
+                if (r3Placed[slotIdx]) {
+                  const next = { ...r3Placed }; delete next[slotIdx];
+                  setR3Placed(next);
+                }
+                return;
+              }
+              const next = { ...r3Placed };
+              next[slotIdx] = r3Picked;
+              setR3Placed(next);
+              setR3Picked(null);
+            }}
+            onSetPlaced={(next) => { if (r3Locked) return; setR3Placed(next); setR3Picked(null); }}
+          />
+        )}
+      </div>
+
+      <ActionRail
+        canVerify={canVerify}
+        onVerify={handleVerify}
+        showErase={showErase}
+        onErase={handleErase}
+        onRestart={() => setConfirmingRestart(true)}
+        onExit={() => setConfirmingExit(true)}
+      />
+
+      <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />
+      <RestartModal confirmingExit={confirmingRestart} setConfirmingExit={setConfirmingRestart} attempted={attempted} total={3} onRestart={onRestart} />
+      <ExitModal confirmingExit={confirmingExit} setConfirmingExit={setConfirmingExit} attempted={attempted} total={3} onExit={() => go("home")} />
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// N1 · R1 — Sujeto/Predicado: fichas de palabras, 2 columnas
+// ─────────────────────────────────────────────────────────────
+function SujetoPredicadoCard({ tokens, assigned, locked, onAssign }) {
+  // Sujeto se pinta amarillo (libro), predicado se pinta rojo (libro).
+  const sCount = tokens.filter((t) => assigned[t.idx] === "S").length;
+  const pCount = tokens.filter((t) => assigned[t.idx] === "P").length;
+
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
+      {/* Cartel con todas las palabras (fichas) */}
+      <div style={{
+        width: "100%", maxWidth: 470,
+        background: "linear-gradient(180deg, rgba(255,253,245,0.97), rgba(245,238,225,0.92))",
+        border: "3px solid #f2c260",
+        borderRadius: 16, padding: "12px 14px",
+        boxShadow: "0 8px 18px rgba(0,0,0,0.45)",
+      }}>
+        <div style={{
+          display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center", alignItems: "center",
+        }}>
+          {tokens.map((t) => {
+            const a = assigned[t.idx];
+            let bg = "rgba(252,233,168,0.65)";
+            let border = "2px dashed rgba(217,164,65,0.55)";
+            let color = "#3a2608";
+            if (a === "S") { bg = "linear-gradient(180deg, #ffe97a, #d7b12a)"; border = "2px solid #b48817"; color = "#3a2608"; }
+            if (a === "P") { bg = "linear-gradient(180deg, #ff9a9a, #d94a4a)"; border = "2px solid #a31818"; color = "#fff"; }
+            return (
+              <span key={t.idx}
+                onClick={() => {
+                  if (locked) return;
+                  // ciclo: vacío → S → P → vacío
+                  const cur = assigned[t.idx];
+                  const next = cur === undefined ? "S" : cur === "S" ? "P" : null;
+                  if (next === null) {
+                    const c = { ...assigned }; delete c[t.idx];
+                    onAssign(t.idx, undefined);
+                    return;
+                  }
+                  onAssign(t.idx, next);
+                }}
+                style={{
+                  display: "inline-block",
+                  padding: "5px 11px",
+                  borderRadius: 9,
+                  background: bg, border,
+                  color, fontWeight: 700,
+                  fontFamily: "var(--ed-font-display)",
+                  fontSize: 14, lineHeight: 1.2,
+                  cursor: locked ? "default" : "pointer",
+                  userSelect: "none",
+                  transition: "all 0.15s",
+                  boxShadow: a ? "0 2px 4px rgba(0,0,0,0.25)" : "none",
+                }}>
+                {t.w}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Botonera con leyenda S / P y contadores */}
+      <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center" }}>
+        <button
+          disabled={locked}
+          onClick={() => {
+            if (locked) return;
+            // Asigna S al primer token sin asignar
+            const next = tokens.find((t) => !assigned[t.idx]);
+            if (next) onAssign(next.idx, "S");
+          }}
+          style={{
+            display: "flex", alignItems: "center", gap: 6,
+            background: "linear-gradient(180deg, #ffe97a, #d7b12a)",
+            color: "#3a2608",
+            padding: "6px 14px", borderRadius: 10,
+            fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
+            border: "2px solid #b48817",
+            cursor: locked ? "default" : "pointer",
+            boxShadow: "0 3px 6px rgba(0,0,0,0.3)",
+            letterSpacing: "0.04em",
+          }}>
+          SUJETO · {sCount}
+        </button>
+        <span style={{ color: "#fce9a8", fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 16 }}>+</span>
+        <button
+          disabled={locked}
+          onClick={() => {
+            if (locked) return;
+            const next = tokens.find((t) => !assigned[t.idx]);
+            if (next) onAssign(next.idx, "P");
+          }}
+          style={{
+            display: "flex", alignItems: "center", gap: 6,
+            background: "linear-gradient(180deg, #ff9a9a, #d94a4a)",
+            color: "#fff",
+            padding: "6px 14px", borderRadius: 10,
+            fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
+            border: "2px solid #a31818",
+            cursor: locked ? "default" : "pointer",
+            boxShadow: "0 3px 6px rgba(0,0,0,0.3)",
+            letterSpacing: "0.04em",
+          }}>
+          PREDICADO · {pCount}
+        </button>
+      </div>
+
+      {/* Mini-pista */}
+      <div style={{
+        background: "rgba(10,6,35,0.65)",
+        border: "1px solid rgba(252,233,168,0.5)",
+        borderRadius: 999,
+        padding: "4px 14px",
+        fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 11, color: "#fce9a8",
+        textAlign: "center", letterSpacing: "0.02em",
+      }}>
+        💡 ¿Quién hace la acción? → Sujeto · ¿Qué hace? → Predicado
+      </div>
+
+      {/* Vista preview: SUJETO ─── PREDICADO */}
+      {locked && (
+        <div style={{
+          width: "100%", maxWidth: 470, marginTop: 4,
+          display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6,
+        }}>
+          <div style={{
+            background: "rgba(255,233,122,0.18)", border: "1.5px solid rgba(255,233,122,0.5)",
+            borderRadius: 10, padding: "6px 10px", textAlign: "center",
+            fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12, color: "#fce9a8",
+          }}>
+            <div className="ed-label" style={{ color: "#ffe97a", fontSize: 9 }}>Sujeto correcto</div>
+            <div>{tokens.filter((t) => t.parte === "S").map((t) => t.w).join(" ")}</div>
+          </div>
+          <div style={{
+            background: "rgba(255,154,154,0.18)", border: "1.5px solid rgba(255,154,154,0.5)",
+            borderRadius: 10, padding: "6px 10px", textAlign: "center",
+            fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12, color: "#ffd0d0",
+          }}>
+            <div className="ed-label" style={{ color: "#ff9a9a", fontSize: 9 }}>Predicado correcto</div>
+            <div>{tokens.filter((t) => t.parte === "P").map((t) => t.w).join(" ")}</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// N1 · R2 — Pintor de modificadores: tap cicla AZUL (MD) / VERDE (MI) / vacío.
+//   El núcleo (sustantivo) ya está marcado en rojo y no se toca.
+// ─────────────────────────────────────────────────────────────
+function PintorModCard({ pick, colors, locked, onCycle }) {
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
+      {/* Cartel con la frase nominal */}
+      <div style={{
+        width: "100%", maxWidth: 470,
+        background: "linear-gradient(180deg, rgba(255,253,245,0.97), rgba(245,238,225,0.92))",
+        border: "3px solid #f2c260",
+        borderRadius: 18,
+        padding: "20px 22px",
+        boxShadow: "0 12px 26px rgba(0,0,0,0.5)",
+        color: "#3a2608",
+        display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: 8,
+      }}>
+        {pick.tokens.map((t, i) => {
+          if (t.tipo === "n") {
+            // núcleo fijo en rojo (libro EDINUN: el núcleo del sujeto = sustantivo)
+            return (
+              <span key={i} style={{
+                display: "inline-block",
+                padding: "5px 12px", borderRadius: 10,
+                background: "linear-gradient(180deg, #ff9a9a, #d94a4a)",
+                color: "#fff", fontWeight: 800,
+                fontFamily: "var(--ed-font-display)", fontSize: 17,
+                border: "2px solid #a31818",
+                boxShadow: "0 3px 7px rgba(0,0,0,0.3)",
+              }}>
+                {t.w}
+                <span style={{ fontSize: 8.5, opacity: 0.9, marginLeft: 4, letterSpacing: "0.06em" }}>· NÚCLEO</span>
+              </span>
+            );
+          }
+          // md o mi → tocable
+          const choice = colors[i]; // "md" | "mi" | undefined
+          const expected = t.tipo;
+          const isCorrect = locked && choice === expected;
+          const isWrong = locked && choice && choice !== expected;
+          const isEmpty = locked && !choice;
+
+          let bg = "rgba(252,233,168,0.55)";
+          let border = "2px dashed rgba(217,164,65,0.6)";
+          let color = "#3a2608";
+          if (choice === "md") { bg = "linear-gradient(180deg, #b9e3ff, #4f9ee0)"; border = "2px solid #1466a6"; color = "#0a2540"; }
+          if (choice === "mi") { bg = "linear-gradient(180deg, #b8efc4, #5fb878)"; border = "2px solid #1e6e2e"; color = "#0a3a18"; }
+          if (isCorrect) { border = "2px solid #2ecc8f"; }
+          if (isWrong)   { bg = "rgba(255,107,107,0.4)"; border = "2px solid #ff6b6b"; }
+
+          return (
+            <span key={i}
+              onClick={() => !locked && onCycle(i)}
+              style={{
+                display: "inline-block",
+                padding: "5px 12px", borderRadius: 10,
+                background: bg, border,
+                color, fontWeight: 700,
+                fontFamily: "var(--ed-font-display)", fontSize: 16,
+                cursor: locked ? "default" : "pointer",
+                boxShadow: choice ? "0 3px 7px rgba(0,0,0,0.3)" : "none",
+                userSelect: "none",
+                transition: "all 0.15s",
+              }}>
+              {t.w}
+              {(isWrong || isEmpty) && (
+                <sup style={{ fontSize: 9, color: "#1e8a5d", marginLeft: 3, fontWeight: 800, letterSpacing: "0.04em" }}>
+                  ✓{expected.toUpperCase()}
+                </sup>
+              )}
+            </span>
+          );
+        })}
+      </div>
+
+      {/* Leyenda de colores */}
+      <div style={{ display: "flex", gap: 8 }}>
+        <span style={{
+          background: "linear-gradient(180deg, #b9e3ff, #4f9ee0)",
+          color: "#0a2540",
+          padding: "4px 12px", borderRadius: 999,
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11,
+          border: "1.5px solid #1466a6",
+          boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
+        }}>
+          1 tap = MD <span style={{ fontWeight: 500, opacity: 0.85 }}>(artículo/adjetivo)</span>
+        </span>
+        <span style={{
+          background: "linear-gradient(180deg, #b8efc4, #5fb878)",
+          color: "#0a3a18",
+          padding: "4px 12px", borderRadius: 999,
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11,
+          border: "1.5px solid #1e6e2e",
+          boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
+        }}>
+          2 taps = MI <span style={{ fontWeight: 500, opacity: 0.85 }}>(con preposición)</span>
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// N1 · R3 — Sastre de citas: bandeja con [: " " .] y huecos en la frase.
+// ─────────────────────────────────────────────────────────────
+function SastreCitasCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, onSetPlaced }) {
+  // Construye banda: cada signo por separado, sin duplicados removidos al usarlos (porque hay dos `"`)
+  // Cuento qué slots tienen cada signo, y la bandeja muestra el restante.
+  const usadosPorSigno = {};
+  for (const v of Object.values(placed)) {
+    usadosPorSigno[v] = (usadosPorSigno[v] || 0) + 1;
+  }
+  const disponiblesPorSigno = {};
+  for (const s of pick.bandeja) {
+    disponiblesPorSigno[s] = (disponiblesPorSigno[s] || 0) + 1;
+  }
+
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12 }}>
+      {/* Cartel con la frase */}
+      <div style={{
+        width: "100%", maxWidth: 470,
+        background: "linear-gradient(180deg, rgba(255,253,245,0.97), rgba(245,238,225,0.92))",
+        border: "3px solid #f2c260",
+        borderRadius: 18,
+        padding: "18px 22px",
+        boxShadow: "0 12px 26px rgba(0,0,0,0.5)",
+        color: "#3a2608",
+        display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: 4,
+        fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 16, lineHeight: 1.6,
+      }}>
+        {pick.partes.map((p, i) => {
+          if (p.t) {
+            return <span key={i} style={{ padding: "0 4px" }}>{p.t}</span>;
+          }
+          // slot
+          const val = placed[i];
+          const expected = p.s;
+          const isCorrect = locked && val === expected;
+          const isWrong = locked && val && val !== expected;
+          const isEmpty = locked && !val;
+
+          let bg = "rgba(252,233,168,0.5)";
+          let border = "2px dashed rgba(217,164,65,0.6)";
+          let color = "#3a2608";
+          if (val) {
+            bg = "linear-gradient(180deg, #fce9a8, #d9a441)";
+            border = "2px solid #b48817";
+          }
+          if (isCorrect) { bg = "rgba(46,204,143,0.5)"; border = "2px solid #2ecc8f"; }
+          if (isWrong)   { bg = "rgba(255,107,107,0.5)"; border = "2px solid #ff6b6b"; }
+
+          return (
+            <span key={i}
+              data-dropzone={`citaslot:${i}`}
+              onClick={() => onPlaceIn(i)}
+              style={{
+                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                minWidth: 26, minHeight: 30,
+                padding: "0 6px", margin: "0 1px",
+                borderRadius: 8,
+                background: bg, border,
+                color, fontWeight: 800,
+                fontFamily: "var(--ed-font-display)", fontSize: 18,
+                cursor: locked ? "default" : "pointer",
+                userSelect: "none",
+                boxShadow: val ? "0 2px 5px rgba(0,0,0,0.25)" : "none",
+                transition: "all 0.15s",
+              }}>
+              {val || "▢"}
+              {(isWrong || isEmpty) && (
+                <sup style={{ fontSize: 9, color: "#1e8a5d", marginLeft: 2, fontWeight: 800 }}>
+                  ✓{expected === '"' ? "”" : expected}
+                </sup>
+              )}
+            </span>
+          );
+        })}
+      </div>
+
+      {/* Bandeja con los 4 signos */}
+      <div data-qa="bandeja" style={{
+        width: "100%", maxWidth: 380,
+        background: "rgba(10,6,35,0.55)",
+        border: "1px dashed rgba(252,233,168,0.4)",
+        borderRadius: 14,
+        padding: "10px 12px",
+        display: "flex", gap: 10, justifyContent: "center", alignItems: "center",
+      }}>
+        {Object.keys(disponiblesPorSigno).map((signo) => {
+          const restante = disponiblesPorSigno[signo] - (usadosPorSigno[signo] || 0);
+          const isPicked = picked === signo;
+          if (restante <= 0) return (
+            <div key={signo} style={{
+              padding: "8px 14px", borderRadius: 10,
+              background: "rgba(255,255,255,0.05)",
+              border: "2px dashed rgba(252,233,168,0.2)",
+              color: "rgba(252,233,168,0.3)",
+              fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 20,
+              minWidth: 50, textAlign: "center",
+            }}>
+              {signo === '"' ? "”" : signo}
+            </div>
+          );
+          return (
+            <div key={signo}
+              className="ed-draggable"
+              onPointerDown={makeDragHandler({
+                item: signo,
+                ghostHtml: `<div style="background:#fce9a8;color:#3a2608;padding:8px 18px;border-radius:10px;font-family:Fredoka,Nunito,sans-serif;font-weight:800;font-size:20px;border:2px solid #4fd8ff;box-shadow:0 8px 22px rgba(0,0,0,0.5);">${signo === '"' ? '&quot;' : signo}</div>`,
+                onTap: () => onPickLabel(signo),
+                onDrop: (zoneId, item) => {
+                  if (zoneId && zoneId.startsWith("citaslot:") && onSetPlaced) {
+                    const slotIdx = parseInt(zoneId.slice("citaslot:".length), 10);
+                    const next = { ...placed };
+                    next[slotIdx] = item;
+                    onSetPlaced(next);
+                  }
+                },
+                disabled: locked,
+              })}
+              style={{
+                padding: "8px 14px", borderRadius: 10,
+                background: isPicked ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.94)",
+                color: "#3a2608",
+                border: `2px solid ${isPicked ? "#4fd8ff" : "rgba(242,194,96,0.6)"}`,
+                fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 22,
+                cursor: locked ? "default" : "grab",
+                boxShadow: isPicked ? "0 0 16px rgba(79,216,255,0.65)" : "0 3px 7px rgba(0,0,0,0.3)",
+                transform: isPicked ? "translateY(-2px)" : "none",
+                transition: "all 0.15s",
+                minWidth: 50, textAlign: "center",
+                userSelect: "none",
+                position: "relative",
+              }}>
+              {signo === '"' ? "”" : signo}
+              {restante > 1 && (
+                <span style={{
+                  position: "absolute", top: -8, right: -8,
+                  width: 22, height: 22, borderRadius: "50%",
+                  background: "#4fd8ff", color: "#0a2540",
+                  fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  border: "2px solid #fff",
+                  boxShadow: "0 2px 5px rgba(0,0,0,0.4)",
+                }}>×{restante}</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Mini-leyenda */}
+      <div style={{
+        background: "rgba(10,6,35,0.65)",
+        border: "1px solid rgba(252,233,168,0.5)",
+        borderRadius: 999,
+        padding: "4px 14px",
+        fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 11, color: "#fce9a8",
+        textAlign: "center", letterSpacing: "0.02em",
+      }}>
+        💡 Orden: el narrador habla : " la cita " .
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// N2 · El narrador — 3 rondas distintas
+// ─────────────────────────────────────────────────────────────
+function NarradorGame({ app, setApp, go, onRestart }) {
+  const char = CHARACTERS.find((c) => c.id === app.character) || CHARACTERS[0];
+  const catLabel = app.currentCatLabel || "El narrador";
+
+  const [ronda, setRonda] = useStateG(0);
+
+  // R1 — Palabras mágicas: { huecoId: opcionElegida }
+  const [r1Selections, setR1Selections] = useStateG({});
+  const [r1Locked, setR1Locked] = useStateG(false);
+
+  // R2 — Partes del cuento: { fragmentoId: parteAsignada }
+  const [r2Assigned, setR2Assigned] = useStateG({});
+  const [r2SelectedPart, setR2SelectedPart] = useStateG(null);
+  const [r2Locked, setR2Locked] = useStateG(false);
+
+  // R3 — Ordena el cuento: array de orden (escenas)
+  const [r3Pick] = useStateG(() => {
+    const recent = new Set(getRecent("narrador"));
+    let pool = ORDEN_BANK.filter((p) => !recent.has("ord:" + p.id));
+    if (pool.length === 0) pool = ORDEN_BANK;
+    const p = pool[Math.floor(Math.random() * pool.length)];
+    pushRecent("narrador", "ord:" + p.id);
+    return p;
+  });
+  const [r3Order, setR3Order] = useStateG(() => {
+    // mezclar pero asegurando no quedar ya ordenado
+    let mixed = shuffle(r3Pick.escenas);
+    let safety = 0;
+    while (mixed.every((e, i) => e.n === i + 1) && safety < 5) {
+      mixed = shuffle(r3Pick.escenas);
+      safety++;
+    }
+    return mixed;
+  });
+  const [r3Selected, setR3Selected] = useStateG(null);
+  const [r3Locked, setR3Locked] = useStateG(false);
+
+  // Picks R1/R2
+  const [r1Pick] = useStateG(() => {
+    const recent = new Set(getRecent("narrador"));
+    let pool = MAGICAS_BANK.filter((p) => !recent.has("mag:" + p.id));
+    if (pool.length === 0) pool = MAGICAS_BANK;
+    const p = pool[Math.floor(Math.random() * pool.length)];
+    pushRecent("narrador", "mag:" + p.id);
+    return p;
+  });
+
+  const [r2Pick] = useStateG(() => {
+    const recent = new Set(getRecent("narrador"));
+    let pool = PARTES_BANK.filter((p) => !recent.has("part:" + p.id));
+    if (pool.length === 0) pool = PARTES_BANK;
+    const p = pool[Math.floor(Math.random() * pool.length)];
+    pushRecent("narrador", "part:" + p.id);
+    return p;
+  });
+  // Fragmentos en orden mezclado para que no aparezcan ya bien
+  const [r2Fragmentos] = useStateG(() => shuffle(r2Pick.fragmentos));
+
+  // Shell state
+  const [elapsed, setElapsed] = useStateG(0);
+  const [stars, setStars] = useStateG(0);
+  const [solved, setSolved] = useStateG(0);
+  const [attempted, setAttempted] = useStateG(0);
+  const [starsSession, setStarsSession] = useStateG(0);
+  const [feedback, setFeedback] = useStateG(null);
+  const [feedbackMsg, setFeedbackMsg] = useStateG("");
+  const [confirmingRestart, setConfirmingRestart] = useStateG(false);
+  const [confirmingExit, setConfirmingExit] = useStateG(false);
+  const [log, setLog] = useStateG([]);
+  const started = useRefG(Date.now());
+  const exerciseStart = useRefG(Date.now());
+
+  useEffectG(() => {
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - started.current) / 1000)), 500);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffectG(() => {
+    window.__currentChalkGlyphs = [
+      { c: "📖", l: "6%",  t: "12%", r: "-8deg" },
+      { c: "🗣", l: "82%", t: "16%", r: "6deg",  s: "0.6em" },
+      { c: "💬", l: "10%", t: "78%", r: "12deg", s: "0.65em" },
+      { c: "✨", l: "88%", t: "72%", r: "-10deg", s: "0.55em" },
+      { c: "👤", l: "45%", t: "8%",  r: "4deg",  s: "0.55em" },
+      { c: "📍", l: "3%",  t: "45%", r: "-4deg", s: "0.55em" },
+      { c: "🎭", l: "92%", t: "45%", r: "8deg",  s: "0.5em" },
+      { c: "?",  l: "30%", t: "55%", r: "-6deg", s: "0.6em" },
+      { c: "→",  l: "70%", t: "62%", r: "8deg",  s: "0.6em" },
+      { c: "★",  l: "55%", t: "30%", r: "-4deg", s: "0.5em" },
+    ];
+    return () => { window.__currentChalkGlyphs = null; };
+  }, []);
+
+  const r1AllSelected = r1Pick.huecos.every((h) => r1Selections[h.id]);
+  const r2AllAssigned = r2Fragmentos.every((f) => r2Assigned[f.id]);
+  const r3InOrder = true; // R3 siempre puede verificar; el chequeo es contra el orden actual
+
+  const canVerify =
+    ronda === 0 ? (r1AllSelected && !r1Locked) :
+    ronda === 1 ? (r2AllAssigned && !r2Locked) :
+    ronda === 2 ? (!r3Locked) :
+    false;
+  const showErase = true;
+
+  function handleVerify() {
+    if (!canVerify) return;
+    if (ronda === 0) {
+      setR1Locked(true);
+      let correct = true;
+      for (const h of r1Pick.huecos) {
+        if (r1Selections[h.id] !== h.correcta) { correct = false; break; }
+      }
+      const userText = r1Pick.huecos.map((h) => `${r1Selections[h.id] || "?"}`).join(" / ");
+      const correctText = r1Pick.huecos.map((h) => h.correcta).join(" / ");
+      setTimeout(() => answer(correct, userText, correctText, "🪄"), 350);
+    } else if (ronda === 1) {
+      setR2Locked(true);
+      let correct = true;
+      for (const f of r2Fragmentos) {
+        if (r2Assigned[f.id] !== f.parte) { correct = false; break; }
+      }
+      const userText = r2Fragmentos.map((f) => `${f.id}=${r2Assigned[f.id] || "?"}`).join(", ");
+      const correctText = r2Fragmentos.map((f) => `${f.id}=${f.parte}`).join(", ");
+      setTimeout(() => answer(correct, userText, correctText, "🗂"), 350);
+    } else if (ronda === 2) {
+      setR3Locked(true);
+      let correct = true;
+      for (let i = 0; i < r3Order.length; i++) {
+        if (r3Order[i].n !== i + 1) { correct = false; break; }
+      }
+      const userText = r3Order.map((e) => `${e.n}`).join(" → ");
+      const correctText = r3Order.map((_, i) => `${i + 1}`).join(" → ");
+      setTimeout(() => answer(correct, userText, correctText, "📚"), 350);
+    }
+  }
+
+  function handleErase() {
+    if (ronda === 0) { if (r1Locked) return; setR1Selections({}); }
+    else if (ronda === 1) { if (r2Locked) return; setR2Assigned({}); setR2SelectedPart(null); }
+    else if (ronda === 2) {
+      if (r3Locked) return;
+      let mixed = shuffle(r3Pick.escenas);
+      let safety = 0;
+      while (mixed.every((e, i) => e.n === i + 1) && safety < 5) { mixed = shuffle(r3Pick.escenas); safety++; }
+      setR3Order(mixed); setR3Selected(null);
+    }
+  }
+
+  function answer(isCorrect, userText, correctText, opIcon) {
+    if (typeof window.markFirstAttempt === "function") window.markFirstAttempt();
+    const exerciseSec = Math.max(0, Math.floor((Date.now() - exerciseStart.current) / 1000));
+    const earned = calcStars(isCorrect, exerciseSec);
+    const newAttempted = attempted + 1;
+    const newSolved = solved + (isCorrect ? 1 : 0);
+    const newStarsTotal = stars + earned;
+    const newStarsSession = starsSession + earned;
+
+    const entry = {
+      idx: newAttempted,
+      a: correctText, b: userText, op: opIcon || "·",
+      correctAnswer: correctText, userAnswer: userText,
+      isCorrect, time: exerciseSec, earned,
+    };
+    const newLog = [...log, entry];
+
+    setFeedback(isCorrect ? "ok" : "err");
+    setFeedbackMsg(isCorrect ? `+${earned} ⭐` : ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)]);
+    setAttempted(newAttempted);
+    setSolved(newSolved);
+    setStars(newStarsTotal);
+    setStarsSession(newStarsSession);
+    setLog(newLog);
+
+    const wait = isCorrect ? 950 : 1400;
+    setTimeout(() => {
+      setFeedback(null);
+      setFeedbackMsg("");
+      if (newAttempted >= 3) {
+        setApp((s) => ({
+          ...s, stars: newStarsTotal,
+          lastResult: { category: catLabel, solved: newSolved, total: 3, time: elapsed, starsEarned: newStarsSession, log: newLog },
+        }));
+        window.incrementGamesCompleted && window.incrementGamesCompleted();
+        go("results");
+      } else {
+        setRonda((r) => r + 1);
+        exerciseStart.current = Date.now();
+      }
+    }, wait);
+  }
+
+  const enunciado =
+    ronda === 0 ? `Completa con la palabra mágica — ${r1Pick.titulo}` :
+    ronda === 1 ? `Clasifica cada parte del cuento — ${r2Pick.titulo}` :
+    `Ordena las escenas del cuento — ${r3Pick.titulo}`;
+
+  const bocadillo =
+    ronda === 0 ? "Toca la palabra que encaja en cada frase." :
+    ronda === 1 ? "Toca una etiqueta y luego una frase." :
+    "Toca dos escenas para intercambiarlas.";
+
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+      <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} app={app} setApp={setApp} />
+      <CharacterCorner char={char} message={bocadillo} />
+      <GameEnunciado text={enunciado} />
+
+      <div data-qa="zona-central" style={{
+        position: "absolute", top: 116, left: 244, width: 488, bottom: 14,
+      }}>
+        {ronda === 0 && (
+          <PalabrasMagicasCard
+            pick={r1Pick}
+            selections={r1Selections}
+            locked={r1Locked}
+            onChoose={(huecoId, op) => {
+              if (r1Locked) return;
+              setR1Selections({ ...r1Selections, [huecoId]: op });
+            }}
+          />
+        )}
+        {ronda === 1 && (
+          <PartesCuentoCard
+            pick={r2Pick}
+            fragmentos={r2Fragmentos}
+            assigned={r2Assigned}
+            selectedPart={r2SelectedPart}
+            locked={r2Locked}
+            onSelectPart={(p) => { if (r2Locked) return; setR2SelectedPart(r2SelectedPart === p ? null : p); }}
+            onAssign={(fid, parte) => {
+              if (r2Locked) return;
+              const next = { ...r2Assigned };
+              if (parte) next[fid] = parte;
+              else delete next[fid];
+              setR2Assigned(next);
+            }}
+          />
+        )}
+        {ronda === 2 && (
+          <OrdenaCuentoCard
+            cuento={r3Pick}
+            order={r3Order}
+            selected={r3Selected}
+            locked={r3Locked}
+            onTap={(i) => {
+              if (r3Locked) return;
+              if (r3Selected === null) { setR3Selected(i); return; }
+              if (r3Selected === i) { setR3Selected(null); return; }
+              const next = [...r3Order];
+              [next[r3Selected], next[i]] = [next[i], next[r3Selected]];
+              setR3Order(next);
+              setR3Selected(null);
+            }}
+          />
+        )}
+      </div>
+
+      <ActionRail
+        canVerify={canVerify}
+        onVerify={handleVerify}
+        showErase={showErase}
+        onErase={handleErase}
+        onRestart={() => setConfirmingRestart(true)}
+        onExit={() => setConfirmingExit(true)}
+      />
+
+      <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />
+      <RestartModal confirmingExit={confirmingRestart} setConfirmingExit={setConfirmingRestart} attempted={attempted} total={3} onRestart={onRestart} />
+      <ExitModal confirmingExit={confirmingExit} setConfirmingExit={setConfirmingExit} attempted={attempted} total={3} onExit={() => go("home")} />
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// N2 · R1 — Palabras mágicas (multi-choice por hueco)
+// ─────────────────────────────────────────────────────────────
+function PalabrasMagicasCard({ pick, selections, locked, onChoose }) {
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6 }}>
+      <div style={{
+        width: "100%", maxWidth: 470,
+        background: "linear-gradient(180deg, rgba(255,253,245,0.97), rgba(245,238,225,0.92))",
+        border: "3px solid #f2c260",
+        borderRadius: 16, padding: "12px 14px",
+        boxShadow: "0 10px 22px rgba(0,0,0,0.45)",
+        color: "#3a2608",
+      }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+          {pick.huecos.map((h, i) => {
+            const userPick = selections[h.id];
+            const isCorrect = locked && userPick === h.correcta;
+            const isWrong = locked && userPick && userPick !== h.correcta;
+            return (
+              <div key={h.id} style={{
+                display: "flex", flexDirection: "column", gap: 5,
+                padding: "6px 8px",
+                background: isCorrect ? "rgba(46,204,143,0.18)" : isWrong ? "rgba(255,107,107,0.18)" : "rgba(252,233,168,0.18)",
+                borderRadius: 10,
+                border: isCorrect ? "1.5px solid #2ecc8f" : isWrong ? "1.5px solid #ff6b6b" : "1.5px solid rgba(217,164,65,0.35)",
+              }}>
+                <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12.5, lineHeight: 1.3, textAlign: "center" }}>
+                  <span style={{ color: "#999", fontWeight: 600, marginRight: 4 }}>{i + 1}.</span>
+                  {h.frase.split("___").map((segment, idx, arr) => (
+                    <React.Fragment key={idx}>
+                      <span>{segment}</span>
+                      {idx < arr.length - 1 && (
+                        <span style={{
+                          display: "inline-block",
+                          minWidth: 90, padding: "1px 6px",
+                          background: userPick ? "rgba(252,233,168,0.85)" : "rgba(0,0,0,0.08)",
+                          border: "1.5px dashed rgba(217,164,65,0.6)",
+                          borderRadius: 6,
+                          fontWeight: 800, color: userPick ? "#3a2608" : "rgba(58,38,8,0.4)",
+                        }}>
+                          {userPick || "___"}
+                        </span>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: 5, justifyContent: "center", flexWrap: "wrap" }}>
+                  {h.opciones.map((op) => {
+                    const isPicked = userPick === op;
+                    return (
+                      <button key={op}
+                        onClick={() => onChoose(h.id, op)}
+                        disabled={locked}
+                        style={{
+                          padding: "5px 12px", borderRadius: 9,
+                          background: isPicked ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.95)",
+                          color: "#3a2608",
+                          border: `1.5px solid ${isPicked ? "#4fd8ff" : "rgba(242,194,96,0.55)"}`,
+                          fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 11.5,
+                          cursor: locked ? "default" : "pointer",
+                          boxShadow: isPicked ? "0 0 12px rgba(79,216,255,0.55)" : "0 2px 5px rgba(0,0,0,0.25)",
+                          transform: isPicked ? "translateY(-1.5px)" : "none",
+                          transition: "all 0.15s",
+                          minWidth: 80,
+                        }}>
+                        {op}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// N2 · R2 — Partes del cuento: 5 etiquetas + 5 fragmentos
+// ─────────────────────────────────────────────────────────────
+function PartesCuentoCard({ pick, fragmentos, assigned, selectedPart, locked, onSelectPart, onAssign }) {
+  const PARTES = [
+    { id: "lugar",      label: "LUGAR",      emoji: "📍", color: "#7ab8ff", ink: "#08264d" },
+    { id: "personajes", label: "PERSONAJES", emoji: "👤", color: "#ffb87a", ink: "#3a2608" },
+    { id: "conflicto",  label: "CONFLICTO",  emoji: "❗",  color: "#ff8ab4", ink: "#5c1f3a" },
+    { id: "acciones",   label: "ACCIONES",   emoji: "🏃", color: "#c39cff", ink: "#2a0a4a" },
+    { id: "resolucion", label: "FINAL",      emoji: "✨", color: "#9ee0a3", ink: "#0a3a18" },
+  ];
+
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6 }}>
+      {/* Fila de 5 etiquetas selectoras */}
+      <div style={{
+        width: "100%", maxWidth: 470,
+        display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4,
+      }}>
+        {PARTES.map((p) => {
+          const isSel = selectedPart === p.id;
+          return (
+            <button key={p.id}
+              onClick={() => !locked && onSelectPart(p.id)}
+              disabled={locked}
+              style={{
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 1,
+                background: isSel ? "linear-gradient(180deg,#fce9a8,#d9a441)" : p.color,
+                color: isSel ? "#3a2608" : p.ink,
+                padding: "5px 4px", borderRadius: 9,
+                border: `2px solid ${isSel ? "#4fd8ff" : "rgba(255,255,255,0.6)"}`,
+                fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 10,
+                letterSpacing: "0.03em",
+                boxShadow: isSel ? "0 0 12px rgba(79,216,255,0.6)" : "0 3px 6px rgba(0,0,0,0.3)",
+                cursor: locked ? "default" : "pointer",
+                transform: isSel ? "translateY(-2px)" : "none",
+                transition: "all 0.15s",
+              }}>
+              <span style={{ fontSize: 14 }}>{p.emoji}</span>
+              <span>{p.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Lista de fragmentos */}
+      <div style={{
+        width: "100%", maxWidth: 470,
+        display: "flex", flexDirection: "column", gap: 4,
+      }}>
+        {fragmentos.map((f) => {
+          const a = assigned[f.id];
+          const isCorrect = locked && a === f.parte;
+          const isWrong = locked && a && a !== f.parte;
+          const isEmpty = locked && !a;
+          const partInfo = PARTES.find((p) => p.id === a);
+          const correctPart = PARTES.find((p) => p.id === f.parte);
+          return (
+            <div key={f.id}
+              onClick={() => {
+                if (locked) return;
+                if (a) { onAssign(f.id, null); return; } // 2do click = quitar
+                if (selectedPart) { onAssign(f.id, selectedPart); }
+              }}
+              style={{
+                display: "flex", alignItems: "center", gap: 8,
+                background: isCorrect
+                  ? "linear-gradient(180deg, rgba(46,204,143,0.32), rgba(255,255,255,0.95))"
+                  : isWrong
+                  ? "linear-gradient(180deg, rgba(255,107,107,0.28), rgba(255,255,255,0.95))"
+                  : a ? `linear-gradient(180deg, ${partInfo.color}44, rgba(255,255,255,0.95))`
+                      : "rgba(255,255,255,0.94)",
+                color: "#3a2608",
+                border: `2px solid ${isCorrect ? "#2ecc8f" : isWrong ? "#ff6b6b" : a ? partInfo.color : "rgba(242,194,96,0.6)"}`,
+                borderRadius: 10, padding: "6px 10px",
+                cursor: locked ? "default" : "pointer",
+                fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 11.5, lineHeight: 1.25,
+                boxShadow: "0 2px 5px rgba(0,0,0,0.25)",
+                transition: "all 0.15s",
+              }}>
+              <div style={{ flex: 1, minWidth: 0 }}>{f.texto}</div>
+              {a && !isWrong && (
+                <div style={{
+                  flexShrink: 0,
+                  background: partInfo.color, color: partInfo.ink,
+                  padding: "2px 8px", borderRadius: 999,
+                  fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 9.5,
+                  border: "1.5px solid rgba(255,255,255,0.7)",
+                  letterSpacing: "0.04em",
+                }}>
+                  {partInfo.emoji} {partInfo.label}
+                </div>
+              )}
+              {isWrong && correctPart && (
+                <div style={{
+                  flexShrink: 0,
+                  background: "#2ecc8f", color: "#fff",
+                  padding: "2px 8px", borderRadius: 999,
+                  fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 9.5,
+                  letterSpacing: "0.04em",
+                }}>
+                  ✓ {correctPart.label}
+                </div>
+              )}
+              {isEmpty && correctPart && (
+                <div style={{
+                  flexShrink: 0,
+                  background: "rgba(46,204,143,0.2)", color: "#1e8a5d",
+                  border: "1px solid rgba(46,204,143,0.6)",
+                  padding: "2px 8px", borderRadius: 999,
+                  fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 9.5,
+                }}>
+                  ✓ {correctPart.label}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// N2 · R3 — Ordena el cuento (tap-tap intercambia)
+// ─────────────────────────────────────────────────────────────
+function OrdenaCuentoCard({ cuento, order, selected, locked, onTap }) {
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6 }}>
+      <div style={{
+        fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13.5, color: "#fce9a8", textAlign: "center",
+        background: "rgba(10,6,35,0.55)",
+        border: "1px solid rgba(242,194,96,0.45)",
+        borderRadius: 999,
+        padding: "5px 18px",
+      }}>
+        📖 {cuento.titulo}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 5, width: "100%", maxWidth: 480 }}>
+        {order.map((escena, i) => {
+          const isSelected = selected === i;
+          const isCorrect = locked && escena.n === i + 1;
+          const isWrong = locked && escena.n !== i + 1;
+          return (
+            <div key={`${escena.n}-${i}`}
+              onClick={() => onTap(i)}
+              style={{
+                display: "flex", alignItems: "center", gap: 10,
+                background: isCorrect
+                  ? "linear-gradient(180deg, rgba(46,204,143,0.28), rgba(255,255,255,0.94))"
+                  : isWrong
+                  ? "linear-gradient(180deg, rgba(255,107,107,0.22), rgba(255,255,255,0.94))"
+                  : isSelected
+                  ? "linear-gradient(180deg, rgba(79,216,255,0.45), rgba(252,233,168,0.88))"
+                  : "rgba(255,255,255,0.95)",
+                color: "#3a2608",
+                border: `2.5px solid ${isCorrect ? "#2ecc8f" : isWrong ? "#ff6b6b" : isSelected ? "#4fd8ff" : "#f2c260"}`,
+                borderRadius: 12, padding: "6px 10px",
+                cursor: locked ? "default" : "pointer",
+                boxShadow: isSelected ? "0 0 18px rgba(79,216,255,0.65)" : "0 3px 8px rgba(0,0,0,0.35)",
+                transform: isSelected ? "translateX(5px)" : "none",
+                transition: "all 0.18s",
+              }}>
+              <div style={{
+                width: 26, height: 26, borderRadius: "50%",
+                background: "linear-gradient(180deg, #f2c260, #d9a441)",
+                color: "#3a2608", fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 13,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+                border: "2px solid rgba(255,255,255,0.9)",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
+              }}>
+                {i + 1}
+              </div>
+              <div style={{ fontSize: 20, lineHeight: 1, flexShrink: 0 }}>{escena.emoji}</div>
+              <div style={{ flex: 1, minWidth: 0, fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 11.5, lineHeight: 1.25 }}>
+                {escena.texto}
+              </div>
+              {isWrong && (
+                <div style={{
+                  flexShrink: 0,
+                  fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 10,
+                  color: "#fff",
+                  background: "linear-gradient(180deg, #2ecc8f, #15a06a)",
+                  padding: "2px 8px", borderRadius: 999,
+                  letterSpacing: "0.04em",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
+                }}>
+                  ✓ Iba en {escena.n}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// ResultsScreen + PrintableReport (compartido)
+// ─────────────────────────────────────────────────────────────
+function formatOp(e) {
+  return `${e.op || ""} ${e.a}`;
+}
+
+const printStyles = {
+  doc: { padding: 0, margin: 0, color: "#111", background: "#fff" },
+  head: { display: "flex", alignItems: "center", gap: 14, borderBottom: "2px solid #d9a441", paddingBottom: 10, marginBottom: 14 },
+  logo: { width: 56, height: 56, objectFit: "contain" },
+  title: { flex: 1, minWidth: 0 },
+  org: { fontFamily: "'Fredoka','Baloo 2','Nunito',sans-serif", fontWeight: 700, fontSize: "16pt", letterSpacing: "0.03em", lineHeight: 1.1, margin: 0 },
+  sub: { fontSize: "9pt", color: "#555", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 4 },
+  date: { fontFamily: "ui-monospace,Consolas,monospace", fontSize: "10pt", color: "#555", textAlign: "right", whiteSpace: "nowrap" },
+  fields: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 14 },
+  field: { padding: "8px 10px", borderRadius: 6, border: "1px solid #ddd" },
+  fieldL: { fontSize: "8pt", textTransform: "uppercase", letterSpacing: "0.08em", color: "#666" },
+  fieldV: { fontSize: "12pt", fontWeight: 700, marginTop: 2 },
+  table: { width: "100%", borderCollapse: "collapse", fontSize: "11pt" },
+  thHead: { borderBottom: "2px solid #111" },
+  th: { padding: 8, textAlign: "left", fontSize: "9pt", textTransform: "uppercase", letterSpacing: "0.08em", color: "#555", fontWeight: 700 },
+  thR: { textAlign: "right" },
+  thC: { textAlign: "center" },
+  tr: { borderBottom: "1px solid #ccc" },
+  td: { padding: "9px 8px", fontFamily: "ui-monospace,Consolas,monospace" },
+  tdNum: { color: "#888", width: 36 },
+  tdOp: { fontWeight: 700 },
+  tdR: { textAlign: "right" },
+  tdC: { textAlign: "center", fontFamily: "'Nunito',sans-serif", fontWeight: 700 },
+  tdDim: { color: "#888" },
+  tdOk: { color: "#1e8a5d" },
+  tdErr: { color: "#c33b3b" },
+  tdEmpty: { padding: 24, textAlign: "center", color: "#888", fontStyle: "italic" },
+  summary: { marginTop: 16, borderTop: "2px solid #d9a441", paddingTop: 12, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 },
+  cell: { padding: 10, borderRadius: 6, border: "1px solid #ddd", textAlign: "center" },
+  cellEmp: { background: "#faf3df", borderColor: "#d9a441" },
+  cellL: { fontSize: "8pt", textTransform: "uppercase", letterSpacing: "0.08em", color: "#666" },
+  cellV: { fontSize: "18pt", fontWeight: 800, marginTop: 4 },
+  foot: { marginTop: 16, fontSize: "9pt", color: "#888", textAlign: "center" },
+};
+
+function PrintableReport({ studentName, res, dateStr, m, s, attemptedCount, totalEx, accuracy }) {
+  const log = res.log || [];
+  return (
+    <PortalToBody>
+      <div className="ed-print-doc" style={printStyles.doc} aria-hidden="true">
+        <div style={printStyles.head}>
+          <img src="assets/edinun-logo.png" alt="" style={printStyles.logo} />
+          <div style={printStyles.title}>
+            <h1 style={printStyles.org}>EDINUN — Ediciones Nacionales Unidas</h1>
+            <div style={printStyles.sub}>Reporte académico · Juegos de Lenguaje</div>
+          </div>
+          <div style={printStyles.date}>{dateStr}</div>
+        </div>
+        <div style={printStyles.fields}>
+          <div style={printStyles.field}>
+            <div style={printStyles.fieldL}>Estudiante</div>
+            <div style={printStyles.fieldV}>{studentName || "—"}</div>
+          </div>
+          <div style={printStyles.field}>
+            <div style={printStyles.fieldL}>Categoría</div>
+            <div style={printStyles.fieldV}>{res.category || "—"}</div>
+          </div>
+          <div style={printStyles.field}>
+            <div style={printStyles.fieldL}>Tiempo total</div>
+            <div style={printStyles.fieldV}>{String(m).padStart(2,"0")}:{String(s).padStart(2,"0")}</div>
+          </div>
+        </div>
+        <table style={printStyles.table}>
+          <thead>
+            <tr style={printStyles.thHead}>
+              <th style={printStyles.th}>#</th>
+              <th style={printStyles.th}>Reto</th>
+              <th style={{ ...printStyles.th, ...printStyles.thR }}>Respuesta del estudiante</th>
+              <th style={{ ...printStyles.th, ...printStyles.thR }}>Respuesta correcta</th>
+              <th style={{ ...printStyles.th, ...printStyles.thC }}>Estado</th>
+              <th style={{ ...printStyles.th, ...printStyles.thR }}>Tiempo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {log.map((e) => (
+              <tr key={e.idx} style={printStyles.tr}>
+                <td style={{ ...printStyles.td, ...printStyles.tdNum }}>{e.idx}</td>
+                <td style={{ ...printStyles.td, ...printStyles.tdOp }}>{e.op || ""} {e.a}</td>
+                <td style={{ ...printStyles.td, ...printStyles.tdR }}>{String(e.userAnswer).slice(0, 40)}</td>
+                <td style={{ ...printStyles.td, ...printStyles.tdR }}>{String(e.correctAnswer).slice(0, 40)}</td>
+                <td style={{ ...printStyles.td, ...printStyles.tdC, ...(e.isCorrect ? printStyles.tdOk : printStyles.tdErr) }}>
+                  {e.isCorrect ? "Correcto" : "Incorrecto"}
+                </td>
+                <td style={{ ...printStyles.td, ...printStyles.tdR, ...printStyles.tdDim }}>{e.time}s</td>
+              </tr>
+            ))}
+            {log.length === 0 && (
+              <tr><td colSpan={6} style={printStyles.tdEmpty}>No se registraron ejercicios en esta sesión.</td></tr>
+            )}
+          </tbody>
+        </table>
+        <div style={printStyles.summary}>
+          <div style={printStyles.cell}><div style={printStyles.cellL}>Ejercicios</div><div style={printStyles.cellV}>{attemptedCount} / {totalEx}</div></div>
+          <div style={printStyles.cell}><div style={printStyles.cellL}>Correctos</div><div style={printStyles.cellV}>{res.solved}</div></div>
+          <div style={printStyles.cell}><div style={printStyles.cellL}>Estrellas</div><div style={printStyles.cellV}>{res.starsEarned}</div></div>
+          <div style={{ ...printStyles.cell, ...printStyles.cellEmp }}><div style={printStyles.cellL}>Precisión total</div><div style={printStyles.cellV}>{accuracy}%</div></div>
+        </div>
+        <div style={printStyles.foot}>EDINUN GAMES · Reporte generado automáticamente</div>
+      </div>
+    </PortalToBody>
+  );
+}
+
+function ResultsScreen({ app, setApp, go }) {
+  const char = CHARACTERS.find((c) => c.id === app.character) || CHARACTERS[0];
+  const res = app.lastResult || { category: "—", solved: 0, total: 3, time: 0, starsEarned: 0, log: [] };
+  const m = Math.floor(res.time / 60), s = res.time % 60;
+  const totalEx = res.total || 3;
+  const attemptedCount = (res.log || []).length;
+  const accuracy = attemptedCount > 0 ? Math.round((res.solved / attemptedCount) * 100) : 0;
+  const dateStr = new Date().toLocaleDateString("es-EC", { year: "numeric", month: "long", day: "numeric" });
+
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+      <div style={{ position: "absolute", top: 14, left: 24, right: 24, display: "flex", justifyContent: "flex-start", alignItems: "center" }}>
+        <button className="ed-btn ed-btn-ghost" onClick={() => go("home")} style={{ padding: "8px 14px", fontWeight: 800, letterSpacing: "0.04em" }}>← VOLVER AL INICIO</button>
+      </div>
+      <div style={{
+        position: "absolute", inset: "70px 32px 20px 32px",
+        display: "grid", gridTemplateColumns: "0.85fr 1.4fr", gap: 24, alignItems: "stretch",
+      }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
+          <div style={{
+            fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 32,
+            background: "linear-gradient(180deg, #fce9a8, #d9a441)",
+            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+            lineHeight: 1, marginBottom: 4, textAlign: "center",
+          }}>¡Ronda completa!</div>
+          <char.Component size={170} />
+          <div className="ed-body" style={{ fontStyle: "italic", textAlign: "center", maxWidth: 240, fontSize: 13 }}>
+            "{app.studentName}, completaste {res.solved} de {totalEx} retos."
+            <div style={{ marginTop: 4, color: "var(--ed-ink-soft)", fontSize: 12 }}>— {char.name}</div>
+          </div>
+        </div>
+        <div className="ed-card" style={{ padding: 16, overflow: "hidden", display: "flex", flexDirection: "column", minHeight: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, borderBottom: "2px solid rgba(242,194,96,0.45)", paddingBottom: 10, marginBottom: 12 }}>
+            <EdinunLogoMini size={56} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 18, letterSpacing: "0.04em", lineHeight: 1.1 }}>
+                EDINUN — Ediciones Nacionales Unidas
+              </div>
+              <div style={{ fontFamily: "var(--ed-font-ui)", fontSize: 11, color: "var(--ed-ink-soft)", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>
+                Reporte académico · Juegos de Lenguaje
+              </div>
+            </div>
+            <div style={{ fontFamily: "var(--ed-font-mono)", fontSize: 11, color: "var(--ed-ink-dim)", textAlign: "right" }}>{dateStr}</div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, fontFamily: "var(--ed-font-ui)", fontSize: 12, marginBottom: 10 }}>
+            <ReportField label="Estudiante" value={app.studentName || "—"} />
+            <ReportField label="Categoría" value={res.category} />
+            <ReportField label="Tiempo total" value={`${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`} />
+          </div>
+          <div style={{ flex: 1, minHeight: 0, overflow: "auto", marginBottom: 10 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "var(--ed-font-ui)", fontSize: 12 }}>
+              <thead>
+                <tr style={{
+                  fontFamily: "var(--ed-font-ui)", fontWeight: 700, fontSize: 10,
+                  letterSpacing: "0.08em", textTransform: "uppercase",
+                  color: "var(--ed-ink-dim)",
+                  borderBottom: "1px solid rgba(148,120,255,0.3)",
+                }}>
+                  <th style={{ textAlign: "left", padding: "6px 8px", width: 36 }}>#</th>
+                  <th style={{ textAlign: "left", padding: "6px 8px" }}>Reto</th>
+                  <th style={{ textAlign: "right", padding: "6px 8px" }}>Tu respuesta</th>
+                  <th style={{ textAlign: "right", padding: "6px 8px" }}>Respuesta correcta</th>
+                  <th style={{ textAlign: "center", padding: "6px 8px" }}>Estado</th>
+                  <th style={{ textAlign: "right", padding: "6px 8px" }}>Tiempo</th>
+                </tr>
+              </thead>
+              <tbody style={{ fontFamily: "var(--ed-font-mono)" }}>
+                {(res.log || []).map((e) => (
+                  <tr key={e.idx} style={{ borderBottom: "1px solid rgba(148,120,255,0.18)" }}>
+                    <td style={{ padding: "8px 8px", color: "var(--ed-ink-soft)" }}>{e.idx}</td>
+                    <td style={{ padding: "8px 8px", fontWeight: 600 }}>{formatOp(e)}</td>
+                    <td style={{ padding: "8px 8px", textAlign: "right", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis" }}>{String(e.userAnswer).slice(0, 28)}</td>
+                    <td style={{ padding: "8px 8px", textAlign: "right", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis" }}>{String(e.correctAnswer).slice(0, 28)}</td>
+                    <td style={{ padding: "8px 8px", textAlign: "center", fontFamily: "var(--ed-font-display)", fontWeight: 700, color: e.isCorrect ? "#2ecc8f" : "#ff6b6b" }}>
+                      {e.isCorrect ? "Correcto" : "Incorrecto"}
+                    </td>
+                    <td style={{ padding: "8px 8px", textAlign: "right", color: "var(--ed-ink-dim)" }}>{e.time}s</td>
+                  </tr>
+                ))}
+                {(res.log || []).length === 0 && (
+                  <tr><td colSpan={6} style={{ padding: "16px 8px", textAlign: "center", color: "var(--ed-ink-soft)", fontStyle: "italic" }}>
+                    No se registraron ejercicios en esta sesión.
+                  </td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          <div style={{ borderTop: "2px solid rgba(242,194,96,0.45)", paddingTop: 10, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, fontFamily: "var(--ed-font-ui)", fontSize: 11 }}>
+            <SummaryCell label="Ejercicios" value={`${attemptedCount} / ${totalEx}`} />
+            <SummaryCell label="Correctos" value={`${res.solved}`} tone="#2ecc8f" />
+            <SummaryCell label="Estrellas" value={`${res.starsEarned}`} tone="#fce9a8" />
+            <SummaryCell label="Precisión total" value={`${accuracy}%`} tone="#fce9a8" emphasis />
+          </div>
+          <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            <button className="ed-btn ed-btn-ghost" onClick={() => window.print()}
+              style={{ padding: "0 10px", fontSize: 13, height: 44, fontWeight: 800, letterSpacing: "0.04em" }}>IMPRIMIR REPORTE</button>
+            <button className="ed-btn ed-btn-primary" onClick={() => go("game")}
+              style={{ padding: "0 10px", fontSize: 13, height: 44, fontWeight: 800, letterSpacing: "0.04em" }}>JUGAR OTRA RONDA</button>
+          </div>
+        </div>
+      </div>
+      <PrintableReport
+        studentName={app.studentName}
+        res={res} dateStr={dateStr} m={m} s={s}
+        attemptedCount={attemptedCount} totalEx={totalEx} accuracy={accuracy}
+      />
+    </div>
+  );
+}
+
+function ReportField({ label, value }) {
+  return (
+    <div style={{ padding: "8px 10px", borderRadius: 10, background: "rgba(10,6,35,0.45)", border: "1px solid rgba(148,120,255,0.25)" }}>
+      <div className="ed-label" style={{ fontSize: 9, color: "var(--ed-ink-soft)", marginBottom: 2 }}>{label}</div>
+      <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 14, color: "var(--ed-ink)" }}>{value}</div>
+    </div>
+  );
+}
+
+function SummaryCell({ label, value, tone = "var(--ed-ink)", emphasis = false }) {
+  return (
+    <div style={{
+      padding: "8px 10px", borderRadius: 10,
+      background: emphasis ? "rgba(242,194,96,0.12)" : "rgba(10,6,35,0.4)",
+      border: `1px solid ${emphasis ? "rgba(242,194,96,0.5)" : "rgba(148,120,255,0.25)"}`,
+      textAlign: "center",
+    }}>
+      <div className="ed-label" style={{ fontSize: 9, color: "var(--ed-ink-soft)", marginBottom: 2 }}>{label}</div>
+      <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: emphasis ? 22 : 18, color: tone, lineHeight: 1 }}>{value}</div>
+    </div>
+  );
+}
+
+Object.assign(window, { GameScreen, ResultsScreen });
+
+
+// app.jsx — Shell de producción EDINUN GAMES.
+// Enrutador por estado y device stage adaptativo (desktop / tablet / mobile).
+// Móvil portrait: el contenido NUNCA rota; un overlay BLOQUEANTE obliga
+// al usuario a girar físicamente el teléfono antes de poder usar la app.
+
+const { useState: useStateA, useEffect: useEffectA, useRef: useRefA } = React;
+
+// ─────────────────────────────────────────────────────────────
+// useViewportSize — devuelve el tamaño REAL visible del viewport.
+//
+// En iOS Safari (y otros mobile browsers), `window.innerHeight` y `100vh`
+// reportan la altura de la ventana INCLUYENDO la URL bar, así que el
+// contenido escalado a esa altura termina parcialmente fuera de pantalla
+// (ej: el numpad del juego queda debajo del fondo visible). La Visual
+// Viewport API reporta el área verdaderamente visible y se actualiza
+// cuando la URL bar se muestra/oculta.
+// ─────────────────────────────────────────────────────────────
+// Detección de "resize REAL" vs "zoom del navegador".
+//
+// Idea: el tamaño FÍSICO de la zona visible en píxeles del display es
+// invariante al ctrl+rueda. Cuando subes el zoom de 100 % a 500 %:
+//   · innerWidth en CSS-px se divide entre 5
+//   · devicePixelRatio se multiplica por 5
+//   · innerWidth × devicePixelRatio queda igual ⇒ NO hubo resize real.
+//
+// Cuando arrastras la esquina de la ventana o rotas el dispositivo:
+//   · innerWidth en CSS-px cambia
+//   · devicePixelRatio NO cambia
+//   · innerWidth × devicePixelRatio cambia ⇒ SÍ hubo resize real.
+//
+// Por eso comparamos contra `innerWidth × devicePixelRatio` y solo
+// actualizamos el state cuando ese producto cambia. Así el lienzo se
+// queda con su tamaño CSS previo durante el zoom y el navegador lo
+// amplifica visualmente — junto con los glifos, que ya leen `glyphSize`
+// del mismo state defendido (ver DeviceStage).
+//
+// La defensa anterior (tracker de _lastDPR) era frágil: se actualizaba
+// en CADA evento, así que si el navegador disparaba dos resize seguidos
+// para la misma acción de zoom, el segundo veía el dpr ya guardado y
+// recalculaba el tamaño con el viewport pequeño. Esto causaba que los
+// glifos quedaran enormes mientras el lienzo se recomprimía.
+function physicalSize() {
+  if (typeof window === "undefined") return { w: 0, h: 0 };
+  const dpr = window.devicePixelRatio || 1;
+  return { w: window.innerWidth * dpr, h: window.innerHeight * dpr };
+}
+let _lastPhysical = physicalSize();
+
+function useViewportSize() {
+  const [size, setSize] = useStateA(() => readSize());
+  useEffectA(() => {
+    function onChange() {
+      const phys = physicalSize();
+      // Tolerancia de 4 px reales para absorber redondeos del navegador.
+      if (Math.abs(phys.w - _lastPhysical.w) < 4 && Math.abs(phys.h - _lastPhysical.h) < 4) {
+        // Mismo display, distinto zoom — no actualizamos el state.
+        return;
+      }
+      _lastPhysical = phys;
+      setSize(readSize());
+    }
+    window.addEventListener("resize", onChange);
+    window.addEventListener("orientationchange", onChange);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", onChange);
+    }
+    return () => {
+      window.removeEventListener("resize", onChange);
+      window.removeEventListener("orientationchange", onChange);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener("resize", onChange);
+      }
+    };
+  }, []);
+  return size;
+}
+function readSize() {
+  if (typeof window === "undefined") return { vw: 0, vh: 0 };
+  const vv = window.visualViewport;
+  // Cuando el usuario hace pinch-zoom, vv.scale > 1 y vv.width/height
+  // reflejan la región visible (más pequeña). Usar esos valores haría
+  // que la escala del lienzo se reduzca al hacer zoom — exactamente lo
+  // contrario de lo que el usuario quiere. Solo confiamos en vv cuando
+  // scale ≈ 1 (sin zoom) — ahí da una lectura más fiel que innerWidth/
+  // Height en iOS Safari (descuenta correctamente la URL bar visible).
+  if (vv && Math.abs(vv.scale - 1) < 0.05) {
+    return { vw: vv.width, vh: vv.height };
+  }
+  return { vw: window.innerWidth, vh: window.innerHeight };
+}
+
+// ─────────────────────────────────────────────────────────────
+// DeviceStage — escala el lienzo lógico 900×540 (paisaje) al viewport.
+//
+// Reglas:
+//   · Desktop / tablet: sin marco, sin notch, fondo cósmico edge-to-edge.
+//   · Mobile portrait: lienzo letterboxed Y overlay BLOQUEANTE "Gira el
+//     teléfono". El contenido del juego no es accesible hasta que rote.
+//   · Mobile landscape: lienzo escalado al viewport visible (visualViewport,
+//     no innerHeight, para no clippearse debajo de la URL bar de iOS).
+// ─────────────────────────────────────────────────────────────
+function DeviceStage({ children, variant = "cosmic" }) {
+  const W = 900, H = 540;
+  const { vw, vh } = useViewportSize();
+  const minSide = Math.min(vw, vh);
+  const maxSide = Math.max(vw, vh);
+  let mode = "desktop";
+  if (maxSide < 820) mode = "mobile";
+  else if (minSide < 820) mode = "tablet";
+  const portrait = vh > vw;
+  const baseScale = Math.max(Math.min(vw / W, vh / H), 0.15);
+
+  // Detección de teléfono independiente del modo: cualquier dispositivo con
+  // lado menor ≤ 600 CSS-px es un teléfono. Cubre todos los teléfonos
+  // actuales (iPhone SE 320 → S25 Ultra/Pro Max ~432) con margen para
+  // modelos futuros más anchos. La menor tablet (iPad mini 744) queda
+  // bien por encima, así que no se rompe el caso "tablet portrait usable
+  // letterboxed". Solo bloqueamos cuando teléfono Y portrait — el lienzo
+  // paisaje queda demasiado pequeño para jugar.
+  const isPhone = minSide <= 600;
+  const lockPortrait = isPhone && portrait;
+
+  // Tamaño de los glifos del fondo: equivalente al `clamp(48px, 7vmin, 110px)`
+  // que tenía el CSS, pero calculado a partir del vw/vh DEFENDIDO contra
+  // cambios de DPR. Esto evita que con ctrl+rueda del mouse los glifos
+  // crezcan más rápido que el lienzo (el lienzo se congela vía la defensa
+  // del DPR; si CSS lee el vmin actual, los glifos no se congelan y desync).
+  const glyphSize = Math.max(48, Math.min(minSide * 0.07, 110));
+
+  const debug = typeof window !== "undefined" && /(?:^|[#&])debug(?:&|$)/.test(window.location.hash || "");
+
+  // ─── Pinch-zoom y pan custom ─────────────────────────────────
+  // Reemplaza el zoom nativo del browser. Razón: con el lienzo letterboxed
+  // dentro de un wrapper viewport-sized, el visual viewport del browser
+  // puede panear hasta dejar al usuario mirando solo el cosmos vacío de los
+  // bordes — el "rebote" reportado en iPhone (ver .planning/ios-zoom.md).
+  // Aquí los gestos operan sobre el transform del lienzo, así que el zoom
+  // siempre gravita alrededor del contenido y no deriva a un borde
+  // decorativo.
+  const wrapperRef = useRefA(null);
+  const gestureRef = useRefA(null);
+  const stateRef = useRefA({ userZoom: 1, pan: { x: 0, y: 0 } });
+  const [userZoom, setUserZoom] = useStateA(1);
+  const [pan, setPan] = useStateA({ x: 0, y: 0 });
+  const [duringGesture, setDuringGesture] = useStateA(false);
+
+  useEffectA(() => {
+    stateRef.current = { userZoom, pan };
+  }, [userZoom, pan]);
+
+  // Reset al cambiar viewport (rotación, resize). Si no, el pan queda
+  // referenciado a un viewport que ya no existe.
+  useEffectA(() => {
+    setUserZoom(1);
+    setPan({ x: 0, y: 0 });
+    setDuringGesture(false);
+  }, [vw, vh]);
+
+  useEffectA(() => {
+    if (lockPortrait) return;
+    const el = wrapperRef.current;
+    if (!el) return;
+
+    const Z_MIN = 1;
+    const Z_MAX = 4;
+
+    const dist = (a, b) => Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+    const mid = (a, b) => ({ x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 });
+
+    function clampPan(zoom, px, py) {
+      // Pan máximo: la mitad del exceso del lienzo escalado sobre el viewport.
+      // En zoom=1 el max es 0 (lienzo cabe en viewport, no hay donde panear).
+      // En zoom=N el lienzo mide N veces el lado contain, así que el usuario
+      // puede mover ±(sw - vw)/2 antes de que la orilla del lienzo cruce la
+      // orilla del viewport. Esto evita perder el contenido fuera de pantalla.
+      const sw = baseScale * zoom * W;
+      const sh = baseScale * zoom * H;
+      const maxX = Math.max(0, (sw - vw) / 2);
+      const maxY = Math.max(0, (sh - vh) / 2);
+      return {
+        x: Math.max(-maxX, Math.min(maxX, px)),
+        y: Math.max(-maxY, Math.min(maxY, py)),
+      };
+    }
+
+    function applyState(z, px, py) {
+      stateRef.current = { userZoom: z, pan: { x: px, y: py } };
+      setUserZoom(z);
+      setPan({ x: px, y: py });
+    }
+
+    function onTouchStart(e) {
+      const { userZoom: z0, pan: p0 } = stateRef.current;
+      if (e.touches.length >= 2) {
+        const [t0, t1] = e.touches;
+        gestureRef.current = {
+          mode: "pinch",
+          d0: dist(t0, t1),
+          m0: mid(t0, t1),
+          z0, p0: { ...p0 },
+        };
+        setDuringGesture(true);
+        e.preventDefault();
+      } else if (e.touches.length === 1) {
+        const t = e.touches[0];
+        gestureRef.current = {
+          mode: "pan-armed",
+          startX: t.clientX,
+          startY: t.clientY,
+          z0, p0: { ...p0 },
+        };
+        // No preventDefault — un tap simple debe seguir generando click.
+      }
+    }
+
+    function onTouchMove(e) {
+      const g = gestureRef.current;
+      if (!g) return;
+
+      // Si en medio de un gesto entra un segundo dedo, transición a pinch
+      // tomando el estado actual como punto de partida.
+      if (e.touches.length >= 2 && g.mode !== "pinch") {
+        const [t0, t1] = e.touches;
+        const { userZoom: zNow, pan: pNow } = stateRef.current;
+        gestureRef.current = {
+          mode: "pinch",
+          d0: dist(t0, t1),
+          m0: mid(t0, t1),
+          z0: zNow, p0: { ...pNow },
+        };
+        setDuringGesture(true);
+        e.preventDefault();
+        return;
+      }
+
+      if (e.touches.length >= 2 && g.mode === "pinch") {
+        const [t0, t1] = e.touches;
+        const d = dist(t0, t1);
+        const m = mid(t0, t1);
+        const ratio = d / g.d0;
+        // Permitimos pasar transitoriamente bajo Z_MIN para sensación elástica
+        // durante el gesto; en touchend hacemos snap-back al rango válido.
+        const newZoom = Math.max(Z_MIN * 0.7, Math.min(Z_MAX * 1.05, g.z0 * ratio));
+        const r = newZoom / g.z0;
+        const ux = g.m0.x - vw / 2;
+        const uy = g.m0.y - vh / 2;
+        // Fórmula que mantiene el punto medio de la pinza anclado al mismo
+        // píxel del lienzo durante todo el gesto. Derivación:
+        //   panX_new = (mx0 - vw/2) + (newZoom/z0) * (panX0 - (mx0 - vw/2))
+        //              + (mx_now - mx0)   ← desplazamiento del propio gesto
+        const newPanX = ux + r * (g.p0.x - ux) + (m.x - g.m0.x);
+        const newPanY = uy + r * (g.p0.y - uy) + (m.y - g.m0.y);
+        applyState(newZoom, newPanX, newPanY);
+        e.preventDefault();
+      } else if (e.touches.length === 1 && g.mode === "pan-armed") {
+        if (g.z0 <= 1.001) return; // sin zoom no panea — dejamos pasar el tap
+        const t = e.touches[0];
+        const dx = t.clientX - g.startX;
+        const dy = t.clientY - g.startY;
+        if (Math.hypot(dx, dy) > 8) {
+          gestureRef.current = { ...g, mode: "pan" };
+          setDuringGesture(true);
+          e.preventDefault();
+        }
+      } else if (e.touches.length === 1 && g.mode === "pan") {
+        const t = e.touches[0];
+        const dx = t.clientX - g.startX;
+        const dy = t.clientY - g.startY;
+        applyState(g.z0, g.p0.x + dx, g.p0.y + dy);
+        e.preventDefault();
+      }
+    }
+
+    function onTouchEnd(e) {
+      const g = gestureRef.current;
+      if (!g) return;
+      if (e.touches.length === 0) {
+        const { userZoom: z, pan: p } = stateRef.current;
+        const clampedZ = Math.max(Z_MIN, Math.min(Z_MAX, z));
+        let cp;
+        if (clampedZ <= 1.001) {
+          cp = { x: 0, y: 0 };
+        } else {
+          cp = clampPan(clampedZ, p.x, p.y);
+        }
+        applyState(clampedZ, cp.x, cp.y);
+        setDuringGesture(false);
+        gestureRef.current = null;
+      }
+    }
+
+    el.addEventListener("touchstart", onTouchStart, { passive: false });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd, { passive: false });
+    el.addEventListener("touchcancel", onTouchEnd, { passive: false });
+
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+      el.removeEventListener("touchcancel", onTouchEnd);
+    };
+  }, [vw, vh, baseScale, lockPortrait]);
+
+  const totalScale = baseScale * userZoom;
+
+  return (
+    <div ref={wrapperRef} style={{
+      width: "100vw", height: "100dvh",
+      minHeight: "-webkit-fill-available",
+      overflow: "hidden",
+      position: "relative",
+      background: variant === "chalkboard" ? "#0b3a2d" : "#050214",
+      // `touch-action: none` desactiva todos los gestos que el browser
+      // interpretaría por su cuenta (pinch, pan, doble-tap-zoom). Los
+      // implementamos en JS sobre el transform del lienzo para que el
+      // zoom siempre quede anclado al contenido y nunca derive a los
+      // bordes letterbox del wrapper. Los click/tap en botones siguen
+      // funcionando — esto solo bloquea gestos del browser, no eventos.
+      touchAction: "none",
+    }}>
+      <CosmosBg variant={variant} glyphSize={glyphSize} />
+
+      {/* Lienzo lógico 900×540 centrado y escalado.
+          El transform combina el escalado base (contain del viewport),
+          el zoom del usuario y el pan acumulado. El orden CSS es
+          right-to-left: scale → translate(pan) → translate(-50%,-50%). */}
+      <div style={{
+        width: W, height: H,
+        position: "absolute",
+        left: "50%", top: "50%",
+        transform: `translate(-50%, -50%) translate(${pan.x}px, ${pan.y}px) scale(${totalScale})`,
+        transformOrigin: "center center",
+        overflow: "hidden",
+        // Sin transición durante el gesto activo (el lienzo sigue la pinza
+        // al instante); con transición elástica al soltar, para que el
+        // snap-back de zoom/pan a los límites válidos no sea abrupto.
+        transition: duringGesture ? "none" : "transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1)",
+        willChange: "transform",
+      }}>
+        {children}
+      </div>
+
+      {lockPortrait && <RotateLockOverlay />}
+      {debug && (
+        <div style={{
+          position: "fixed", top: 6, left: 6, zIndex: 999999,
+          background: "rgba(0,0,0,0.85)", color: "#0f0",
+          font: "11px ui-monospace,Menlo,monospace",
+          padding: "6px 8px", borderRadius: 6,
+          maxWidth: "90vw", whiteSpace: "pre",
+          pointerEvents: "none",
+        }}>
+{`vw=${vw} vh=${vh}
+min=${minSide} max=${maxSide}
+mode=${mode} portrait=${portrait}
+isPhone=${isPhone} LOCK=${lockPortrait}
+zoom=${userZoom.toFixed(2)} pan=${pan.x.toFixed(0)},${pan.y.toFixed(0)}
+vv=${typeof window!=="undefined" && window.visualViewport ? "yes" : "no"}
+ua=${(typeof navigator!=="undefined" ? navigator.userAgent : "?").slice(0,60)}`}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Overlay bloqueante de rotación. En mobile portrait cubre toda la pantalla
+// con un mensaje claro y un ícono animado. NO se puede descartar — el usuario
+// DEBE girar el dispositivo para acceder al juego. Se desmonta solo cuando
+// el viewport pasa a landscape.
+function RotateLockOverlay() {
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Gira tu teléfono para jugar"
+      style={{
+        position: "fixed", inset: 0, zIndex: 99999,
+        background: "linear-gradient(180deg,#050214 0%,#0a0628 100%)",
+        display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center",
+        textAlign: "center", padding: "32px 24px",
+        color: "#fce9a8",
+        fontFamily: "var(--ed-font-display, system-ui)",
+      }}
+    >
+      <div
+        style={{
+          width: 132, height: 132, marginBottom: 28,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          animation: "ed-rotate-lock 2.4s ease-in-out infinite",
+        }}
+        aria-hidden="true"
+      >
+        {/* Ícono de teléfono que rota */}
+        <svg viewBox="0 0 100 100" width="120" height="120" fill="none">
+          <rect x="36" y="14" width="28" height="72" rx="6"
+                stroke="#f2c260" strokeWidth="3" fill="rgba(242,194,96,0.08)" />
+          <rect x="42" y="22" width="16" height="48" rx="2" fill="rgba(242,194,96,0.18)" />
+          <circle cx="50" cy="78" r="2.5" fill="#f2c260" />
+        </svg>
+      </div>
+      <div style={{
+        fontWeight: 800,
+        fontSize: "clamp(18px, 5.2vw, 26px)",
+        lineHeight: 1.15,
+        textTransform: "uppercase", letterSpacing: "0.02em",
+        marginBottom: 12,
+      }}>
+        Gira tu teléfono
+      </div>
+      <div style={{
+        fontWeight: 500,
+        fontSize: "clamp(13px, 4vw, 16px)",
+        lineHeight: 1.4,
+        color: "rgba(252,233,168,0.78)",
+        maxWidth: "min(320px, 80vw)",
+      }}>
+        Pon tu teléfono de lado para jugar.
+      </div>
+      <style>{`
+        @keyframes ed-rotate-lock {
+          0%   { transform: rotate(0deg); }
+          45%  { transform: rotate(0deg); }
+          70%  { transform: rotate(-90deg); }
+          100% { transform: rotate(-90deg); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// App principal
+// ─────────────────────────────────────────────────────────────
+function App() {
+  const [route, setRoute] = useStateA("home");
+  const [app, setApp] = useStateA({
+    studentName: "",
+    character: "escritor",
+    level: null,
+    stars: 0,
+    sessionStart: Date.now(),
+    gameSeed: 0,
+  });
+
+  function go(r) {
+    // Al (re)entrar al juego, regeneramos la seed para que GameScreen se remonte
+    // y reinicie ronda, tiempo, racha, etc. También reseteamos las estrellas:
+    // cada partida empieza desde 0, no acumula entre rondas.
+    if (r === "game") {
+      setApp((s) => ({ ...s, gameSeed: (s.gameSeed || 0) + 1, stars: 0 }));
+    }
+    setRoute(r);
+  }
+
+  const screenProps = { app, setApp, go };
+
+  let Screen = window.HomeScreen;
+  if (route === "character") Screen = window.CharacterScreen;
+  else if (route === "game") Screen = window.GameScreen;
+  else if (route === "results") Screen = window.ResultsScreen;
+
+  const variant = route === "game" ? "chalkboard" : "cosmic";
+
+  return (
+    <DeviceStage variant={variant}>
+      <Screen key={route === "game" ? `game-${app.gameSeed}` : route} {...screenProps} />
+    </DeviceStage>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+
+</script>
+</body>
+</html>
