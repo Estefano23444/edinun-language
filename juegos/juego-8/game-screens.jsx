@@ -507,11 +507,11 @@ function GameHUD({ elapsed, stars, attempted, solved, total = 3, app, setApp }) 
       </div>
 
       <div style={{
-        position: "absolute", top: 58, left: "50%", transform: "translateX(-50%)",
-        display: "flex", alignItems: "center", gap: 8,
+        position: "absolute", top: 52, left: "50%", transform: "translateX(-50%)",
+        display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
       }}>
-        <span className="ed-label" style={{ color: "rgba(255,255,255,0.7)" }}>Ronda {Math.min(attempted + 1, total)} de {total}</span>
-        <div style={{ display: "flex", gap: 4 }}>
+        <span className="ed-label" style={{ color: "rgba(255,255,255,0.7)", letterSpacing: "0.14em" }}>RONDA</span>
+        <div style={{ display: "flex", gap: 6 }}>
           {Array.from({ length: total }).map((_, i) => (
             <div key={i} style={{
               width: 10, height: 10, borderRadius: "50%",
@@ -1039,7 +1039,7 @@ function SujetoPredicadoCard({ tokens, assigned, locked, onAssign }) {
   const pCount = tokens.filter((t) => assigned[t.idx] === "P").length;
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
+    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 22 }}>
       {/* Cartel con todas las palabras (fichas) */}
       <div style={{
         width: "100%", maxWidth: 470,
@@ -1184,7 +1184,7 @@ function SujetoPredicadoCard({ tokens, assigned, locked, onAssign }) {
 // ─────────────────────────────────────────────────────────────
 function PintorModCard({ pick, colors, locked, onCycle }) {
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
+    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 22 }}>
       {/* Cartel con la frase nominal */}
       <div style={{
         width: "100%", maxWidth: 470,
@@ -1297,7 +1297,7 @@ function SastreCitasCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn,
   }
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12 }}>
+    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 22 }}>
       {/* Cartel con la frase */}
       <div style={{
         width: "100%", maxWidth: 470,
@@ -1727,7 +1727,7 @@ function NarradorGame({ app, setApp, go, onRestart }) {
 // ─────────────────────────────────────────────────────────────
 function PalabrasMagicasCard({ pick, selections, locked, onChoose }) {
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6 }}>
+    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14 }}>
       <div style={{
         width: "100%", maxWidth: 470,
         background: "linear-gradient(180deg, rgba(255,253,245,0.97), rgba(245,238,225,0.92))",
@@ -1815,7 +1815,7 @@ function PartesCuentoCard({ pick, fragmentos, assigned, selectedPart, locked, on
   ];
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6 }}>
+    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14 }}>
       {/* Fila de 5 etiquetas selectoras */}
       <div style={{
         width: "100%", maxWidth: 470,
@@ -1930,7 +1930,7 @@ function PartesCuentoCard({ pick, fragmentos, assigned, selectedPart, locked, on
 // ─────────────────────────────────────────────────────────────
 function OrdenaCuentoCard({ cuento, order, selected, locked, onTap }) {
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6 }}>
+    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14 }}>
       <div style={{
         fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13.5, color: "#fce9a8", textAlign: "center",
         background: "rgba(10,6,35,0.55)",
