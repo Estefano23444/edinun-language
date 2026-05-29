@@ -383,10 +383,10 @@ const HOMOFONAS_BANK = [
   { id: "taza",   pista: "Pequeña vasija con asa para beber.",         pre: "TA",  post: "A", correcta: "Z",  opciones: ["S", "Z"]  },
   { id: "tasa",   pista: "Precio fijado a un elemento.",                pre: "TA",  post: "A", correcta: "S",  opciones: ["S", "Z"]  },
   { id: "valla",  pista: "Saltar la barrera del jardín.",               pre: "VA",  post: "A", correcta: "LL", opciones: ["Y", "LL"] },
-  { id: "vaya",   pista: "Exclamación: '¡___ susto me diste!'",         pre: "VA",  post: "A", correcta: "Y",  opciones: ["Y", "LL"] },
+  { id: "vaya",   pista: "Forma del verbo ir usada para expresar sorpresa.", pre: "VA",  post: "A", correcta: "Y",  opciones: ["Y", "LL"] },
   { id: "vello",  pista: "Pelo suave del cuerpo.",                      pre: "",    post: "ELLO", correcta: "V", opciones: ["V", "B"] },
   { id: "bello",  pista: "Hermoso, precioso.",                          pre: "",    post: "ELLO", correcta: "B", opciones: ["V", "B"] },
-  { id: "votar",  pista: "Acción para elegir representante.",           pre: "",    post: "OTAR", correcta: "V", opciones: ["V", "B"] },
+  { id: "votar",  pista: "Acción cívica que hacemos en elecciones.",    pre: "",    post: "OTAR", correcta: "V", opciones: ["V", "B"] },
   { id: "botar",  pista: "Lanzar algo lejos.",                          pre: "",    post: "OTAR", correcta: "B", opciones: ["V", "B"] },
 ];
 
@@ -783,14 +783,15 @@ function FeedbackOverlay({ feedback, feedbackMsg, charName }) {
 }
 
 // Componente personaje + bocadillo (zona inferior izquierda)
+// Patrón unificado con el resto del repo: size 190, bottom 90.
 function CharacterCorner({ char, message }) {
   return (
     <div data-qa="personaje" style={{
-      position: "absolute", left: 8, bottom: 76, width: 220,
+      position: "absolute", left: 8, bottom: 90, width: 220,
       pointerEvents: "none", textAlign: "center",
     }}>
       <div data-qa="bocadillo" style={{
-        position: "absolute", left: 0, right: 0, top: -82,
+        position: "absolute", left: 0, right: 0, top: -80,
         display: "flex", justifyContent: "center",
         pointerEvents: "none",
       }}>
@@ -801,7 +802,7 @@ function CharacterCorner({ char, message }) {
           border: "1.5px solid rgba(242,194,96,0.65)",
           borderRadius: 16, padding: "10px 14px",
           fontFamily: "var(--ed-font-display)",
-          fontWeight: 700, fontSize: 13, lineHeight: 1.25,
+          fontWeight: 700, fontSize: 14, lineHeight: 1.25,
           color: "#fce9a8", textAlign: "center",
           boxShadow: "0 10px 24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08)",
         }}>
@@ -818,15 +819,15 @@ function CharacterCorner({ char, message }) {
       <div style={{ position: "relative", display: "flex", justifyContent: "center" }}>
         <div style={{
           position: "absolute", bottom: 14, left: "50%", transform: "translateX(-50%)",
-          width: 130, height: 14, borderRadius: "50%",
+          width: 140, height: 16, borderRadius: "50%",
           background: "radial-gradient(ellipse, rgba(242,194,96,0.45), transparent 70%)",
           filter: "blur(5px)",
         }} />
-        <char.Component size={170} floating />
+        <char.Component size={190} floating />
       </div>
       <div style={{
-        marginTop: -4,
-        fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13,
+        marginTop: -2,
+        fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 14,
         color: "#fce9a8", letterSpacing: "0.04em",
         textShadow: "0 2px 6px rgba(0,0,0,0.6)",
       }}>{char.name}</div>

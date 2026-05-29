@@ -553,15 +553,18 @@ function GameScreen({ app, setApp, go }) {
         position: "absolute", left: 8, bottom: 90, width: 220,
         pointerEvents: "none", textAlign: "center",
       }}>
-        {/* Bocadillo de pista — sale de la cabeza del personaje. Posicionado
-            absoluto dentro del wrapper para que cuelgue justo arriba del PNG
-            con la cola apuntando hacia abajo a la cabeza. */}
+        {/* Bocadillo de pista — el padre flex centra al hijo inline-block que
+            se ajusta al texto (sin width fijo). Así textos cortos no dejan
+            espacio en blanco al lado. */}
         <div data-qa="bocadillo" style={{
-          position: "absolute", left: 6, top: -80, width: 208,
+          position: "absolute", left: 0, right: 0, top: -80,
+          display: "flex", justifyContent: "center",
           pointerEvents: "none",
         }}>
           <div style={{
             position: "relative",
+            display: "inline-block",
+            maxWidth: 208,
             background: "linear-gradient(180deg, rgba(20,12,55,0.95), rgba(10,6,35,0.95))",
             border: "1.5px solid rgba(242,194,96,0.65)",
             borderRadius: 16,
@@ -572,9 +575,9 @@ function GameScreen({ app, setApp, go }) {
             boxShadow: "0 10px 24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08)",
           }}>
             {catCfg.hint}
-            {/* Cola del bocadillo — apunta hacia abajo a la cabeza del PNG. */}
+            {/* Cola del bocadillo — centrada al cuadro. */}
             <div style={{
-              position: "absolute", bottom: -10, left: 70,
+              position: "absolute", bottom: -10, left: "50%", transform: "translateX(-50%)",
               width: 0, height: 0,
               borderLeft: "9px solid transparent",
               borderRight: "9px solid transparent",

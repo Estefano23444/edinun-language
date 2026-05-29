@@ -582,11 +582,11 @@ function FeedbackOverlay({ feedback, feedbackMsg, charName }) {
 function CharacterCorner({ char, message }) {
   return (
     <div data-qa="personaje" style={{
-      position: "absolute", left: 8, bottom: 76, width: 220,
+      position: "absolute", left: 8, bottom: 90, width: 220,
       pointerEvents: "none", textAlign: "center",
     }}>
       <div data-qa="bocadillo" style={{
-        position: "absolute", left: 0, right: 0, top: -82,
+        position: "absolute", left: 0, right: 0, top: -80,
         display: "flex", justifyContent: "center",
         pointerEvents: "none",
       }}>
@@ -597,7 +597,7 @@ function CharacterCorner({ char, message }) {
           border: "1.5px solid rgba(242,194,96,0.65)",
           borderRadius: 16, padding: "10px 14px",
           fontFamily: "var(--ed-font-display)",
-          fontWeight: 700, fontSize: 13, lineHeight: 1.25,
+          fontWeight: 700, fontSize: 14, lineHeight: 1.25,
           color: "#fce9a8", textAlign: "center",
           boxShadow: "0 10px 24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08)",
         }}>
@@ -614,15 +614,15 @@ function CharacterCorner({ char, message }) {
       <div style={{ position: "relative", display: "flex", justifyContent: "center" }}>
         <div style={{
           position: "absolute", bottom: 14, left: "50%", transform: "translateX(-50%)",
-          width: 130, height: 14, borderRadius: "50%",
+          width: 140, height: 16, borderRadius: "50%",
           background: "radial-gradient(ellipse, rgba(242,194,96,0.45), transparent 70%)",
           filter: "blur(5px)",
         }} />
-        <char.Component size={170} floating />
+        <char.Component size={190} floating />
       </div>
       <div style={{
-        marginTop: -4,
-        fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13,
+        marginTop: -2,
+        fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 14,
         color: "#fce9a8", letterSpacing: "0.04em",
         textShadow: "0 2px 6px rgba(0,0,0,0.6)",
       }}>{char.name}</div>
@@ -860,8 +860,8 @@ function TextoPoeticoGame({ app, setApp, go, onRestart }) {
 
   const enunciado =
     ronda === 0 ? "¿La oración es comparación, metáfora o ninguna?" :
-    ronda === 1 ? `Encuentra las palabras sin tilde — "${r2Pick.titulo}"` :
-    "Encuentra las 3 parejas: masculino con femenino";
+    ronda === 1 ? `Encuentra las palabras sin tilde — "${r2Pick.titulo}".` :
+    "Encuentra las 3 parejas: masculino con femenino.";
 
   const bocadillo =
     ronda === 0 ? "Elige el cofre correcto y ábrelo." :
@@ -1410,9 +1410,9 @@ function TextoInstructivoGame({ app, setApp, go, onRestart }) {
   }
 
   const enunciado =
-    ronda === 0 ? `Empareja cada palabra kichwa con su miembro — ${r1Set.titulo}` :
-    ronda === 1 ? `Ordena los pasos: "${r2Receta.titulo}"` :
-    `Forma el plural: ${r3Pick.singular} + ___`;
+    ronda === 0 ? `Empareja cada palabra kichwa con su miembro — ${r1Set.titulo}.` :
+    ronda === 1 ? `Ordena los pasos: "${r2Receta.titulo}".` :
+    `Forma el plural: ${r3Pick.singular} + ___.`;
 
   const bocadillo =
     ronda === 0 ? "Arrastra cada palabra al miembro correcto." :
@@ -1825,7 +1825,7 @@ function LaboratorioPluralCard({ pick, selected, locked, onSelect }) {
         letterSpacing: "0.02em",
         maxWidth: 460, textAlign: "center",
       }}>
-        💡 "{pick.singular}" {pick.regla}
+        💡 Observa cómo termina la palabra para elegir el sufijo.
       </div>
 
       {/* Bandeja con 2 sufijos */}

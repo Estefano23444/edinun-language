@@ -1371,11 +1371,14 @@ function LetraRGame({ app, setApp, go, onRestart }) {
         pointerEvents: "none", textAlign: "center",
       }}>
         <div data-qa="bocadillo" style={{
-          position: "absolute", left: 6, top: -80, width: 208,
+          position: "absolute", left: 0, right: 0, top: -80,
+          display: "flex", justifyContent: "center",
           pointerEvents: "none",
         }}>
           <div style={{
             position: "relative",
+            display: "inline-block",
+            maxWidth: 208,
             background: "linear-gradient(180deg, rgba(20,12,55,0.95), rgba(10,6,35,0.95))",
             border: "1.5px solid rgba(242,194,96,0.65)",
             borderRadius: 16, padding: "10px 14px",
@@ -1386,7 +1389,7 @@ function LetraRGame({ app, setApp, go, onRestart }) {
           }}>
             Selecciona la letra correcta.
             <div style={{
-              position: "absolute", bottom: -10, left: 70,
+              position: "absolute", bottom: -10, left: "50%", transform: "translateX(-50%)",
               width: 0, height: 0,
               borderLeft: "9px solid transparent", borderRight: "9px solid transparent",
               borderTop: "10px solid rgba(20,12,55,0.95)",
@@ -1670,11 +1673,14 @@ function NoticiaGame({ app, setApp, go, onRestart }) {
         pointerEvents: "none", textAlign: "center",
       }}>
         <div data-qa="bocadillo" style={{
-          position: "absolute", left: 6, top: -80, width: 208,
+          position: "absolute", left: 0, right: 0, top: -80,
+          display: "flex", justifyContent: "center",
           pointerEvents: "none",
         }}>
           <div style={{
             position: "relative",
+            display: "inline-block",
+            maxWidth: 208,
             background: "linear-gradient(180deg, rgba(20,12,55,0.95), rgba(10,6,35,0.95))",
             border: "1.5px solid rgba(242,194,96,0.65)",
             borderRadius: 16, padding: "10px 14px",
@@ -1687,7 +1693,7 @@ function NoticiaGame({ app, setApp, go, onRestart }) {
             {ronda === 1 && "Selecciona el resumen correcto."}
             {ronda === 2 && "Selecciona el concepto correcto."}
             <div style={{
-              position: "absolute", bottom: -10, left: 70,
+              position: "absolute", bottom: -10, left: "50%", transform: "translateX(-50%)",
               width: 0, height: 0,
               borderLeft: "9px solid transparent", borderRight: "9px solid transparent",
               borderTop: "10px solid rgba(20,12,55,0.95)",
@@ -2018,11 +2024,14 @@ function BlogGame({ app, setApp, go, onRestart }) {
         pointerEvents: "none", textAlign: "center",
       }}>
         <div data-qa="bocadillo" style={{
-          position: "absolute", left: 6, top: -80, width: 208,
+          position: "absolute", left: 0, right: 0, top: -80,
+          display: "flex", justifyContent: "center",
           pointerEvents: "none",
         }}>
           <div style={{
             position: "relative",
+            display: "inline-block",
+            maxWidth: 208,
             background: "linear-gradient(180deg, rgba(20,12,55,0.95), rgba(10,6,35,0.95))",
             border: "1.5px solid rgba(242,194,96,0.65)",
             borderRadius: 16, padding: "10px 14px",
@@ -2035,7 +2044,7 @@ function BlogGame({ app, setApp, go, onRestart }) {
             {ronda === 1 && "Toca solo los elementos del blog."}
             {ronda === 2 && "Selecciona el concepto correcto."}
             <div style={{
-              position: "absolute", bottom: -10, left: 70,
+              position: "absolute", bottom: -10, left: "50%", transform: "translateX(-50%)",
               width: 0, height: 0,
               borderLeft: "9px solid transparent", borderRight: "9px solid transparent",
               borderTop: "10px solid rgba(20,12,55,0.95)",
@@ -2439,7 +2448,7 @@ function ResultsScreen({ app, setApp, go }) {
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
             lineHeight: 1, marginBottom: 4,
           }}>¡Ronda completa!</div>
-          <char.Component size={180} />
+          <char.Component size={190} />
           <div className="ed-body" style={{ fontStyle: "italic", textAlign: "center", maxWidth: 240, fontSize: 13 }}>
             "{app.studentName}, completaste {res.solved} de {totalEx} retos."
             <div style={{ marginTop: 4, color: "var(--ed-ink-soft)", fontSize: 12 }}>— {char.name}</div>

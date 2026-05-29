@@ -853,13 +853,14 @@ function CSZGame({ app, setApp, go, onRestart }) {
         pointerEvents: "none", textAlign: "center",
       }}>
         <div data-qa="bocadillo" style={{
-          position: "absolute", left: 6, top: -80, width: 208,
+          position: "absolute", left: 0, right: 0, top: -80,
           pointerEvents: "none",
           display: "flex", justifyContent: "center",
         }}>
           <div style={{
             position: "relative",
             display: "inline-block",
+            maxWidth: 208,
             background: "linear-gradient(180deg, rgba(20,12,55,0.95), rgba(10,6,35,0.95))",
             border: "1.5px solid rgba(242,194,96,0.65)",
             borderRadius: 16, padding: "10px 14px",
@@ -867,7 +868,6 @@ function CSZGame({ app, setApp, go, onRestart }) {
             fontWeight: 700, fontSize: 14, lineHeight: 1.25,
             color: "#fce9a8", textAlign: "center",
             boxShadow: "0 10px 24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08)",
-            maxWidth: "100%",
           }}>
             {ronda === 0 && hintMsg}
             {ronda === 1 && <>Solo una está<br/>bien escrita.</>}
@@ -940,17 +940,17 @@ function CSZGame({ app, setApp, go, onRestart }) {
         )}
       </div>
 
-      {/* Columna de acciones a la derecha */}
+      {/* Columna de acciones a la derecha — centrada vertical al lienzo */}
       <div data-qa="acciones" style={{
-        position: "absolute", right: 18, top: 90, bottom: 28, width: 130,
-        display: "flex", flexDirection: "column", justifyContent: "center", gap: 10,
+        position: "absolute", right: 18, top: "50%", transform: "translateY(-50%)",
+        display: "flex", flexDirection: "column", gap: 12, width: 150,
       }}>
         {ronda !== 2 && (
           <button className="ed-btn ed-btn-verify"
             onClick={() => { if (verifyReady && verifyRef.current) verifyRef.current(); }}
             disabled={!verifyReady}
             style={{
-              fontSize: 13, padding: "0 8px", height: 50, fontWeight: 800, letterSpacing: "0.04em",
+              fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em",
               opacity: verifyReady ? 1 : 0.45,
               cursor: verifyReady ? "pointer" : "not-allowed",
             }}>¡VERIFICAR!</button>
@@ -960,15 +960,15 @@ function CSZGame({ app, setApp, go, onRestart }) {
             onClick={() => { if (clearReady && clearRef.current) clearRef.current(); }}
             disabled={!clearReady}
             style={{
-              fontSize: 13, padding: "0 8px", height: 50, fontWeight: 800, letterSpacing: "0.04em",
+              fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em",
               opacity: clearReady ? 1 : 0.45,
               cursor: clearReady ? "pointer" : "not-allowed",
             }}>BORRAR</button>
         )}
         <button className="ed-btn ed-btn-restart" onClick={() => setConfirmingExit(true)}
-          style={{ fontSize: 13, padding: "0 8px", height: 50, fontWeight: 800, letterSpacing: "0.04em" }}>REINICIAR</button>
+          style={{ fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}>REINICIAR</button>
         <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingHomeExit(true)}
-          style={{ fontSize: 13, padding: "0 8px", height: 50, fontWeight: 800, letterSpacing: "0.04em" }}>SALIR</button>
+          style={{ fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}>SALIR</button>
       </div>
 
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />
@@ -1457,13 +1457,14 @@ function LenguaGame({ app, setApp, go, onRestart }) {
         pointerEvents: "none", textAlign: "center",
       }}>
         <div data-qa="bocadillo" style={{
-          position: "absolute", left: 6, top: -80, width: 208,
+          position: "absolute", left: 0, right: 0, top: -80,
           pointerEvents: "none",
           display: "flex", justifyContent: "center",
         }}>
           <div style={{
             position: "relative",
             display: "inline-block",
+            maxWidth: 208,
             background: "linear-gradient(180deg, rgba(20,12,55,0.95), rgba(10,6,35,0.95))",
             border: "1.5px solid rgba(242,194,96,0.65)",
             borderRadius: 16, padding: "10px 14px",
@@ -1471,7 +1472,6 @@ function LenguaGame({ app, setApp, go, onRestart }) {
             fontWeight: 700, fontSize: 14, lineHeight: 1.25,
             color: "#fce9a8", textAlign: "center",
             boxShadow: "0 10px 24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08)",
-            maxWidth: "100%",
           }}>
             {ronda === 0 && <>Arrastra cada frase a<br/>su carril correcto.</>}
             {ronda === 1 && <>Elige la respuesta<br/>más empática.</>}
@@ -1546,14 +1546,14 @@ function LenguaGame({ app, setApp, go, onRestart }) {
 
       {/* Columna de acciones — Nivel 2: VERIFICAR/BORRAR aplican a las 3 rondas */}
       <div data-qa="acciones" style={{
-        position: "absolute", right: 18, top: 90, bottom: 28, width: 130,
-        display: "flex", flexDirection: "column", justifyContent: "center", gap: 10,
+        position: "absolute", right: 18, top: "50%", transform: "translateY(-50%)",
+        display: "flex", flexDirection: "column", gap: 12, width: 150,
       }}>
         <button className="ed-btn ed-btn-verify"
           onClick={() => { if (verifyReady && verifyRef.current) verifyRef.current(); }}
           disabled={!verifyReady}
           style={{
-            fontSize: 13, padding: "0 8px", height: 50, fontWeight: 800, letterSpacing: "0.04em",
+            fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em",
             opacity: verifyReady ? 1 : 0.45,
             cursor: verifyReady ? "pointer" : "not-allowed",
           }}>¡VERIFICAR!</button>
@@ -1561,14 +1561,14 @@ function LenguaGame({ app, setApp, go, onRestart }) {
           onClick={() => { if (clearReady && clearRef.current) clearRef.current(); }}
           disabled={!clearReady}
           style={{
-            fontSize: 13, padding: "0 8px", height: 50, fontWeight: 800, letterSpacing: "0.04em",
+            fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em",
             opacity: clearReady ? 1 : 0.45,
             cursor: clearReady ? "pointer" : "not-allowed",
           }}>BORRAR</button>
         <button className="ed-btn ed-btn-restart" onClick={() => setConfirmingExit(true)}
-          style={{ fontSize: 13, padding: "0 8px", height: 50, fontWeight: 800, letterSpacing: "0.04em" }}>REINICIAR</button>
+          style={{ fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}>REINICIAR</button>
         <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingHomeExit(true)}
-          style={{ fontSize: 13, padding: "0 8px", height: 50, fontWeight: 800, letterSpacing: "0.04em" }}>SALIR</button>
+          style={{ fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}>SALIR</button>
       </div>
 
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />

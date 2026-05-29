@@ -785,6 +785,7 @@ const ENCOURAGEMENTS = [
 const RECENT_KEYS = {
   resena:   "edinun_juego7_resena_recientes_v1",
   escritor: "edinun_juego7_escritor_recientes_v1",
+  usog:     "edinun_juego7_usog_recientes_v1",
 };
 const RECENT_LIMIT = 4;
 
@@ -847,6 +848,45 @@ const RESENAS_BANK = [
       { id: "p4", texto: "Lo que más me gustó es la parte del zorro y su secreto del corazón.",  tipo: "valoracion" },
       { id: "p5", texto: "Lo recomiendo a niños y a adultos por igual.",                         tipo: "conclusion" },
       { id: "p6", texto: "Si buscas un libro corto y profundo, no dudes en leerlo.",             tipo: "conclusion" },
+    ],
+  },
+  {
+    id: "pinocho",
+    titulo: "Pinocho",
+    portada: "🪵",
+    parrafos: [
+      { id: "p1", texto: "Es una novela de Carlo Collodi publicada en 1883.",                    tipo: "descripcion" },
+      { id: "p2", texto: "Cuenta la historia de un muñeco de madera que quiere ser un niño real.", tipo: "descripcion" },
+      { id: "p3", texto: "Me gustó porque enseña a no decir mentiras.",                          tipo: "valoracion" },
+      { id: "p4", texto: "Lo más bonito es cuando Pinocho aprende a ser valiente.",              tipo: "valoracion" },
+      { id: "p5", texto: "Lo recomiendo a quienes disfrutan los cuentos clásicos.",              tipo: "conclusion" },
+      { id: "p6", texto: "Si te gusta la fantasía, este libro te encantará.",                    tipo: "conclusion" },
+    ],
+  },
+  {
+    id: "charlie-chocolate",
+    titulo: "Charlie y la fábrica de chocolate",
+    portada: "🍫",
+    parrafos: [
+      { id: "p1", texto: "Es una novela de Roald Dahl publicada en 1964.",                       tipo: "descripcion" },
+      { id: "p2", texto: "Cuenta cómo un niño pobre gana un boleto para visitar una fábrica mágica.", tipo: "descripcion" },
+      { id: "p3", texto: "Me encantó la imaginación y los inventos golosos del señor Wonka.",    tipo: "valoracion" },
+      { id: "p4", texto: "Lo que más me gustó es la familia humilde y unida de Charlie.",        tipo: "valoracion" },
+      { id: "p5", texto: "Lo recomiendo a quienes aman la fantasía y la aventura.",              tipo: "conclusion" },
+      { id: "p6", texto: "Si buscas una historia divertida, este libro es ideal.",               tipo: "conclusion" },
+    ],
+  },
+  {
+    id: "patito-feo",
+    titulo: "El patito feo",
+    portada: "🦢",
+    parrafos: [
+      { id: "p1", texto: "Es un cuento clásico de Hans Christian Andersen del año 1843.",        tipo: "descripcion" },
+      { id: "p2", texto: "Trata sobre un patito diferente que crece sintiéndose solo.",          tipo: "descripcion" },
+      { id: "p3", texto: "Me gustó muchísimo el mensaje sobre aceptarse uno mismo.",             tipo: "valoracion" },
+      { id: "p4", texto: "Lo más bonito es el final, cuando descubre quién es realmente.",       tipo: "valoracion" },
+      { id: "p5", texto: "Lo recomiendo para hablar de respeto y diferencias.",                  tipo: "conclusion" },
+      { id: "p6", texto: "Si buscas un cuento corto con enseñanza, este es perfecto.",           tipo: "conclusion" },
     ],
   },
 ];
@@ -939,6 +979,40 @@ const DETERMINANTES_BANK = [
       { t: " puntos." },
     ],
   },
+  {
+    id: "mercado",
+    titulo: "El mercado",
+    parrafo: [
+      { t: "En el mercado compré " },
+      { d: "varias",   tipo: "indefinido", note: "indefinido · cantidad no exacta" },
+      { t: " frutas. La " },
+      { d: "primera",  tipo: "ordinal",    note: "ordinal · indica orden" },
+      { t: " caja tenía " },
+      { d: "doce",     tipo: "cardinal",   note: "cardinal · cantidad exacta" },
+      { t: " manzanas y " },
+      { d: "muchos",   tipo: "indefinido", note: "indefinido · cantidad no exacta" },
+      { t: " mangos. Pagué con " },
+      { d: "cinco",    tipo: "cardinal",   note: "cardinal · cantidad exacta" },
+      { t: " dólares." },
+    ],
+  },
+  {
+    id: "excursion",
+    titulo: "La excursión",
+    parrafo: [
+      { t: "Salimos de excursión y vimos " },
+      { d: "diez",      tipo: "cardinal",   note: "cardinal · cantidad exacta" },
+      { t: " mariposas. " },
+      { d: "Algunas",   tipo: "indefinido", note: "indefinido · cantidad no exacta" },
+      { t: " eran azules. El " },
+      { d: "cuarto",    tipo: "ordinal",    note: "ordinal · indica orden" },
+      { t: " día subimos una loma. Llevamos " },
+      { d: "ochenta",   tipo: "cardinal",   note: "cardinal · cantidad exacta" },
+      { t: " litros de agua y " },
+      { d: "pocas",     tipo: "indefinido", note: "indefinido · cantidad no exacta" },
+      { t: " mochilas." },
+    ],
+  },
 ];
 
 // R3 — Verbo camaleón: lexema + tabla de conjugación (5 personas)
@@ -1007,6 +1081,32 @@ const VERBO_TABLA_BANK = [
       { id: "ellos",    persona: "Ellos",      desinencia: "en" },
     ],
     bandeja: ["o", "as", "es", "a", "e", "amos", "emos", "an", "en"],
+  },
+  {
+    id: "cantar",
+    verbo: "CANTAR",
+    lexema: "cant",
+    filas: [
+      { id: "yo",       persona: "Yo",         desinencia: "o" },
+      { id: "tu",       persona: "Tú",         desinencia: "as" },
+      { id: "el",       persona: "Él / Ella",  desinencia: "a" },
+      { id: "nosotros", persona: "Nosotros",   desinencia: "amos" },
+      { id: "ellos",    persona: "Ellos",      desinencia: "an" },
+    ],
+    bandeja: ["o", "as", "es", "a", "e", "amos", "emos", "an", "en"],
+  },
+  {
+    id: "vivir",
+    verbo: "VIVIR",
+    lexema: "viv",
+    filas: [
+      { id: "yo",       persona: "Yo",         desinencia: "o" },
+      { id: "tu",       persona: "Tú",         desinencia: "es" },
+      { id: "el",       persona: "Él / Ella",  desinencia: "e" },
+      { id: "nosotros", persona: "Nosotros",   desinencia: "imos" },
+      { id: "ellos",    persona: "Ellos",      desinencia: "en" },
+    ],
+    bandeja: ["o", "as", "es", "e", "imos", "amos", "emos", "an", "en"],
   },
 ];
 
@@ -1118,99 +1218,204 @@ const VERBOIDES_BANK = [
     correctas: { infinitivo: "er", gerundio: "iendo", participio: "ido" },
     bandeja: ["ar", "er", "ir", "ando", "iendo", "ado", "ido"],
   },
+  {
+    id: "saltar",
+    verbo: "SALTAR",
+    lexema: "salt",
+    correctas: { infinitivo: "ar", gerundio: "ando", participio: "ado" },
+    bandeja: ["ar", "er", "ir", "ando", "iendo", "ado", "ido"],
+  },
+  {
+    id: "leer",
+    verbo: "LEER",
+    lexema: "le",
+    correctas: { infinitivo: "er", gerundio: "yendo", participio: "ído" },
+    bandeja: ["ar", "er", "ir", "yendo", "iendo", "ado", "ído"],
+  },
 ];
 
-// R3 — Uso de la letra G: párrafo con 5 palabras incompletas; el niño elige G o J
-// Reglas: -gencia/-gente/-ingente, -gia/-gio, -ger/-gir → G (siempre G, J es distractor)
+// R3 — Uso de la letra G y J: párrafo con 5 huecos; cada uno con su letra correcta (c)
+// Mezcla: hay palabras con G y con J en el mismo texto.
 const USO_G_BANK = [
   {
-    id: "ente",
-    titulo: "La gente y la inteligencia",
-    regla: "-gente y -gencia se escriben con G",
+    id: "viaje-refugio",
+    titulo: "Un viaje al refugio",
+    regla: "Recuerda las reglas de uso de G y J que ya conoces.",
     parrafo: [
-      { t: "La " },
-      { g: "ente",        antes: "" },   // → gente
-      { t: " vio la inteli" },
-      { g: "encia",       antes: "" },   // → inteligencia
-      { t: " y la diri" },
-      { g: "encia",       antes: "" },   // → dirigencia
-      { t: " de la mujer. Por ne" },
-      { g: "ligencia",    antes: "" },   // → negligencia
-      { t: " perdió el contin" },
-      { g: "ente",        antes: "" },   // → contingente
+      { t: "El " },
+      { c: "j", g: "efe" },                    // jefe
+      { t: " organizó un via" },
+      { c: "j", g: "e" },                       // viaje
+      { t: " al refu" },
+      { c: "g", g: "io" },                      // refugio
+      { t: " en la sierra. La " },
+      { c: "g", g: "ente" },                    // gente
+      { t: " llevó equipa" },
+      { c: "j", g: "e" },                       // equipaje
       { t: "." },
     ],
   },
   {
-    id: "gia-gio",
-    titulo: "La magia y el prestigio",
-    regla: "-gia, -gio, -gioso se escriben con G",
+    id: "jefe-jardin",
+    titulo: "El jefe del jardín",
+    regla: "Recuerda las reglas de uso de G y J que ya conoces.",
     parrafo: [
-      { t: "La ma" },
-      { g: "ia" },           // → magia
-      { t: " del presti" },
-      { g: "io" },           // → prestigio
-      { t: " vino de un acto prodi" },
-      { g: "ioso" },         // → prodigioso
-      { t: ". Encontraron un refu" },
-      { g: "io" },           // → refugio
-      { t: " y todos hicieron un elo" },
-      { g: "io" },           // → elogio
+      { t: "El " },
+      { c: "j", g: "efe" },                     // jefe
+      { t: " del " },
+      { c: "j", g: "ardín" },                   // jardín
+      { t: " cortó las ho" },
+      { c: "j", g: "as" },                      // hojas
+      { t: ". La " },
+      { c: "g", g: "ente" },                    // gente
+      { t: " trabaja con dili" },
+      { c: "g", g: "encia" },                   // diligencia
       { t: "." },
     ],
   },
   {
-    id: "ger-gir",
-    titulo: "Recoger y dirigir",
-    regla: "Verbos en -ger y -gir se escriben con G",
+    id: "magia-abejas",
+    titulo: "Magia y abejas",
+    regla: "Recuerda las reglas de uso de G y J que ya conoces.",
     parrafo: [
-      { t: "Hay que reco" },
-      { g: "er" },           // → recoger
-      { t: " la tarea, exi" },
-      { g: "ir" },           // → exigir
-      { t: " respeto, prote" },
-      { g: "er" },           // → proteger
-      { t: " el libro, ali" },
-      { g: "erar" },         // → aligerar
-      { t: " el peso y diri" },
-      { g: "ir" },           // → dirigir
+      { t: "En la ma" },
+      { c: "g", g: "ia" },                      // magia
+      { t: " del bosque, las abe" },
+      { c: "j", g: "as" },                      // abejas
+      { t: " trabajan. El " },
+      { c: "j", g: "efe" },                     // jefe
+      { t: " dirige con dili" },
+      { c: "g", g: "encia" },                   // diligencia
+      { t: ". El presti" },
+      { c: "g", g: "io" },                      // prestigio
+      { t: " del panal es famoso." },
+    ],
+  },
+  {
+    id: "biblioteca-mix",
+    titulo: "En la biblioteca",
+    regla: "Recuerda las reglas de uso de G y J que ya conoces.",
+    parrafo: [
+      { t: "Tomé un libro de psicolo" },
+      { c: "g", g: "ía" },                      // psicología
+      { t: " y otro de mitolo" },
+      { c: "g", g: "ía" },                      // mitología
+      { t: ". Hice un buen traba" },
+      { c: "j", g: "o" },                       // trabajo
+      { t: ". El presti" },
+      { c: "g", g: "io" },                      // prestigio
+      { t: " del autor es enorme. Es un consejo de un experto vie" },
+      { c: "j", g: "o" },                       // viejo
       { t: "." },
     ],
   },
   {
-    id: "comunicado",
+    id: "comunicado-mix",
     titulo: "Comunicado importante",
-    regla: "Las palabras en -gencia y -gente se escriben con G",
+    regla: "Recuerda las reglas de uso de G y J que ya conoces.",
     parrafo: [
-      { t: "Se comunica a toda la " },
-      { g: "ente" },           // gente
-      { t: " que por la ne" },
-      { g: "ligencia" },       // negligencia
-      { t: " de algunos, no habrá indul" },
-      { g: "encia" },          // indulgencia
-      { t: ". Vamos a corre" },
-      { g: "ir" },             // corregir
-      { t: " esto. Los diri" },
-      { g: "entes" },          // dirigentes
+      { t: "Se comunica a la " },
+      { c: "g", g: "ente" },                    // gente
+      { t: " que por la negli" },
+      { c: "g", g: "encia" },                   // negligencia
+      { t: " no se podrá traba" },
+      { c: "j", g: "ar" },                      // trabajar
+      { t: ". El mensa" },
+      { c: "j", g: "e" },                       // mensaje
+      { t: " lo dieron los diri" },
+      { c: "g", g: "entes" },                   // dirigentes
       { t: "." },
     ],
   },
   {
-    id: "estudios",
-    titulo: "Mis estudios",
-    regla: "Las palabras en -logía y -gioso se escriben con G",
+    id: "escuela-mix",
+    titulo: "En la escuela",
+    regla: "Recuerda las reglas de uso de G y J que ya conoces.",
     parrafo: [
-      { t: "Estudio bio" },
-      { g: "ía" },             // biología
-      { t: " y geo" },
-      { g: "ía" },             // geografía → geo + gía
-      { t: ". Mi profesor es pro" },
-      { g: "ioso" },           // prodigioso
-      { t: " explicando. La re" },
-      { g: "ión" },            // región
-      { t: " que estudiamos tiene mucha eco" },
-      { g: "ía" },             // ecología
+      { t: "En clase de biolo" },
+      { c: "g", g: "ía" },                      // biología (biolo + g + ía)
+      { t: " no debemos de" },
+      { c: "j", g: "ar" },                      // dejar (de + j + ar)
+      { t: " las tareas. El profesor exi" },
+      { c: "g", g: "e" },                       // exige (exi + g + e)
+      { t: " respeto y nunca " },
+      { c: "j", g: "uega" },                    // juega (_ + j + uega)
+      { t: " con eso. La " },
+      { c: "g", g: "ente" },                    // gente (_ + g + ente)
+      { t: " lo respeta." },
+    ],
+  },
+  // ─── Escenas nuevas (variedad anti-repetición) ────────────────
+  {
+    id: "libro-magico",
+    titulo: "El libro mágico",
+    regla: "Recuerda las reglas de uso de G y J que ya conoces.",
+    parrafo: [
+      { t: "Tomé un libro de ma" },
+      { c: "g", g: "ia" },                      // magia (ma + g + ia)
+      { t: " donde cada pá" },
+      { c: "g", g: "ina" },                     // página (pá + g + ina)
+      { t: " es un viaje. El persona" },
+      { c: "j", g: "e" },                       // personaje (persona + j + e)
+      { t: " principal lleva un mensa" },
+      { c: "j", g: "e" },                       // mensaje (mensa + j + e)
+      { t: " de respeto a la " },
+      { c: "g", g: "ente" },                    // gente (_ + g + ente)
       { t: "." },
+    ],
+  },
+  {
+    id: "tareas-hogar",
+    titulo: "Tareas del hogar",
+    regla: "Recuerda las reglas de uso de G y J que ya conoces.",
+    parrafo: [
+      { t: "Mamá pidió recoger las ho" },
+      { c: "j", g: "as" },                      // hojas (ho + j + as)
+      { t: " del jardín. Luego organicé mi equipa" },
+      { c: "j", g: "e" },                       // equipaje (equipa + j + e)
+      { t: " para el viaje. Mi hermano arregló los relo" },
+      { c: "j", g: "es" },                      // relojes (relo + j + es)
+      { t: " con dili" },
+      { c: "g", g: "encia" },                   // diligencia (dili + g + encia)
+      { t: ". Todos cumplimos con el traba" },
+      { c: "j", g: "o" },                       // trabajo (traba + j + o)
+      { t: "." },
+    ],
+  },
+  {
+    id: "aventura-bosque",
+    titulo: "Aventura en el bosque",
+    regla: "Recuerda las reglas de uso de G y J que ya conoces.",
+    parrafo: [
+      { t: "Llegamos al refu" },
+      { c: "g", g: "io" },                      // refugio (refu + g + io)
+      { t: " del bosque. Vi una ima" },
+      { c: "g", g: "en" },                      // imagen (ima + g + en)
+      { t: " hermosa y caminé con ener" },
+      { c: "g", g: "ía" },                      // energía (ener + g + ía)
+      { t: ". Encontré a un sabio vie" },
+      { c: "j", g: "o" },                       // viejo (vie + j + o)
+      { t: " que vivía cerca de un espe" },
+      { c: "j", g: "o" },                       // espejo (espe + j + o)
+      { t: " de agua." },
+    ],
+  },
+  {
+    id: "clase-tecnologia",
+    titulo: "Clase de tecnología",
+    regla: "Recuerda las reglas de uso de G y J que ya conoces.",
+    parrafo: [
+      { t: "En clase de tecnolo" },
+      { c: "g", g: "ía" },                      // tecnología (tecnolo + g + ía)
+      { t: " estudiamos la lógica de la ima" },
+      { c: "g", g: "en" },                      // imagen (ima + g + en)
+      { t: ". El profesor exi" },
+      { c: "g", g: "e" },                       // exige (exi + g + e)
+      { t: " atención. Cada e" },
+      { c: "j", g: "ercicio" },                 // ejercicio (e + j + ercicio)
+      { t: " es un traba" },
+      { c: "j", g: "o" },                       // trabajo (traba + j + o)
+      { t: " creativo." },
     ],
   },
 ];
@@ -1248,11 +1453,11 @@ function GameScreen({ app, setApp, go }) {
 // ─────────────────────────────────────────────────────────────
 // Shell común: HUD, modales, action rail, feedback, personaje
 // ─────────────────────────────────────────────────────────────
-function GameEnunciado({ text }) {
+function GameEnunciado({ text, top = 84 }) {
   if (!text) return null;
   return (
     <div style={{
-      position: "absolute", top: 84, left: 244, width: 488,
+      position: "absolute", top, left: "50%", transform: "translateX(-50%)", width: 488,
       textAlign: "center",
       fontFamily: "var(--ed-font-display)", fontWeight: 700,
       fontSize: 17, lineHeight: 1.2,
@@ -1546,7 +1751,7 @@ function FeedbackOverlay({ feedback, feedbackMsg, charName }) {
 function CharacterCorner({ char, message }) {
   return (
     <div data-qa="personaje" style={{
-      position: "absolute", left: 8, bottom: 76, width: 220,
+      position: "absolute", left: 8, bottom: 90, width: 220,
       pointerEvents: "none", textAlign: "center",
     }}>
       <div data-qa="bocadillo" style={{
@@ -1561,8 +1766,9 @@ function CharacterCorner({ char, message }) {
           border: "1.5px solid rgba(242,194,96,0.65)",
           borderRadius: 16, padding: "10px 14px",
           fontFamily: "var(--ed-font-display)",
-          fontWeight: 700, fontSize: 13, lineHeight: 1.25,
+          fontWeight: 700, fontSize: 14, lineHeight: 1.25,
           color: "#fce9a8", textAlign: "center",
+          whiteSpace: "pre-line",
           boxShadow: "0 10px 24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08)",
         }}>
           {message}
@@ -1578,15 +1784,15 @@ function CharacterCorner({ char, message }) {
       <div style={{ position: "relative", display: "flex", justifyContent: "center" }}>
         <div style={{
           position: "absolute", bottom: 14, left: "50%", transform: "translateX(-50%)",
-          width: 130, height: 14, borderRadius: "50%",
+          width: 140, height: 16, borderRadius: "50%",
           background: "radial-gradient(ellipse, rgba(242,194,96,0.45), transparent 70%)",
           filter: "blur(5px)",
         }} />
-        <char.Component size={170} floating />
+        <char.Component size={190} floating />
       </div>
       <div style={{
-        marginTop: -4,
-        fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13,
+        marginTop: -2,
+        fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 14,
         color: "#fce9a8", letterSpacing: "0.04em",
         textShadow: "0 2px 6px rgba(0,0,0,0.6)",
       }}>{char.name}</div>
@@ -1810,23 +2016,23 @@ function ResenaGame({ app, setApp, go, onRestart }) {
   }
 
   const enunciado =
-    ronda === 0 ? `Clasifica las partes de la reseña de "${r1Pick.titulo}"` :
-    ronda === 1 ? `Pinta cada determinante con su color` :
-    `Forma el verbo "${r3Pick.verbo}" en cada persona`;
+    ronda === 0 ? `Clasifica las partes de la reseña de "${r1Pick.titulo}".` :
+    ronda === 1 ? `Pinta cada determinante con su color.` :
+    `Forma el verbo "${r3Pick.verbo}" en cada persona.`;
 
   const bocadillo =
-    ronda === 0 ? "Arrastra cada frase al cajón." :
-    ronda === 1 ? "1 tap = cardinal, 2 = ordinal, 3 = indefinido." :
+    ronda === 0 ? "Lleva cada frase a donde pertenece." :
+    ronda === 1 ? "1 tap = cardinal, 2 = ordinal,\n3 = indefinido." :
     "Arrastra la terminación a cada fila.";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
       <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} app={app} setApp={setApp} />
       <CharacterCorner char={char} message={bocadillo} />
-      <GameEnunciado text={enunciado} />
+      <GameEnunciado text={enunciado} top={(ronda === 1 || ronda === 2) ? 120 : 84} />
 
       <div data-qa="zona-central" style={{
-        position: "absolute", top: 116, left: 244, width: 488, bottom: 14,
+        position: "absolute", top: (ronda === 1 || ronda === 2) ? 150 : 116, left: "50%", transform: "translateX(-50%)", width: 440, bottom: 14,
       }}>
         {ronda === 0 && (
           <PartesResenaCard pick={r1Pick} parrafos={r1Parrafos}
@@ -1909,51 +2115,21 @@ function ResenaGame({ app, setApp, go, onRestart }) {
 // R2 · Pintor de determinantes — texto con determinantes a clasificar
 //      por color: 🟠 cardinal, 🟣 ordinal, 🟢 indefinido
 // ─────────────────────────────────────────────────────────────
-function PintorDeterminantesCard({ pick, colors, selectedTipo, locked, onSelectTipo, onApply }) {
+function PintorDeterminantesCard({ pick, colors, locked, onCycle }) {
   const TIPOS = [
     { id: "cardinal",   label: "CARDINAL",   color: "#ff9a3a", ink: "#5a3208", hint: "cantidad exacta" },
     { id: "ordinal",    label: "ORDINAL",    color: "#a78bfa", ink: "#2a0a4a", hint: "indica orden" },
     { id: "indefinido", label: "INDEFINIDO", color: "#5fb878", ink: "#0a3a18", hint: "no exacta" },
   ];
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
-      {/* 3 botones de TIPO — seleccionables */}
-      <div style={{ display: "flex", gap: 8 }}>
-        {TIPOS.map((t) => {
-          const isSel = selectedTipo === t.id;
-          return (
-            <button key={t.id}
-              onClick={() => !locked && onSelectTipo(t.id)}
-              disabled={locked}
-              style={{
-                display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
-                background: isSel ? "linear-gradient(180deg,#fce9a8,#d9a441)" : t.color,
-                color: isSel ? "#3a2608" : "#fff",
-                padding: "5px 16px", borderRadius: 12,
-                fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11.5,
-                border: `2px solid ${isSel ? "#4fd8ff" : "rgba(255,255,255,0.7)"}`,
-                boxShadow: isSel ? "0 0 16px rgba(79,216,255,0.7)" : "0 3px 7px rgba(0,0,0,0.3)",
-                letterSpacing: "0.04em",
-                cursor: locked ? "default" : "pointer",
-                transform: isSel ? "translateY(-2px)" : "none",
-                transition: "all 0.18s",
-              }}>
-              <span>{t.label}</span>
-              <span style={{ fontSize: 8.5, opacity: 0.9, fontStyle: "italic", letterSpacing: 0 }}>
-                {t.hint}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Cartel del texto con determinantes */}
+    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-around", paddingTop: 4, paddingBottom: 4 }}>
+      {/* Cartel del texto con determinantes — PRIMERO */}
       <div style={{
-        width: "100%", maxWidth: 470,
+        width: "100%", maxWidth: 380,
         background: "linear-gradient(180deg, rgba(255,253,245,0.97), rgba(245,238,225,0.92))",
         border: "3px solid #f2c260",
         borderRadius: 18,
-        padding: "14px 22px",
+        padding: "12px 22px",
         boxShadow: "0 12px 26px rgba(0,0,0,0.5)",
         color: "#3a2608",
       }}>
@@ -1979,7 +2155,7 @@ function PintorDeterminantesCard({ pick, colors, selectedTipo, locked, onSelectT
             if (isWrong)                { bg = "rgba(255,107,107,0.4)";  border = "2px solid #ff6b6b"; }
             return (
               <span key={i}
-                onClick={() => !locked && onApply(i)}
+                onClick={() => !locked && onCycle(i)}
                 style={{
                   display: "inline-block",
                   padding: "1px 8px", margin: "1px 2px",
@@ -1992,13 +2168,36 @@ function PintorDeterminantesCard({ pick, colors, selectedTipo, locked, onSelectT
                 {tk.d}
                 {(isWrong || isEmpty) && correctTipo && (
                   <sup style={{ fontSize: 9, color: "#c33b3b", marginLeft: 2, fontWeight: 800 }}>
-                    ✗ Era {correctTipo.label.charAt(0)}
+                    ✗ {correctTipo.label.charAt(0)}
                   </sup>
                 )}
               </span>
             );
           })}
         </div>
+      </div>
+
+      {/* Leyenda de colores en columna — DESPUÉS del cartel, solo visual */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 7, alignItems: "center" }}>
+        {TIPOS.map((t) => (
+          <div key={t.id}
+            style={{
+              display: "flex", flexDirection: "row", alignItems: "center", gap: 10,
+              background: t.color, color: "#fff",
+              padding: "8px 22px", borderRadius: 14,
+              fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 14,
+              border: "2px solid rgba(255,255,255,0.8)",
+              boxShadow: "0 3px 8px rgba(0,0,0,0.35)",
+              letterSpacing: "0.04em",
+              minWidth: 320,
+              justifyContent: "center",
+            }}>
+            <span>{t.label}</span>
+            <span style={{ fontSize: 11.5, opacity: 0.95, fontStyle: "italic", letterSpacing: 0 }}>
+              · {t.hint}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -2012,7 +2211,7 @@ function TablaVerboCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, 
   const usedDesinencias = new Set(Object.values(placed));
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
+    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 22 }}>
       {/* Cabecera con verbo */}
       <div style={{
         fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 13, color: "#fce9a8", letterSpacing: "0.04em",
@@ -2116,15 +2315,16 @@ function TablaVerboCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, 
         })}
       </div>
 
-      {/* Bandeja de desinencias */}
+      {/* Bandeja de desinencias — siempre en 1 sola fila */}
       <div data-qa="bandeja" style={{
-        width: "100%", maxWidth: 470,
+        width: "100%", maxWidth: 440,
         background: "rgba(10,6,35,0.55)",
         border: "1px dashed rgba(252,233,168,0.35)",
-        borderRadius: 12,
-        padding: "7px 10px",
-        display: "flex", gap: 4, justifyContent: "center", alignItems: "center",
+        borderRadius: 14,
+        padding: "12px 14px",
+        display: "flex", gap: 5, justifyContent: "center", alignItems: "center",
         flexWrap: "nowrap",
+        boxSizing: "border-box",
       }}>
         {pick.bandeja.map((d) => {
           if (usedDesinencias.has(d)) return null;
@@ -2148,7 +2348,7 @@ function TablaVerboCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, 
                 disabled: locked,
               })}
               style={{
-                padding: "6px 10px", borderRadius: 9,
+                padding: "6px 7px", borderRadius: 9,
                 background: isPicked ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.94)",
                 color: "#3a2608",
                 border: `2px solid ${isPicked ? "#4fd8ff" : "rgba(242,194,96,0.6)"}`,
@@ -2157,7 +2357,7 @@ function TablaVerboCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, 
                 boxShadow: isPicked ? "0 0 14px rgba(79,216,255,0.6)" : "0 3px 7px rgba(0,0,0,0.3)",
                 transform: isPicked ? "translateY(-2px)" : "none",
                 transition: "all 0.15s",
-                minWidth: 48, flex: "0 0 auto",
+                minWidth: 32, flex: "0 0 auto",
                 whiteSpace: "nowrap",
                 userSelect: "none",
                 textAlign: "center",
@@ -2367,19 +2567,7 @@ function PartesResenaCard({ pick, parrafos, assigned, selectedBin, locked, onSel
   const pendientes = parrafos.filter((p) => !assigned[p.id]);
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", gap: 6, paddingTop: 0 }}>
-      {/* Título del libro */}
-      <div style={{
-        display: "flex", alignItems: "center", gap: 8,
-        background: "rgba(10,6,35,0.55)",
-        border: "1px solid rgba(242,194,96,0.45)",
-        borderRadius: 999,
-        padding: "3px 14px",
-        fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 11.5, color: "#fce9a8",
-      }}>
-        {pick.portada} {pick.titulo}
-      </div>
-
+    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-around", gap: 6, paddingTop: 4, paddingBottom: 4 }}>
       {/* 3 cajones grandes en fila — dropzones */}
       <div style={{ width: "100%", maxWidth: 480, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
         {BINS.map((b) => {
@@ -2495,11 +2683,11 @@ function PartesResenaCard({ pick, parrafos, assigned, selectedBin, locked, onSel
       }}>
         {pendientes.length === 0 ? (
           <div style={{
-            textAlign: "center", color: "rgba(252,233,168,0.6)",
-            fontFamily: "var(--ed-font-display)", fontStyle: "italic", fontSize: 11,
-            padding: "8px 4px",
+            textAlign: "center", color: "rgba(252,233,168,0.7)",
+            fontFamily: "var(--ed-font-display)", fontStyle: "italic", fontSize: 11.5,
+            padding: "10px 4px",
           }}>
-            ¡Bien! Todas las frases ya están clasificadas.
+            Todas las frases ya están clasificadas.
           </div>
         ) : pendientes.map((p) => (
           <div key={p.id}
@@ -2627,7 +2815,7 @@ function EscritorGame({ app, setApp, go, onRestart }) {
   const [r2Picked, setR2Picked] = useStateG(null);
   const [r2Locked, setR2Locked] = useStateG(false);
 
-  // R3 state: { verboIndex: color "azul" | "rojo" | null }
+  // R3 state: { huecoIdx: "g" | "j" } — selector inline en cada hueco
   const [r3Colors, setR3Colors] = useStateG({});
   const [r3Locked, setR3Locked] = useStateG(false);
 
@@ -2651,11 +2839,13 @@ function EscritorGame({ app, setApp, go, onRestart }) {
   });
 
   const [r3Pick] = useStateG(() => {
-    const recent = new Set(getRecent("escritor"));
+    // Key exclusiva de R3 G/J (antes compartía "escritor" con R1/R2, lo que
+    // contaminaba el FIFO y reducía la variedad real).
+    const recent = new Set(getRecent("usog"));
     let pool = USO_G_BANK.filter((v) => !recent.has(v.id));
     if (pool.length === 0) pool = USO_G_BANK;
     const p = pool[Math.floor(Math.random() * pool.length)];
-    pushRecent("escritor", p.id);
+    pushRecent("usog", p.id);
     return p;
   });
 
@@ -2737,11 +2927,11 @@ function EscritorGame({ app, setApp, go, onRestart }) {
       setR3Locked(true);
       let correct = true;
       for (const h of r3Huecos) {
-        // Todas las palabras del banco USO_G_BANK son con G (las reglas del libro)
-        if (r3Colors[h.idx] !== "g") { correct = false; }
+        // Cada hueco tiene su propia letra correcta (h.c = "g" | "j")
+        if (r3Colors[h.idx] !== h.c) { correct = false; }
       }
       const userText = r3Huecos.map((h) => `_${h.g}=${r3Colors[h.idx] || "?"}`).join(", ");
-      const correctText = r3Huecos.map((h) => `g${h.g}`).join(", ");
+      const correctText = r3Huecos.map((h) => `${h.c}${h.g}`).join(", ");
       setTimeout(() => answer(correct, userText, correctText, "🔠"), 350);
     }
   }
@@ -2812,23 +3002,23 @@ function EscritorGame({ app, setApp, go, onRestart }) {
   }
 
   const enunciado =
-    ronda === 0 ? `Reemplaza cada nombre por el pronombre correcto` :
-    ronda === 1 ? `Forma los 3 verboides del verbo "${r2Pick.verbo}"` :
-    `Uso de la letra G — "${r3Pick.titulo}"`;
+    ronda === 0 ? `Reemplaza cada nombre por el pronombre correcto.` :
+    ronda === 1 ? `Forma los 3 verboides del verbo "${r2Pick.verbo}".` :
+    `Uso de la letra G — "${r3Pick.titulo}".`;
 
   const bocadillo =
     ronda === 0 ? "Toca el pronombre que reemplaza cada nombre." :
     ronda === 1 ? "Toca una terminación y luego un cajón." :
-    "1 tap = G, 2 taps = J. Llena cada hueco.";
+    "Toca g o j en cada palabra para elegir.";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
       <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} app={app} setApp={setApp} />
       <CharacterCorner char={char} message={bocadillo} />
-      <GameEnunciado text={enunciado} />
+      <GameEnunciado text={enunciado} top={120} />
 
       <div data-qa="zona-central" style={{
-        position: "absolute", top: 116, left: 244, width: 488, bottom: 14,
+        position: "absolute", top: 150, left: "50%", transform: "translateX(-50%)", width: 440, bottom: 14,
       }}>
         {ronda === 0 && (
           <PronombreCard pick={r1Pick}
@@ -2864,13 +3054,13 @@ function EscritorGame({ app, setApp, go, onRestart }) {
         {ronda === 2 && (
           <DetectiveGCard pick={r3Pick}
             choices={r3Colors} locked={r3Locked}
-            onCycle={(idx) => {
+            onSelectLetter={(idx, letter) => {
               if (r3Locked) return;
               const cur = r3Colors[idx];
-              const next = cur === undefined ? "g" : cur === "g" ? "j" : undefined;
-              const newColors = { ...r3Colors };
-              if (next === undefined) delete newColors[idx]; else newColors[idx] = next;
-              setR3Colors(newColors);
+              const next = { ...r3Colors };
+              if (cur === letter) delete next[idx]; // re-tap = deseleccionar
+              else next[idx] = letter;
+              setR3Colors(next);
             }}
           />
         )}
@@ -2899,23 +3089,23 @@ function PronombreCard({ pick, selections, locked, onChoose }) {
   return (
     <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
       <div style={{
-        width: "100%", maxWidth: 470,
+        width: "100%", maxWidth: 380,
         background: "linear-gradient(180deg, rgba(255,253,245,0.97), rgba(245,238,225,0.92))",
         border: "3px solid #f2c260",
         borderRadius: 16,
-        padding: "14px 16px 12px 16px",
+        padding: "22px 18px 22px 18px",
         boxShadow: "0 10px 22px rgba(0,0,0,0.45)",
         color: "#3a2608",
       }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {pick.huecos.map((h, i) => {
             const userPick = selections[h.id];
             const isCorrect = locked && userPick === h.pronombre;
             const isWrong = locked && userPick && userPick !== h.pronombre;
             return (
               <div key={h.id} style={{
-                display: "flex", flexDirection: "column", gap: 6,
-                padding: "8px 10px",
+                display: "flex", flexDirection: "column", gap: 10,
+                padding: "12px 12px",
                 background: isCorrect ? "rgba(46,204,143,0.18)" : isWrong ? "rgba(255,107,107,0.18)" : "rgba(252,233,168,0.18)",
                 borderRadius: 10,
                 border: isCorrect ? "1.5px solid #2ecc8f" : isWrong ? "1.5px solid #ff6b6b" : "1.5px solid rgba(217,164,65,0.35)",
@@ -2972,7 +3162,7 @@ function VerboidesCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, o
   const usedDesinencias = new Set(Object.values(placed));
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
+    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-around", paddingTop: 4, paddingBottom: 4 }}>
       {/* Cabecera con verbo */}
       <div style={{
         fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 14, color: "#fce9a8", letterSpacing: "0.04em",
@@ -2984,7 +3174,7 @@ function VerboidesCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, o
       </div>
 
       {/* 3 cajones: lexema + slot desinencia */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", maxWidth: 460 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", maxWidth: 360 }}>
         {BINS.map((b) => {
           const des = placed[b.id];
           const isCorrect = locked && des === pick.correctas[b.id];
@@ -3072,7 +3262,7 @@ function VerboidesCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, o
                     boxShadow: "0 3px 7px rgba(0,0,0,0.3)",
                     letterSpacing: "0.04em",
                   }}>
-                    ✗ Era {pick.correctas[b.id]}
+                    ✗ {pick.correctas[b.id]}
                   </div>
                 )}
               </div>
@@ -3139,59 +3329,74 @@ function VerboidesCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, o
 // ─────────────────────────────────────────────────────────────
 // R3 (N2) · Pintor de verbos — texto con verbos cliclables, ciclan AZUL/ROJO/limpio
 // ─────────────────────────────────────────────────────────────
-function DetectiveGCard({ pick, choices, locked, onCycle }) {
+function DetectiveGCard({ pick, choices, locked, onSelectLetter }) {
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 9 }}>
+    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-around", paddingTop: 4, paddingBottom: 4 }}>
       {/* Cartel del comunicado */}
       <div style={{
         width: "100%", maxWidth: 470,
         background: "linear-gradient(180deg, rgba(255,253,245,0.97), rgba(245,238,225,0.92))",
         border: "3px solid #f2c260",
         borderRadius: 18,
-        padding: "14px 22px 16px 22px",
+        padding: "16px 24px 20px 24px",
         boxShadow: "0 12px 26px rgba(0,0,0,0.5)",
         color: "#3a2608",
       }}>
-        <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 13, marginBottom: 8, textAlign: "center", color: "#7a4a0e", letterSpacing: "0.02em" }}>
+        <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 13, marginBottom: 10, textAlign: "center", color: "#7a4a0e", letterSpacing: "0.02em" }}>
           🔠 {pick.titulo}
         </div>
-        <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 16, lineHeight: 2, textAlign: "center" }}>
+        <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 17, lineHeight: 2.5, textAlign: "center" }}>
           {pick.parrafo.map((tk, i) => {
             if (tk.t) return <span key={i}>{tk.t}</span>;
             const choice = choices[i]; // "g" | "j" | undefined
-            const isCorrect = locked && choice === "g";
-            const isWrong = locked && choice === "j";
+            const correct = tk.c; // letra correcta del banco
+            const isCorrect = locked && choice === correct;
+            const isWrong = locked && choice && choice !== correct;
             const isEmpty = locked && !choice;
-            let bg = "rgba(252,233,168,0.85)";
-            let border = "2px dashed #d9a441";
-            let color = "#3a2608";
-            if (choice === "g") { bg = "rgba(46,204,143,0.35)"; border = "2px solid #2ecc8f"; }
-            if (choice === "j") { bg = "rgba(255,107,107,0.35)"; border = "2px solid #ff6b6b"; }
-            if (isCorrect) { bg = "rgba(46,204,143,0.55)"; border = "2px solid #2ecc8f"; }
-            if (isWrong)   { bg = "rgba(255,107,107,0.5)"; border = "2px solid #ff6b6b"; }
+            // Selector inline g/j — compacto, sin márgenes que rompan
+            // la lectura de la palabra (\"bio\" + [g/j] + \"ía\" → biología).
+            const renderOption = (letter, activeColor, activeBg) => {
+              const isSel = choice === letter;
+              let bg = "rgba(252,233,168,0.45)";
+              let bd = "1px solid rgba(116,72,32,0.25)";
+              let col = "#7a4a0e";
+              if (isSel) { bg = activeBg; bd = `2px solid ${activeColor}`; col = "#fff"; }
+              if (locked && isSel && letter === "g") { bg = "rgba(46,204,143,0.85)"; bd = "2px solid #2ecc8f"; col = "#fff"; }
+              if (locked && isSel && letter === "j") { bg = "rgba(255,107,107,0.85)"; bd = "2px solid #ff6b6b"; col = "#fff"; }
+              return (
+                <span
+                  onClick={() => !locked && onSelectLetter(i, letter)}
+                  style={{
+                    display: "inline-block",
+                    padding: "0 3px",
+                    background: bg, border: bd, borderRadius: 4,
+                    color: col, fontWeight: 800,
+                    fontFamily: "var(--ed-font-display)",
+                    fontSize: 13,
+                    cursor: locked ? "default" : "pointer",
+                    userSelect: "none",
+                    margin: 0,
+                    transition: "all 0.15s",
+                  }}>
+                  {letter}
+                </span>
+              );
+            };
             return (
-              <span key={i}
-                onClick={() => !locked && onCycle(i)}
-                style={{
-                  display: "inline-block",
-                  margin: "0 1px",
-                  cursor: locked ? "default" : "pointer",
-                  userSelect: "none",
-                }}>
+              <span key={i} style={{ display: "inline-block", margin: 0, userSelect: "none", whiteSpace: "nowrap" }}>
                 <span style={{
                   display: "inline-block",
-                  minWidth: 22, textAlign: "center",
-                  padding: "0 5px",
-                  background: bg,
-                  border, borderRadius: 6,
-                  color, fontWeight: 800,
-                  fontFamily: "var(--ed-font-display)",
+                  padding: 0, borderRadius: 4,
+                  background: isCorrect ? "rgba(46,204,143,0.15)" : (isWrong ? "rgba(255,107,107,0.15)" : "transparent"),
+                  border: isCorrect ? "1px dashed #2ecc8f" : (isWrong ? "1px dashed #ff6b6b" : "none"),
+                  lineHeight: 1,
                 }}>
-                  {choice ? choice.toUpperCase() : "_"}
+                  {renderOption("g", "#2ecc8f", "rgba(46,204,143,0.65)")}
+                  {renderOption("j", "#ff8a3a", "rgba(255,138,58,0.65)")}
                 </span>
                 <span style={{ fontWeight: 700 }}>{tk.g}</span>
                 {(isWrong || isEmpty) && (
-                  <sup style={{ fontSize: 10, color: "#c33b3b", marginLeft: 2, fontWeight: 800 }}>✗ Era G</sup>
+                  <sup style={{ fontSize: 10, color: "#c33b3b", marginLeft: 2, fontWeight: 800 }}>{correct}</sup>
                 )}
               </span>
             );
@@ -3199,42 +3404,17 @@ function DetectiveGCard({ pick, choices, locked, onCycle }) {
         </div>
       </div>
 
-      {/* Pista de regla + leyenda */}
+      {/* Pista de regla */}
       <div style={{
         background: "rgba(10,6,35,0.65)",
         border: "1px solid rgba(252,233,168,0.5)",
         borderRadius: 999,
-        padding: "5px 18px",
+        padding: "6px 20px",
         fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12, color: "#fce9a8",
         letterSpacing: "0.02em",
         maxWidth: 460, textAlign: "center",
       }}>
-        💡 {pick.regla}
-      </div>
-
-      <div style={{ display: "flex", gap: 10 }}>
-        <div style={{
-          display: "flex", alignItems: "center", gap: 6,
-          background: "rgba(46,204,143,0.85)",
-          color: "#fff",
-          padding: "4px 14px", borderRadius: 999,
-          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11.5,
-          border: "1.5px solid #fff",
-          boxShadow: "0 3px 7px rgba(0,0,0,0.3)",
-        }}>
-          1 tap = G
-        </div>
-        <div style={{
-          display: "flex", alignItems: "center", gap: 6,
-          background: "rgba(255,107,107,0.85)",
-          color: "#fff",
-          padding: "4px 14px", borderRadius: 999,
-          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11.5,
-          border: "1.5px solid #fff",
-          boxShadow: "0 3px 7px rgba(0,0,0,0.3)",
-        }}>
-          2 taps = J
-        </div>
+        {pick.regla}
       </div>
     </div>
   );
@@ -3375,7 +3555,7 @@ function ResultsScreen({ app, setApp, go }) {
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
             lineHeight: 1, marginBottom: 4, textAlign: "center",
           }}>¡Ronda completa!</div>
-          <char.Component size={170} />
+          <char.Component size={190} />
           <div className="ed-body" style={{ fontStyle: "italic", textAlign: "center", maxWidth: 240, fontSize: 13 }}>
             "{app.studentName}, completaste {res.solved} de {totalEx} retos."
             <div style={{ marginTop: 4, color: "var(--ed-ink-soft)", fontSize: 12 }}>— {char.name}</div>
