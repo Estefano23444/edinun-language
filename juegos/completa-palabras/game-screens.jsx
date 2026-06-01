@@ -556,7 +556,7 @@ function GameScreen({ app, setApp, go }) {
         {/* Bocadillo de pista — el padre flex centra al hijo inline-block que
             se ajusta al texto (sin width fijo). Así textos cortos no dejan
             espacio en blanco al lado. */}
-        <div data-qa="bocadillo" style={{
+        <div data-qa="bocadillo" className="ed-float-soft" style={{
           position: "absolute", left: 0, right: 0, bottom: "100%",
           display: "flex", justifyContent: "center",
           pointerEvents: "none",

@@ -715,7 +715,7 @@ function LetraRGame({ app, setApp, go, onRestart }) {
         position: "absolute", left: 8, bottom: 90, width: 220,
         pointerEvents: "none", textAlign: "center",
       }}>
-        <div data-qa="bocadillo" style={{
+        <div data-qa="bocadillo" className="ed-float-soft" style={{
           position: "absolute", left: 0, right: 0, bottom: "100%",
           display: "flex", justifyContent: "center",
           pointerEvents: "none",
@@ -1017,7 +1017,7 @@ function NoticiaGame({ app, setApp, go, onRestart }) {
         position: "absolute", left: 8, bottom: 90, width: 220,
         pointerEvents: "none", textAlign: "center",
       }}>
-        <div data-qa="bocadillo" style={{
+        <div data-qa="bocadillo" className="ed-float-soft" style={{
           position: "absolute", left: 0, right: 0, bottom: "100%",
           display: "flex", justifyContent: "center",
           pointerEvents: "none",
@@ -1368,7 +1368,7 @@ function BlogGame({ app, setApp, go, onRestart }) {
         position: "absolute", left: 8, bottom: 90, width: 220,
         pointerEvents: "none", textAlign: "center",
       }}>
-        <div data-qa="bocadillo" style={{
+        <div data-qa="bocadillo" className="ed-float-soft" style={{
           position: "absolute", left: 0, right: 0, bottom: "100%",
           display: "flex", justifyContent: "center",
           pointerEvents: "none",

@@ -709,7 +709,7 @@ function CharacterCorner({ char, message }) {
       position: "absolute", left: 8, bottom: 76, width: 220,
       pointerEvents: "none", textAlign: "center",
     }}>
-      <div data-qa="bocadillo" style={{
+      <div data-qa="bocadillo" className="ed-float-soft" style={{
         position: "absolute", left: 0, right: 0, top: -82,
         display: "flex", justifyContent: "center",
         pointerEvents: "none",

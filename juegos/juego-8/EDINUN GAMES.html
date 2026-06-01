@@ -79,7 +79,6 @@ function EdinunLogoMini({ size = 40 }) {
 
 Object.assign(window, { EdinunLogo, EdinunLogoMini });
 
-
 // characters.jsx — Personajes EDINUN GAMES · Juegos de lenguaje.
 // Renderizan los PNG de assets/char-<id>.png. Misma API que la versión
 // SVG (props `size`, `floating`) para no romper a los consumidores
@@ -234,7 +233,6 @@ Object.assign(window, {
   CharacterAvatar,
   CHARACTERS,
 });
-
 
 // screens.jsx — HomeScreen + CharacterScreen + CosmosBg para "Juego 8".
 // Dos niveles del libro EDINUN:
@@ -637,7 +635,6 @@ function CharacterScreen({ app, setApp, go }) {
 }
 
 Object.assign(window, { HomeScreen, CharacterScreen, CosmosBg, incrementGamesCompleted, useVisitorCount, markFirstAttempt, LEVELS_CFG });
-
 
 // game-screens.jsx — Juego 8. Dos niveles de lenguaje con mecánicas distintas:
 //   1. El escritor  (9 años)  — caza S/P · pintor de modificadores · sastre de citas
@@ -1350,7 +1347,7 @@ function CharacterCorner({ char, message }) {
       position: "absolute", left: 8, bottom: 76, width: 220,
       pointerEvents: "none", textAlign: "center",
     }}>
-      <div data-qa="bocadillo" style={{
+      <div data-qa="bocadillo" className="ed-float-soft" style={{
         position: "absolute", left: 0, right: 0, top: -82,
         display: "flex", justifyContent: "center",
         pointerEvents: "none",
@@ -2886,7 +2883,6 @@ function SummaryCell({ label, value, tone = "var(--ed-ink)", emphasis = false })
 }
 
 Object.assign(window, { GameScreen, ResultsScreen });
-
 
 // app.jsx — Shell de producción EDINUN GAMES.
 // Enrutador por estado y device stage adaptativo (desktop / tablet / mobile).
