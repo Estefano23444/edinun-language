@@ -1992,12 +1992,12 @@ function ResultsScreen({ app, setApp, go }) {
       }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
           <div style={{
-            fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 32,
+            fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 36,
             background: "linear-gradient(180deg, #fce9a8, #d9a441)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
             lineHeight: 1, marginBottom: 4, textAlign: "center",
           }}>¡Ronda completa!</div>
-          <char.Component size={170} />
+          <char.Component size={180} />
           <div className="ed-body" style={{ fontStyle: "italic", textAlign: "center", maxWidth: 240, fontSize: 13 }}>
             "{app.studentName}, completaste {res.solved} de {totalEx} retos."
             <div style={{ marginTop: 4, color: "var(--ed-ink-soft)", fontSize: 12 }}>— {char.name}</div>

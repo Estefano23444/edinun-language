@@ -1793,7 +1793,7 @@ function ResultsScreen({ app, setApp, go }) {
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
             lineHeight: 1, marginBottom: 4,
           }}>¡Ronda completa!</div>
-          <char.Component size={190} />
+          <char.Component size={180} />
           <div className="ed-body" style={{ fontStyle: "italic", textAlign: "center", maxWidth: 240, fontSize: 13 }}>
             "{app.studentName}, completaste {res.solved} de {totalEx} retos."
             <div style={{ marginTop: 4, color: "var(--ed-ink-soft)", fontSize: 12 }}>— {char.name}</div>
