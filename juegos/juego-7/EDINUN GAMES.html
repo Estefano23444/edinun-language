@@ -3004,7 +3004,7 @@ function EscritorGame({ app, setApp, go, onRestart }) {
   const enunciado =
     ronda === 0 ? `Reemplaza cada nombre por el pronombre correcto.` :
     ronda === 1 ? `Forma los 3 verboides del verbo "${r2Pick.verbo}".` :
-    `"${r3Pick.titulo}".`;
+    `Completa el texto con G o J.`;
 
   const bocadillo =
     ronda === 0 ? "Toca el pronombre que reemplaza cada nombre." :
@@ -3368,7 +3368,7 @@ function DetectiveGCard({ pick, choices, locked, onSelectLetter }) {
         <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 13, marginBottom: 10, textAlign: "center", color: "#7a4a0e", letterSpacing: "0.02em" }}>
           🔠 {pick.titulo}
         </div>
-        <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 17, lineHeight: 2.5, textAlign: "center" }}>
+        <div style={{ fontFamily: "var(--ed-font-ui)", fontWeight: 400, fontSize: 17, lineHeight: 2.5, textAlign: "center" }}>
           {groups.map((g, j) => {
             if (g.kind === "text") return <span key={`t-${j}`}>{g.value}</span>;
             const i = g.choiceIdx;
@@ -3406,7 +3406,7 @@ function DetectiveGCard({ pick, choices, locked, onSelectLetter }) {
             };
             return (
               <span key={`w-${j}`} style={{ display: "inline-block", margin: 0, userSelect: "none", whiteSpace: "nowrap" }}>
-                {g.prefix && <span style={{ fontWeight: 700 }}>{g.prefix}</span>}
+                {g.prefix && <span>{g.prefix}</span>}
                 <span style={{
                   display: "inline-block",
                   padding: 0, borderRadius: 4,
@@ -3417,7 +3417,7 @@ function DetectiveGCard({ pick, choices, locked, onSelectLetter }) {
                   {renderOption("g", "#2ecc8f", "rgba(46,204,143,0.65)")}
                   {renderOption("j", "#ff8a3a", "rgba(255,138,58,0.65)")}
                 </span>
-                <span style={{ fontWeight: 700 }}>{g.choice.g}</span>
+                <span>{g.choice.g}</span>
                 {(isWrong || isEmpty) && (
                   <sup style={{ fontSize: 10, color: "#c33b3b", marginLeft: 2, fontWeight: 800 }}>{correct}</sup>
                 )}
