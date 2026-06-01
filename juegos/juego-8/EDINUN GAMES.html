@@ -1022,7 +1022,7 @@ function GameEnunciado({ text, top = 84 }) {
   if (!text) return null;
   return (
     <div style={{
-      position: "absolute", top, left: "50%", transform: "translateX(-50%)", width: 488,
+      position: "absolute", top, left: "50%", transform: "translateX(-50%)", width: 440,
       textAlign: "center",
       fontFamily: "var(--ed-font-display)", fontWeight: 700,
       fontSize: 17, lineHeight: 1.2,
@@ -1316,19 +1316,23 @@ function FeedbackOverlay({ feedback, feedbackMsg, charName }) {
 }
 
 function CharacterCorner({ char, message }) {
+  // El wrapper completo se anima (ed-float-soft) para que personaje + bocadillo
+  // + nombre suban y bajen como un solo bloque. El char.Component se monta
+  // SIN su propio floating para no duplicar la animación.
   return (
-    <div data-qa="personaje" style={{
+    <div data-qa="personaje" className="ed-float-soft" style={{
       position: "absolute", left: 8, bottom: 90, width: 220,
       pointerEvents: "none", textAlign: "center",
     }}>
-      <div data-qa="bocadillo" className="ed-float-soft" style={{
+      <div data-qa="bocadillo" style={{
         position: "absolute", left: 0, right: 0, bottom: "100%",
         display: "flex", justifyContent: "center",
         pointerEvents: "none",
       }}>
         <div style={{
           position: "relative",
-          maxWidth: 208,
+          width: "fit-content",   // se adapta al texto: nube chiquita si el texto es corto
+          maxWidth: 220,          // tope razonable para que no se desborde del wrapper
           background: "linear-gradient(180deg, rgba(20,12,55,0.95), rgba(10,6,35,0.95))",
           border: "1.5px solid rgba(242,194,96,0.65)",
           borderRadius: 16, padding: "10px 14px",
@@ -1355,7 +1359,7 @@ function CharacterCorner({ char, message }) {
           background: "radial-gradient(ellipse, rgba(242,194,96,0.45), transparent 70%)",
           filter: "blur(5px)",
         }} />
-        <char.Component size={190} floating />
+        <char.Component size={190} floating={false} />
       </div>
       <div style={{
         marginTop: -2,
@@ -1590,7 +1594,8 @@ function EscritorGame({ app, setApp, go, onRestart }) {
       <GameEnunciado text={enunciado} top={enunciadoTop} />
 
       <div data-qa="zona-central" style={{
-        position: "absolute", top: 116, left: 244, width: 488, bottom: 14,
+        position: "absolute", top: 116, left: "50%", transform: "translateX(-50%)",
+        width: 440, bottom: 14,
       }}>
         {ronda === 0 && (
           <RuletaEscritorCard
@@ -1744,7 +1749,7 @@ function RuletaEscritorCard({ pick, spinning, revealed, split, locked, onSpin, o
   return (
     <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 24 }}>
       <div style={{
-        width: "fit-content", maxWidth: 480,
+        width: "fit-content", maxWidth: 430,
         background: "linear-gradient(180deg, rgba(255,253,245,0.97), rgba(245,238,225,0.92))",
         border: "3px solid #f2c260",
         borderRadius: 18, padding: "16px 18px",
@@ -1835,7 +1840,7 @@ function _SujetoPredicadoCard_DEPRECATED({ pick, split, locked, onChooseSplit })
     <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 24 }}>
       {/* Cartel con la oración como fichas + tijeras entre cada par de palabras */}
       <div style={{
-        width: "fit-content", maxWidth: 480,
+        width: "fit-content", maxWidth: 430,
         background: "linear-gradient(180deg, rgba(255,253,245,0.97), rgba(245,238,225,0.92))",
         border: "3px solid #f2c260",
         borderRadius: 18, padding: "16px 18px",
@@ -1932,7 +1937,7 @@ function DetectiveModCard({ pick, marks, lupa, locked, onChooseLupa, onMarkWord 
     <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 18 }}>
       {/* Expediente (cartel principal) */}
       <div style={{
-        width: "fit-content", maxWidth: 480,
+        width: "fit-content", maxWidth: 430,
         background: "linear-gradient(180deg, rgba(255,253,245,0.97), rgba(245,238,225,0.92))",
         border: "3px solid #f2c260",
         borderRadius: 18, padding: "14px 18px 16px 18px",
@@ -2057,7 +2062,7 @@ function _PintorModCard_DEPRECATED({ pick, colors, locked, onCycle }) {
     <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 22 }}>
       {/* Cartel con la frase nominal — fit-content para que se adapte al texto. */}
       <div style={{
-        width: "fit-content", maxWidth: 470,
+        width: "fit-content", maxWidth: 430,
         background: "linear-gradient(180deg, rgba(255,253,245,0.97), rgba(245,238,225,0.92))",
         border: "3px solid #f2c260",
         borderRadius: 18,
@@ -2167,7 +2172,7 @@ function LabCitasCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, on
     <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14 }}>
       {/* Probeta = cartel verde de "tubo de ensayo" con la cita */}
       <div style={{
-        width: "fit-content", maxWidth: 480,
+        width: "fit-content", maxWidth: 430,
         background: "linear-gradient(180deg, rgba(229,252,239,0.97), rgba(200,238,220,0.92))",
         border: "3px solid #5fb878",
         borderRadius: 22,
@@ -2337,7 +2342,7 @@ function _SastreCitasCard_DEPRECATED({ pick, placed, picked, locked, onPickLabel
     <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 22 }}>
       {/* Cartel con la frase — fit-content para que se adapte al texto. */}
       <div style={{
-        width: "fit-content", maxWidth: 470,
+        width: "fit-content", maxWidth: 430,
         background: "linear-gradient(180deg, rgba(255,253,245,0.97), rgba(245,238,225,0.92))",
         border: "3px solid #f2c260",
         borderRadius: 18,
@@ -2683,7 +2688,8 @@ function NarradorGame({ app, setApp, go, onRestart }) {
       <GameEnunciado text={enunciado} />
 
       <div data-qa="zona-central" style={{
-        position: "absolute", top: 116, left: 244, width: 488, bottom: 14,
+        position: "absolute", top: 116, left: "50%", transform: "translateX(-50%)",
+        width: 440, bottom: 14,
       }}>
         {ronda === 0 && (
           <PalabrasMagicasCard
@@ -2755,7 +2761,7 @@ function PalabrasMagicasCard({ pick, selections, locked, onChoose }) {
   return (
     <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14 }}>
       <div style={{
-        width: "fit-content", maxWidth: 470,
+        width: "fit-content", maxWidth: 430,
         background: "linear-gradient(180deg, rgba(255,253,245,0.97), rgba(245,238,225,0.92))",
         border: "3px solid #f2c260",
         borderRadius: 16, padding: "12px 14px",
@@ -2912,7 +2918,7 @@ function PartesCuentoCard({ pick, fragmentos, assigned, selectedPart, locked, on
 
       {/* Lista de fragmentos — fit-content para que se adapte al texto. */}
       <div style={{
-        width: "fit-content", maxWidth: 470,
+        width: "fit-content", maxWidth: 430,
         display: "flex", flexDirection: "column", gap: 4,
       }}>
         {fragmentos.map((f) => {
@@ -3003,7 +3009,7 @@ function OrdenaCuentoCard({ cuento, order, selected, locked, onTap }) {
       }}>
         📖 {cuento.titulo}
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 5, width: "fit-content", maxWidth: 480 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 5, width: "fit-content", maxWidth: 430 }}>
         {order.map((escena, i) => {
           const isSelected = selected === i;
           const isCorrect = locked && escena.n === i + 1;
