@@ -79,39 +79,39 @@ const ENCOURAGEMENTS = [
 // Al renderizar, los huecos h se llenan con fichas de la bandeja.
 // ─────────────────────────────────────────────────────────────
 const LETRA_CQ_R0 = [
-  { word: "CASA",    emoji: "🏠", segments: [{ h: "CA" }, { v: "SA" }] },
-  { word: "COCO",    emoji: "🥥", segments: [{ h: "CO" }, { h: "CO" }] },
-  { word: "CUCHARA", emoji: "🥄", segments: [{ h: "CU" }, { v: "CHARA" }] },
-  { word: "CAMA",    emoji: "🛌", segments: [{ h: "CA" }, { v: "MA" }] },
-  { word: "COCHE",   emoji: "🚗", segments: [{ h: "CO" }, { v: "CHE" }] },
-  { word: "CABRA",   emoji: "🐐", segments: [{ h: "CA" }, { v: "BRA" }] },
-  { word: "CASCO",   emoji: "🪖", segments: [{ h: "CA" }, { v: "S" }, { h: "CO" }] },
-  { word: "CARACOL", emoji: "🐌", segments: [{ h: "CA" }, { v: "RA" }, { h: "CO" }, { v: "L" }] },
-  { word: "CACAO",   emoji: "🍫", segments: [{ h: "CA" }, { h: "CA" }, { v: "O" }] },
+  { word: "casa",    emoji: "🏠", segments: [{ h: "ca" }, { v: "sa" }] },
+  { word: "coco",    emoji: "🥥", segments: [{ h: "co" }, { h: "co" }] },
+  { word: "cuchara", emoji: "🥄", segments: [{ h: "cu" }, { v: "chara" }] },
+  { word: "cama",    emoji: "🛌", segments: [{ h: "ca" }, { v: "ma" }] },
+  { word: "coche",   emoji: "🚗", segments: [{ h: "co" }, { v: "che" }] },
+  { word: "cabra",   emoji: "🐐", segments: [{ h: "ca" }, { v: "bra" }] },
+  { word: "casco",   emoji: "🪖", segments: [{ h: "ca" }, { v: "s" }, { h: "co" }] },
+  { word: "caracol", emoji: "🐌", segments: [{ h: "ca" }, { v: "ra" }, { h: "co" }, { v: "l" }] },
+  { word: "cacao",   emoji: "🍫", segments: [{ h: "ca" }, { h: "ca" }, { v: "o" }] },
 ];
 const LETRA_CQ_R1 = [
-  { word: "CEBRA",  emoji: "🦓", segments: [{ h: "CE" }, { v: "BRA" }] },
-  { word: "CISNE",  emoji: "🦢", segments: [{ h: "CI" }, { v: "SNE" }] },
-  { word: "CEREZA", emoji: "🍒", segments: [{ h: "CE" }, { v: "REZA" }] },
-  { word: "CENA",   emoji: "🍽️", segments: [{ h: "CE" }, { v: "NA" }] },
-  { word: "CINE",   emoji: "🎬", segments: [{ h: "CI" }, { v: "NE" }] },
-  { word: "CINTA",  emoji: "🎀", segments: [{ h: "CI" }, { v: "NTA" }] },
-  { word: "CIPRÉS", emoji: "🌲", segments: [{ h: "CI" }, { v: "PRÉS" }] },
+  { word: "cebra",  emoji: "🦓", segments: [{ h: "ce" }, { v: "bra" }] },
+  { word: "cisne",  emoji: "🦢", segments: [{ h: "ci" }, { v: "sne" }] },
+  { word: "cereza", emoji: "🍒", segments: [{ h: "ce" }, { v: "reza" }] },
+  { word: "cena",   emoji: "🍽️", segments: [{ h: "ce" }, { v: "na" }] },
+  { word: "cine",   emoji: "🎬", segments: [{ h: "ci" }, { v: "ne" }] },
+  { word: "cinta",  emoji: "🎀", segments: [{ h: "ci" }, { v: "nta" }] },
+  { word: "ciprés", emoji: "🌲", segments: [{ h: "ci" }, { v: "prés" }] },
 ];
 const LETRA_CQ_R2 = [
-  { word: "QUESO",     emoji: "🧀", segments: [{ h: "QUE" }, { v: "SO" }] },
-  { word: "QUINCE",    emoji: "15", segments: [{ h: "QUI" }, { v: "NCE" }] },
-  { word: "RAQUETA",   emoji: "🎾", segments: [{ v: "RA" }, { h: "QUE" }, { v: "TA" }] },
-  { word: "MOSQUITO",  emoji: "🦟", segments: [{ v: "MOS" }, { h: "QUI" }, { v: "TO" }] },
-  { word: "MÁQUINA",   emoji: "🚂", segments: [{ v: "MÁ" }, { h: "QUI" }, { v: "NA" }] },
-  { word: "PARQUE",    emoji: "🌳", segments: [{ v: "PAR" }, { h: "QUE" }] },
-  { word: "BUQUE",     emoji: "🚢", segments: [{ v: "BU" }, { h: "QUE" }] },
-  { word: "PAQUETE",   emoji: "📦", segments: [{ v: "PA" }, { h: "QUE" }, { v: "TE" }] },
-  { word: "BOSQUE",    emoji: "🌲", segments: [{ v: "BOS" }, { h: "QUE" }] },
-  { word: "ESQUELETO", emoji: "💀", segments: [{ v: "ES" }, { h: "QUE" }, { v: "LETO" }] },
+  { word: "queso",     emoji: "🧀", segments: [{ h: "que" }, { v: "so" }] },
+  { word: "quince",    emoji: "15", segments: [{ h: "qui" }, { v: "nce" }] },
+  { word: "raqueta",   emoji: "🎾", segments: [{ v: "ra" }, { h: "que" }, { v: "ta" }] },
+  { word: "mosquito",  emoji: "🦟", segments: [{ v: "mos" }, { h: "qui" }, { v: "to" }] },
+  { word: "máquina",   emoji: "🚂", segments: [{ v: "má" }, { h: "qui" }, { v: "na" }] },
+  { word: "parque",    emoji: "🌳", segments: [{ v: "par" }, { h: "que" }] },
+  { word: "buque",     emoji: "🚢", segments: [{ v: "bu" }, { h: "que" }] },
+  { word: "paquete",   emoji: "📦", segments: [{ v: "pa" }, { h: "que" }, { v: "te" }] },
+  { word: "bosque",    emoji: "🌲", segments: [{ v: "bos" }, { h: "que" }] },
+  { word: "esqueleto", emoji: "💀", segments: [{ v: "es" }, { h: "que" }, { v: "leto" }] },
 ];
-const TRAY_C = ["CA", "CE", "CI", "CO", "CU"];
-const TRAY_Q = ["QUE", "QUI"];
+const TRAY_C = ["ca", "ce", "ci", "co", "cu"];
+const TRAY_Q = ["que", "qui"];
 
 // ─────────────────────────────────────────────────────────────
 // DATA — NIVEL 2: Elementos del texto
