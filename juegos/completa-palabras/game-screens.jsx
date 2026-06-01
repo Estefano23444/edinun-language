@@ -557,7 +557,7 @@ function GameScreen({ app, setApp, go }) {
             se ajusta al texto (sin width fijo). Así textos cortos no dejan
             espacio en blanco al lado. */}
         <div data-qa="bocadillo" style={{
-          position: "absolute", left: 0, right: 0, top: -80,
+          position: "absolute", left: 0, right: 0, bottom: "100%",
           display: "flex", justifyContent: "center",
           pointerEvents: "none",
         }}>

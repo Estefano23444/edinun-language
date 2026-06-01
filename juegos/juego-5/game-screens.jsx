@@ -853,7 +853,7 @@ function CSZGame({ app, setApp, go, onRestart }) {
         pointerEvents: "none", textAlign: "center",
       }}>
         <div data-qa="bocadillo" style={{
-          position: "absolute", left: 0, right: 0, top: -80,
+          position: "absolute", left: 0, right: 0, bottom: "100%",
           pointerEvents: "none",
           display: "flex", justifyContent: "center",
         }}>
@@ -1457,7 +1457,7 @@ function LenguaGame({ app, setApp, go, onRestart }) {
         pointerEvents: "none", textAlign: "center",
       }}>
         <div data-qa="bocadillo" style={{
-          position: "absolute", left: 0, right: 0, top: -80,
+          position: "absolute", left: 0, right: 0, bottom: "100%",
           pointerEvents: "none",
           display: "flex", justifyContent: "center",
         }}>
