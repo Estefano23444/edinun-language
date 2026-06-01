@@ -127,7 +127,7 @@ const LEVELS_CFG = [
     label: "El escritor",
     grad: "linear-gradient(180deg, #ffc06e, #e4881a)",
     ink: "#3a2608",
-    description: "Sujeto, modificadores y comillas. (9 años)",
+    description: "Sujeto, modificadores y comillas.",
     catLabel: "El escritor",
   },
   {
@@ -135,7 +135,7 @@ const LEVELS_CFG = [
     label: "El narrador",
     grad: "linear-gradient(180deg, #b9e3ff, #4f9ee0)",
     ink: "#0a2540",
-    description: "Palabras mágicas y partes de un cuento. (10 años)",
+    description: "Palabras mágicas y partes de un cuento.",
     catLabel: "El narrador",
   },
 ];
