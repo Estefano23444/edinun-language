@@ -1044,11 +1044,11 @@ function GameScreen({ app, setApp, go }) {
 // ─────────────────────────────────────────────────────────────
 // Shell común: HUD, modales, action rail, feedback, personaje
 // ─────────────────────────────────────────────────────────────
-function GameEnunciado({ text }) {
+function GameEnunciado({ text, top = 84 }) {
   if (!text) return null;
   return (
     <div style={{
-      position: "absolute", top: 84, left: 244, width: 488,
+      position: "absolute", top, left: "50%", transform: "translateX(-50%)", width: 488,
       textAlign: "center",
       fontFamily: "var(--ed-font-display)", fontWeight: 700,
       fontSize: 17, lineHeight: 1.2,
@@ -1344,11 +1344,11 @@ function FeedbackOverlay({ feedback, feedbackMsg, charName }) {
 function CharacterCorner({ char, message }) {
   return (
     <div data-qa="personaje" style={{
-      position: "absolute", left: 8, bottom: 76, width: 220,
+      position: "absolute", left: 8, bottom: 90, width: 220,
       pointerEvents: "none", textAlign: "center",
     }}>
       <div data-qa="bocadillo" className="ed-float-soft" style={{
-        position: "absolute", left: 0, right: 0, top: -82,
+        position: "absolute", left: 0, right: 0, bottom: "100%",
         display: "flex", justifyContent: "center",
         pointerEvents: "none",
       }}>
@@ -1359,8 +1359,9 @@ function CharacterCorner({ char, message }) {
           border: "1.5px solid rgba(242,194,96,0.65)",
           borderRadius: 16, padding: "10px 14px",
           fontFamily: "var(--ed-font-display)",
-          fontWeight: 700, fontSize: 13, lineHeight: 1.25,
+          fontWeight: 700, fontSize: 14, lineHeight: 1.25,
           color: "#fce9a8", textAlign: "center",
+          whiteSpace: "pre-line",
           boxShadow: "0 10px 24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08)",
         }}>
           {message}
@@ -1376,15 +1377,15 @@ function CharacterCorner({ char, message }) {
       <div style={{ position: "relative", display: "flex", justifyContent: "center" }}>
         <div style={{
           position: "absolute", bottom: 14, left: "50%", transform: "translateX(-50%)",
-          width: 130, height: 14, borderRadius: "50%",
+          width: 140, height: 16, borderRadius: "50%",
           background: "radial-gradient(ellipse, rgba(242,194,96,0.45), transparent 70%)",
           filter: "blur(5px)",
         }} />
-        <char.Component size={170} floating />
+        <char.Component size={190} floating />
       </div>
       <div style={{
-        marginTop: -4,
-        fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13,
+        marginTop: -2,
+        fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 14,
         color: "#fce9a8", letterSpacing: "0.04em",
         textShadow: "0 2px 6px rgba(0,0,0,0.6)",
       }}>{char.name}</div>
@@ -1579,9 +1580,9 @@ function EscritorGame({ app, setApp, go, onRestart }) {
   }
 
   const enunciado =
-    ronda === 0 ? "Manda cada palabra a SUJETO o PREDICADO" :
-    ronda === 1 ? "Pinta cada palabra: AZUL (MD) o VERDE (MI)" :
-    "Coloca los signos en los huecos de la cita";
+    ronda === 0 ? "Manda cada palabra a SUJETO o PREDICADO." :
+    ronda === 1 ? "Pinta cada palabra: AZUL (MD) o VERDE (MI)." :
+    "Coloca los signos en los huecos de la cita.";
 
   const bocadillo =
     ronda === 0 ? "Toca una palabra y luego SUJETO o PREDICADO." :
@@ -2279,9 +2280,9 @@ function NarradorGame({ app, setApp, go, onRestart }) {
   }
 
   const enunciado =
-    ronda === 0 ? `Completa con la palabra mágica — ${r1Pick.titulo}` :
-    ronda === 1 ? `Clasifica cada parte del cuento — ${r2Pick.titulo}` :
-    `Ordena las escenas del cuento — ${r3Pick.titulo}`;
+    ronda === 0 ? `Completa con la palabra mágica — ${r1Pick.titulo}.` :
+    ronda === 1 ? `Clasifica cada parte del cuento — ${r2Pick.titulo}.` :
+    `Ordena las escenas del cuento — ${r3Pick.titulo}.`;
 
   const bocadillo =
     ronda === 0 ? "Toca la palabra que encaja en cada frase." :
