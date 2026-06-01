@@ -735,14 +735,16 @@ function EscritorGame({ app, setApp, go, onRestart }) {
 
   const [ronda, setRonda] = useStateG(0);
 
-  // R1 state — sujeto/predicado: índice del corte elegido (null si nada)
+  // R1 state — Ruleta del escritor: girando, revelada, corte elegido.
+  const [r1Spinning, setR1Spinning] = useStateG(false);
+  const [r1Revealed, setR1Revealed] = useStateG(false);
   const [r1Split, setR1Split] = useStateG(null);
   const [r1Locked, setR1Locked] = useStateG(false);
 
-  // R2 state — pintor modificadores: { tokenIdx: "md" | "mi" }
-  const [r2Colors, setR2Colors] = useStateG({});
+  // R2 state — Detective literario: lupa activa (md/mi/null) + marcas por palabra.
+  const [r2Lupa, setR2Lupa] = useStateG(null);
+  const [r2Marks, setR2Marks] = useStateG({});
   const [r2Locked, setR2Locked] = useStateG(false);
-  const [r2Selected, setR2Selected] = useStateG(null);
 
   // R3 state — sastre de citas: { slotIdx: signo }
   const [r3Placed, setR3Placed] = useStateG({});
@@ -816,16 +818,17 @@ function EscritorGame({ app, setApp, go, onRestart }) {
   }, []);
 
   // Verificación
-  const r1Done = r1Split !== null;
-  // R2: cada token md/mi debe estar pintado; los "n" (núcleo) no se pintan
+  // R1: para verificar se necesita haber revelado la oración (girado) y elegido un corte.
+  const r1Done = r1Revealed && r1Split !== null;
+  // R2: cada token md/mi debe estar marcado con la lupa correcta; el núcleo no se toca.
   const r2Targets = r2Pick.tokens.map((t, i) => ({ ...t, idx: i })).filter((t) => t.tipo !== "n");
-  const r2AllPainted = r2Targets.every((t) => r2Colors[t.idx]);
+  const r2AllMarked = r2Targets.every((t) => r2Marks[t.idx]);
   // R3: todos los slots llenos
   const r3AllPlaced = r3Slots.every((s) => r3Placed[s.idx]);
 
   const canVerify =
     ronda === 0 ? (r1Done && !r1Locked) :
-    ronda === 1 ? (r2AllPainted && !r2Locked) :
+    ronda === 1 ? (r2AllMarked && !r2Locked) :
     ronda === 2 ? (r3AllPlaced && !r3Locked) :
     false;
   const showErase = true;
@@ -841,16 +844,16 @@ function EscritorGame({ app, setApp, go, onRestart }) {
       const predicadoOk = r1Pick.palabras.slice(r1Pick.splitIdx + 1).join(" ");
       const userText = `S: ${sujeto} | P: ${predicado}`;
       const correctText = `S: ${sujetoOk} | P: ${predicadoOk}`;
-      setTimeout(() => answer(correct, userText, correctText, "✂"), 350);
+      setTimeout(() => answer(correct, userText, correctText, "🎡"), 350);
     } else if (ronda === 1) {
       setR2Locked(true);
       let correct = true;
       for (const t of r2Targets) {
-        if (r2Colors[t.idx] !== t.tipo) { correct = false; break; }
+        if (r2Marks[t.idx] !== t.tipo) { correct = false; break; }
       }
-      const userText = r2Targets.map((t) => `${t.w}=${r2Colors[t.idx] || "?"}`).join(" ");
+      const userText = r2Targets.map((t) => `${t.w}=${r2Marks[t.idx] || "?"}`).join(" ");
       const correctText = r2Targets.map((t) => `${t.w}=${t.tipo}`).join(" ");
-      setTimeout(() => answer(correct, userText, correctText, "🎨"), 350);
+      setTimeout(() => answer(correct, userText, correctText, "🔍"), 350);
     } else if (ronda === 2) {
       setR3Locked(true);
       let correct = true;
@@ -859,13 +862,13 @@ function EscritorGame({ app, setApp, go, onRestart }) {
       }
       const userText = r3Slots.map((s) => `${r3Placed[s.idx] || "?"}`).join(" ");
       const correctText = r3Slots.map((s) => s.signo).join(" ");
-      setTimeout(() => answer(correct, userText, correctText, "✂"), 350);
+      setTimeout(() => answer(correct, userText, correctText, "🧪"), 350);
     }
   }
 
   function handleErase() {
     if (ronda === 0) { if (r1Locked) return; setR1Split(null); }
-    else if (ronda === 1) { if (r2Locked) return; setR2Colors({}); setR2Selected(null); }
+    else if (ronda === 1) { if (r2Locked) return; setR2Marks({}); setR2Lupa(null); }
     else if (ronda === 2) { if (r3Locked) return; setR3Placed({}); setR3Picked(null); }
   }
 
@@ -913,14 +916,24 @@ function EscritorGame({ app, setApp, go, onRestart }) {
   }
 
   const enunciado =
-    ronda === 0 ? "Divide la oración entre sujeto y predicado." :
-    ronda === 1 ? "Pinta cada palabra: AZUL (MD) o VERDE (MI)." :
-    "Coloca los signos en los huecos de la cita.";
+    ronda === 0 ? "Gira la ruleta y divide la oración." :
+    ronda === 1 ? "Marca con la lupa los modificadores." :
+    "Mezcla los signos en el orden correcto.";
 
+  // Bocadillo dinámico: en R2 cambia según qué lupa esté activa para
+  // explicar qué significa MD y MI.
   const bocadillo =
-    ronda === 0 ? "Toca entre dos palabras donde se divide." :
-    ronda === 1 ? "1 toque = AZUL · 2 toques = VERDE." :
-    "Toca un signo y luego el hueco donde va.";
+    ronda === 0
+      ? (r1Spinning ? "¡Girando…!"
+        : !r1Revealed ? "Toca el botón GIRAR."
+        : "Toca entre dos palabras donde se divide.")
+      :
+    ronda === 1
+      ? (r2Lupa === "md" ? "MD: artículo (el, la) o adjetivo (pequeño)."
+        : r2Lupa === "mi" ? "MI: grupo con preposición (de, con, para)."
+        : "Toma una lupa y marca las palabras.")
+      :
+    "Toma un signo y suéltalo en el hueco.";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
@@ -932,30 +945,38 @@ function EscritorGame({ app, setApp, go, onRestart }) {
         position: "absolute", top: 116, left: 244, width: 488, bottom: 14,
       }}>
         {ronda === 0 && (
-          <SujetoPredicadoCard
+          <RuletaEscritorCard
             pick={r1Pick}
+            spinning={r1Spinning}
+            revealed={r1Revealed}
             split={r1Split}
             locked={r1Locked}
+            onSpin={() => {
+              if (r1Spinning || r1Revealed) return;
+              setR1Spinning(true);
+              setTimeout(() => { setR1Spinning(false); setR1Revealed(true); }, 1800);
+            }}
             onChooseSplit={(idx) => { if (r1Locked) return; setR1Split(idx); }}
           />
         )}
         {ronda === 1 && (
-          <PintorModCard
+          <DetectiveModCard
             pick={r2Pick}
-            colors={r2Colors}
+            marks={r2Marks}
+            lupa={r2Lupa}
             locked={r2Locked}
-            onCycle={(idx) => {
-              if (r2Locked) return;
-              const cur = r2Colors[idx];
-              const next = cur === undefined ? "md" : cur === "md" ? "mi" : undefined;
-              const newColors = { ...r2Colors };
-              if (next === undefined) delete newColors[idx]; else newColors[idx] = next;
-              setR2Colors(newColors);
+            onChooseLupa={(l) => { if (r2Locked) return; setR2Lupa(r2Lupa === l ? null : l); }}
+            onMarkWord={(idx) => {
+              if (r2Locked || !r2Lupa) return;
+              const next = { ...r2Marks };
+              if (next[idx] === r2Lupa) delete next[idx];
+              else next[idx] = r2Lupa;
+              setR2Marks(next);
             }}
           />
         )}
         {ronda === 2 && (
-          <SastreCitasCard
+          <LabCitasCard
             pick={r3Pick}
             placed={r3Placed}
             picked={r3Picked}
@@ -997,10 +1018,165 @@ function EscritorGame({ app, setApp, go, onRestart }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// N1 · R1 — Corta la oración: 1 sola decisión (dónde dividir
-// sujeto y predicado). Inspirado en el formato simple del juego-2.
+// N1 · R1 — Ruleta del escritor: gira la rueda para revelar la
+// oración del libro y corta entre sujeto y predicado.
 // ─────────────────────────────────────────────────────────────
-function SujetoPredicadoCard({ pick, split, locked, onChooseSplit }) {
+function RuletaEscritorCard({ pick, spinning, revealed, split, locked, onSpin, onChooseSplit }) {
+  const palabras = pick.palabras;
+  const splitOk = pick.splitIdx;
+  const chosen = split;
+  const isCorrect = locked && chosen === splitOk;
+  const isWrong = locked && chosen !== splitOk;
+  // Iconos de los 5 sectores (corresponden a SP_BANK)
+  const SECTORS = ["🍅", "🏔", "🏀", "🦋", "♟"];
+  const SECTOR_COLORS = ["#ff9a9a", "#b9e3ff", "#ffe97a", "#c39cff", "#9ee0a3"];
+  // Vista no revelada: ruleta grande + botón GIRAR. Vista revelada: oración con tijeras.
+  if (!revealed) {
+    return (
+      <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 18 }}>
+        <div style={{ position: "relative", width: 220, height: 220 }}>
+          {/* Flecha indicadora arriba */}
+          <div style={{
+            position: "absolute", top: -6, left: "50%", transform: "translateX(-50%)",
+            width: 0, height: 0, zIndex: 3,
+            borderLeft: "13px solid transparent", borderRight: "13px solid transparent",
+            borderTop: "22px solid #fce9a8",
+            filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))",
+          }} />
+          {/* Ruleta SVG */}
+          <svg width="220" height="220" viewBox="-110 -110 220 220" style={{
+            transition: spinning ? "transform 1.8s cubic-bezier(0.2,0.7,0.3,1)" : "none",
+            transform: spinning ? "rotate(1440deg)" : "rotate(0deg)",
+            filter: "drop-shadow(0 6px 14px rgba(0,0,0,0.5))",
+          }}>
+            <circle r="100" fill="#0a0626" stroke="#fce9a8" strokeWidth="4" />
+            {SECTORS.map((emoji, i) => {
+              const a0 = (i * 360 / 5) - 90;
+              const a1 = a0 + 72;
+              const rad = (a) => (a * Math.PI) / 180;
+              const x0 = 100 * Math.cos(rad(a0)), y0 = 100 * Math.sin(rad(a0));
+              const x1 = 100 * Math.cos(rad(a1)), y1 = 100 * Math.sin(rad(a1));
+              const aMid = a0 + 36;
+              const tx = 62 * Math.cos(rad(aMid)), ty = 62 * Math.sin(rad(aMid));
+              return (
+                <g key={i}>
+                  <path d={`M 0 0 L ${x0} ${y0} A 100 100 0 0 1 ${x1} ${y1} Z`}
+                    fill={SECTOR_COLORS[i]} stroke="rgba(0,0,0,0.25)" strokeWidth="1.5" />
+                  <text x={tx} y={ty + 12} textAnchor="middle"
+                    fontSize="32" style={{ pointerEvents: "none", userSelect: "none" }}>
+                    {emoji}
+                  </text>
+                </g>
+              );
+            })}
+            {/* Centro */}
+            <circle r="14" fill="#fce9a8" stroke="#d9a441" strokeWidth="2" />
+          </svg>
+        </div>
+        <button
+          onClick={onSpin}
+          disabled={spinning}
+          style={{
+            padding: "10px 28px", borderRadius: 14,
+            background: spinning ? "rgba(120,120,120,0.5)" : "linear-gradient(180deg, #fce9a8, #d9a441)",
+            color: "#3a2608",
+            border: "2px solid #b48817",
+            fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 17,
+            letterSpacing: "0.06em",
+            cursor: spinning ? "default" : "pointer",
+            boxShadow: spinning ? "none" : "0 6px 14px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.4)",
+            transition: "all 0.18s",
+          }}>
+          {spinning ? "🎡 GIRANDO..." : "🎡 GIRAR"}
+        </button>
+      </div>
+    );
+  }
+  // Vista revelada: cartel con palabras + tijeras tocables
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 24 }}>
+      <div style={{
+        width: "fit-content", maxWidth: 480,
+        background: "linear-gradient(180deg, rgba(255,253,245,0.97), rgba(245,238,225,0.92))",
+        border: "3px solid #f2c260",
+        borderRadius: 18, padding: "16px 18px",
+        boxShadow: "0 10px 22px rgba(0,0,0,0.45)",
+      }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, justifyContent: "center", alignItems: "center" }}>
+          {palabras.map((p, i) => {
+            const beforeSplit = chosen !== null && i <= chosen;
+            const afterSplit  = chosen !== null && i >  chosen;
+            let bg = "rgba(252,233,168,0.55)";
+            let border = "2px solid rgba(217,164,65,0.4)";
+            let color = "#3a2608";
+            if (beforeSplit) { bg = "linear-gradient(180deg, #ffe97a, #d7b12a)"; border = "2px solid #b48817"; }
+            if (afterSplit)  { bg = "linear-gradient(180deg, #ff9a9a, #d94a4a)"; border = "2px solid #a31818"; color = "#fff"; }
+            return (
+              <React.Fragment key={i}>
+                <span style={{
+                  display: "inline-block",
+                  padding: "7px 13px",
+                  borderRadius: 10,
+                  background: bg, border, color,
+                  fontFamily: "var(--ed-font-display)", fontWeight: 700,
+                  fontSize: 17, lineHeight: 1.2,
+                  userSelect: "none",
+                  boxShadow: chosen !== null ? "0 2px 4px rgba(0,0,0,0.2)" : "none",
+                  transition: "all 0.2s",
+                }}>{p}</span>
+                {i < palabras.length - 1 && (
+                  <button
+                    onClick={() => !locked && onChooseSplit(i)}
+                    disabled={locked}
+                    style={{
+                      width: chosen === i ? 6 : 26, height: 38,
+                      padding: 0,
+                      background: chosen === i
+                        ? (isCorrect ? "#2ecc8f" : isWrong ? "#ff6b6b" : "#4fd8ff")
+                        : "transparent",
+                      border: chosen === i ? "none" : "2px dashed rgba(252,233,168,0.55)",
+                      borderRadius: chosen === i ? 3 : 8,
+                      color: "#fce9a8",
+                      cursor: locked ? "default" : "pointer",
+                      fontSize: 16, fontWeight: 800,
+                      lineHeight: 1,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      transition: "all 0.2s",
+                      boxShadow: chosen === i ? "0 0 14px currentColor" : "none",
+                    }}
+                    title={chosen === i ? "Corte aquí" : "Toca para cortar aquí"}
+                  >
+                    {chosen === i ? "" : "✂"}
+                  </button>
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 16, alignItems: "center", justifyContent: "center" }}>
+        <div style={{
+          background: "linear-gradient(180deg, #ffe97a, #d7b12a)", color: "#3a2608",
+          padding: "6px 16px", borderRadius: 999,
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
+          border: "2px solid #b48817", letterSpacing: "0.06em",
+          boxShadow: "0 3px 7px rgba(0,0,0,0.3)",
+        }}>SUJETO ←</div>
+        <div style={{ color: "#fce9a8", fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 20 }}>✂</div>
+        <div style={{
+          background: "linear-gradient(180deg, #ff9a9a, #d94a4a)", color: "#fff",
+          padding: "6px 16px", borderRadius: 999,
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
+          border: "2px solid #a31818", letterSpacing: "0.06em",
+          boxShadow: "0 3px 7px rgba(0,0,0,0.3)",
+        }}>→ PREDICADO</div>
+      </div>
+    </div>
+  );
+}
+
+// (Sin uso — sustituido por RuletaEscritorCard, se mantiene comentado por si vuelve)
+function _SujetoPredicadoCard_DEPRECATED({ pick, split, locked, onChooseSplit }) {
   const palabras = pick.palabras;
   const splitOk = pick.splitIdx;
   const chosen = split;
@@ -1099,10 +1275,136 @@ function SujetoPredicadoCard({ pick, split, locked, onChooseSplit }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// N1 · R2 — Pintor de modificadores: tap cicla AZUL (MD) / VERDE (MI) / vacío.
-//   El núcleo (sustantivo) ya está marcado en rojo y no se toca.
+// N1 · R2 — Detective literario: el niño toma una lupa (MD o MI)
+// y marca las palabras del expediente. El núcleo ya está marcado
+// en rojo como "víctima del caso".
 // ─────────────────────────────────────────────────────────────
-function PintorModCard({ pick, colors, locked, onCycle }) {
+function DetectiveModCard({ pick, marks, lupa, locked, onChooseLupa, onMarkWord }) {
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 18 }}>
+      {/* Expediente (cartel principal) */}
+      <div style={{
+        width: "fit-content", maxWidth: 480,
+        background: "linear-gradient(180deg, rgba(255,253,245,0.97), rgba(245,238,225,0.92))",
+        border: "3px solid #f2c260",
+        borderRadius: 18, padding: "14px 18px 16px 18px",
+        boxShadow: "0 12px 26px rgba(0,0,0,0.5)",
+        color: "#3a2608",
+      }}>
+        <div style={{
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11,
+          color: "#7a4a0e", letterSpacing: "0.1em",
+          textAlign: "center", marginBottom: 10,
+          textTransform: "uppercase",
+        }}>
+          📓 Expediente del caso
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: 6 }}>
+          {pick.tokens.map((t, i) => {
+            if (t.tipo === "n") {
+              return (
+                <span key={i} style={{
+                  display: "inline-block",
+                  padding: "6px 14px", borderRadius: 10,
+                  background: "linear-gradient(180deg, #ff9a9a, #d94a4a)",
+                  color: "#fff", fontWeight: 800,
+                  fontFamily: "var(--ed-font-display)", fontSize: 17,
+                  border: "2px solid #a31818",
+                  boxShadow: "0 3px 7px rgba(0,0,0,0.3)",
+                }}>
+                  {t.w}
+                  <span style={{ fontSize: 8.5, opacity: 0.9, marginLeft: 4, letterSpacing: "0.06em" }}>· NÚCLEO</span>
+                </span>
+              );
+            }
+            const choice = marks[i];
+            const expected = t.tipo;
+            const isCorrect = locked && choice === expected;
+            const isWrong = locked && choice && choice !== expected;
+            const isEmpty = locked && !choice;
+
+            let bg = "rgba(252,233,168,0.55)";
+            let border = "2px dashed rgba(217,164,65,0.6)";
+            let color = "#3a2608";
+            if (choice === "md") { bg = "linear-gradient(180deg, #b9e3ff, #4f9ee0)"; border = "2px solid #1466a6"; color = "#0a2540"; }
+            if (choice === "mi") { bg = "linear-gradient(180deg, #b8efc4, #5fb878)"; border = "2px solid #1e6e2e"; color = "#0a3a18"; }
+            if (isCorrect) { border = "2px solid #2ecc8f"; }
+            if (isWrong)   { bg = "rgba(255,107,107,0.4)"; border = "2px solid #ff6b6b"; }
+            return (
+              <span key={i}
+                onClick={() => !locked && lupa && onMarkWord(i)}
+                style={{
+                  display: "inline-block",
+                  padding: "6px 14px", borderRadius: 10,
+                  background: bg, border, color,
+                  fontWeight: 700, fontFamily: "var(--ed-font-display)", fontSize: 17,
+                  cursor: locked ? "default" : (lupa ? "pointer" : "not-allowed"),
+                  boxShadow: choice ? "0 3px 7px rgba(0,0,0,0.3)" : "none",
+                  userSelect: "none",
+                  opacity: !locked && !lupa ? 0.85 : 1,
+                  transition: "all 0.15s",
+                }}>
+                {t.w}
+                {(isWrong || isEmpty) && (
+                  <sup style={{ fontSize: 9, color: "#1e8a5d", marginLeft: 3, fontWeight: 800, letterSpacing: "0.04em" }}>
+                    ✓{expected.toUpperCase()}
+                  </sup>
+                )}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Selector de lupas */}
+      <div style={{ display: "flex", gap: 12, alignItems: "center", justifyContent: "center" }}>
+        <span style={{
+          fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 11,
+          color: "#fce9a8", letterSpacing: "0.06em",
+        }}>TU LUPA:</span>
+        <button
+          onClick={() => !locked && onChooseLupa("md")}
+          disabled={locked}
+          style={{
+            display: "flex", alignItems: "center", gap: 6,
+            padding: "6px 14px", borderRadius: 999,
+            background: lupa === "md" ? "linear-gradient(180deg, #b9e3ff, #4f9ee0)" : "rgba(10,6,35,0.55)",
+            color: lupa === "md" ? "#0a2540" : "#b9e3ff",
+            border: `2px solid ${lupa === "md" ? "#fce9a8" : "#1466a6"}`,
+            fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
+            letterSpacing: "0.06em",
+            cursor: locked ? "default" : "pointer",
+            boxShadow: lupa === "md" ? "0 0 14px rgba(79,158,224,0.65)" : "0 3px 6px rgba(0,0,0,0.3)",
+            transform: lupa === "md" ? "translateY(-2px)" : "none",
+            transition: "all 0.18s",
+          }}>
+          🔍 MD
+        </button>
+        <button
+          onClick={() => !locked && onChooseLupa("mi")}
+          disabled={locked}
+          style={{
+            display: "flex", alignItems: "center", gap: 6,
+            padding: "6px 14px", borderRadius: 999,
+            background: lupa === "mi" ? "linear-gradient(180deg, #b8efc4, #5fb878)" : "rgba(10,6,35,0.55)",
+            color: lupa === "mi" ? "#0a3a18" : "#b8efc4",
+            border: `2px solid ${lupa === "mi" ? "#fce9a8" : "#1e6e2e"}`,
+            fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
+            letterSpacing: "0.06em",
+            cursor: locked ? "default" : "pointer",
+            boxShadow: lupa === "mi" ? "0 0 14px rgba(95,184,120,0.65)" : "0 3px 6px rgba(0,0,0,0.3)",
+            transform: lupa === "mi" ? "translateY(-2px)" : "none",
+            transition: "all 0.18s",
+          }}>
+          🔍 MI
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// (Sin uso — sustituido por DetectiveModCard, se mantiene como referencia)
+function _PintorModCard_DEPRECATED({ pick, colors, locked, onCycle }) {
   return (
     <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 22 }}>
       {/* Cartel con la frase nominal — fit-content para que se adapte al texto. */}
@@ -1200,9 +1502,178 @@ function PintorModCard({ pick, colors, locked, onCycle }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// N1 · R3 — Sastre de citas: bandeja con [: " " .] y huecos en la frase.
+// N1 · R3 — Laboratorio de citas: una "probeta" con la frase del
+// narrador y los signos como reactivos en la estantería inferior.
 // ─────────────────────────────────────────────────────────────
-function SastreCitasCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, onSetPlaced }) {
+function LabCitasCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, onSetPlaced }) {
+  const usadosPorSigno = {};
+  for (const v of Object.values(placed)) {
+    usadosPorSigno[v] = (usadosPorSigno[v] || 0) + 1;
+  }
+  const disponiblesPorSigno = {};
+  for (const s of pick.bandeja) {
+    disponiblesPorSigno[s] = (disponiblesPorSigno[s] || 0) + 1;
+  }
+
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14 }}>
+      {/* Probeta = cartel verde de "tubo de ensayo" con la cita */}
+      <div style={{
+        width: "fit-content", maxWidth: 480,
+        background: "linear-gradient(180deg, rgba(229,252,239,0.97), rgba(200,238,220,0.92))",
+        border: "3px solid #5fb878",
+        borderRadius: 22,
+        padding: "12px 20px 14px 20px",
+        boxShadow: "0 12px 26px rgba(0,0,0,0.5), inset 0 -6px 0 rgba(95,184,120,0.25)",
+        color: "#0a3a18",
+        position: "relative",
+      }}>
+        <div style={{
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11,
+          color: "#1e6e2e", letterSpacing: "0.1em",
+          textAlign: "center", marginBottom: 8,
+          textTransform: "uppercase",
+        }}>🧪 Probeta — cita en proceso</div>
+        <div style={{
+          display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: 4,
+          fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 16, lineHeight: 1.6,
+        }}>
+          {pick.partes.map((p, i) => {
+            if (p.t) {
+              return <span key={i} style={{ padding: "0 4px" }}>{p.t}</span>;
+            }
+            const val = placed[i];
+            const expected = p.s;
+            const isCorrect = locked && val === expected;
+            const isWrong = locked && val && val !== expected;
+            const isEmpty = locked && !val;
+
+            let bg = "rgba(255,255,255,0.85)";
+            let border = "2px dashed rgba(30,110,46,0.6)";
+            let color = "#0a3a18";
+            if (val) {
+              bg = "linear-gradient(180deg, #fce9a8, #d9a441)";
+              border = "2px solid #b48817";
+              color = "#3a2608";
+            }
+            if (isCorrect) { bg = "rgba(46,204,143,0.55)"; border = "2px solid #2ecc8f"; }
+            if (isWrong)   { bg = "rgba(255,107,107,0.5)"; border = "2px solid #ff6b6b"; }
+
+            return (
+              <span key={i}
+                data-dropzone={`citaslot:${i}`}
+                onClick={() => onPlaceIn(i)}
+                style={{
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  minWidth: 28, minHeight: 32,
+                  padding: "0 6px", margin: "0 1px",
+                  borderRadius: 8,
+                  background: bg, border, color,
+                  fontWeight: 800,
+                  fontFamily: "var(--ed-font-display)", fontSize: 18,
+                  cursor: locked ? "default" : "pointer",
+                  userSelect: "none",
+                  boxShadow: val ? "0 2px 5px rgba(0,0,0,0.25)" : "none",
+                  transition: "all 0.15s",
+                }}>
+                {val || "▢"}
+                {(isWrong || isEmpty) && (
+                  <sup style={{ fontSize: 9, color: "#1e8a5d", marginLeft: 2, fontWeight: 800 }}>
+                    ✓{expected === '"' ? "”" : expected}
+                  </sup>
+                )}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Estantería de reactivos */}
+      <div data-qa="bandeja" style={{
+        width: "fit-content",
+        background: "rgba(10,6,35,0.55)",
+        border: "1.5px solid rgba(95,184,120,0.45)",
+        borderRadius: 16,
+        padding: "8px 14px",
+        display: "flex", gap: 10, justifyContent: "center", alignItems: "center",
+        position: "relative",
+      }}>
+        <div style={{
+          position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)",
+          background: "rgba(10,6,35,0.85)",
+          color: "#b8efc4", padding: "2px 10px", borderRadius: 999,
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 9.5,
+          letterSpacing: "0.1em",
+          border: "1px solid rgba(95,184,120,0.5)",
+        }}>REACTIVOS</div>
+        {Object.keys(disponiblesPorSigno).map((signo) => {
+          const restante = disponiblesPorSigno[signo] - (usadosPorSigno[signo] || 0);
+          const isPicked = picked === signo;
+          if (restante <= 0) return (
+            <div key={signo} style={{
+              padding: "8px 14px", borderRadius: 10,
+              background: "rgba(255,255,255,0.05)",
+              border: "2px dashed rgba(252,233,168,0.2)",
+              color: "rgba(252,233,168,0.3)",
+              fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 20,
+              minWidth: 50, textAlign: "center",
+            }}>
+              {signo === '"' ? "”" : signo}
+            </div>
+          );
+          return (
+            <div key={signo}
+              className="ed-draggable"
+              onPointerDown={makeDragHandler({
+                item: signo,
+                ghostHtml: `<div style="background:#fce9a8;color:#3a2608;padding:8px 18px;border-radius:10px;font-family:Fredoka,Nunito,sans-serif;font-weight:800;font-size:20px;border:2px solid #4fd8ff;box-shadow:0 8px 22px rgba(0,0,0,0.5);">${signo === '"' ? '&quot;' : signo}</div>`,
+                onTap: () => onPickLabel(signo),
+                onDrop: (zoneId, item) => {
+                  if (zoneId && zoneId.startsWith("citaslot:") && onSetPlaced) {
+                    const slotIdx = parseInt(zoneId.slice("citaslot:".length), 10);
+                    const next = { ...placed };
+                    next[slotIdx] = item;
+                    onSetPlaced(next);
+                  }
+                },
+                disabled: locked,
+              })}
+              style={{
+                padding: "8px 14px", borderRadius: 10,
+                background: isPicked ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.94)",
+                color: "#3a2608",
+                border: `2px solid ${isPicked ? "#4fd8ff" : "rgba(242,194,96,0.6)"}`,
+                fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 22,
+                cursor: locked ? "default" : "grab",
+                boxShadow: isPicked ? "0 0 16px rgba(79,216,255,0.65)" : "0 3px 7px rgba(0,0,0,0.3)",
+                transform: isPicked ? "translateY(-2px)" : "none",
+                transition: "all 0.15s",
+                minWidth: 50, textAlign: "center",
+                userSelect: "none",
+                position: "relative",
+              }}>
+              {signo === '"' ? "”" : signo}
+              {restante > 1 && (
+                <span style={{
+                  position: "absolute", top: -8, right: -8,
+                  width: 22, height: 22, borderRadius: "50%",
+                  background: "#4fd8ff", color: "#0a2540",
+                  fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  border: "2px solid #fff",
+                  boxShadow: "0 2px 5px rgba(0,0,0,0.4)",
+                }}>×{restante}</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// (Sin uso — sustituido por LabCitasCard, se mantiene como referencia)
+function _SastreCitasCard_DEPRECATED({ pick, placed, picked, locked, onPickLabel, onPlaceIn, onSetPlaced }) {
   // Construye banda: cada signo por separado, sin duplicados removidos al usarlos (porque hay dos `"`)
   // Cuento qué slots tienen cada signo, y la bandeja muestra el restante.
   const usadosPorSigno = {};
