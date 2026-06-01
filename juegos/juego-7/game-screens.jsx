@@ -2862,9 +2862,10 @@ function DetectiveGCard({ pick, choices, locked, onSelectLetter }) {
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-around", paddingTop: 4, paddingBottom: 4 }}>
-      {/* Cartel del comunicado */}
+      {/* Cartel del comunicado — width fit-content para que se ajuste al
+          texto: escenas cortas no quedan con aire vacío a los lados. */}
       <div style={{
-        width: "100%", maxWidth: 470,
+        width: "fit-content", maxWidth: 470,
         background: "linear-gradient(180deg, rgba(255,253,245,0.97), rgba(245,238,225,0.92))",
         border: "3px solid #f2c260",
         borderRadius: 18,
