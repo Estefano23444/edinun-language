@@ -1872,8 +1872,12 @@ function SpeedQuizCard({ pool, chips, onFinish, verifyRef, setVerifyReady }) {
     } else {
       setStats((s) => ({ ...s, errores: s.errores + 1 }));
       setShake(selectedChip);
-      setTimeout(() => setShake(null), 350);
-      setSelectedChip(null);
+      pushRecent("elementos_r1", current.id);
+      setTimeout(() => {
+        setShake(null);
+        setSelectedChip(null);
+        nextText();
+      }, 450);
     }
   }
 
