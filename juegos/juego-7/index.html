@@ -3229,23 +3229,60 @@ function PronombreCard({ pick, selections, locked, onChoose }) {
                 <div style={{ display: "flex", gap: 6, justifyContent: "center" }}>
                   {h.opciones.map((op) => {
                     const isPicked = userPick === op;
+                    const isCorrectAns = op === h.pronombre;
+                    const showCorrect = locked && isCorrectAns;
+                    const showWrong = locked && isPicked && !isCorrectAns;
+                    let bg, bd, col, shadow;
+                    if (showCorrect) {
+                      bg = "linear-gradient(180deg, rgba(46,204,143,0.95), rgba(34,160,108,0.95))";
+                      bd = "2px solid #2ecc8f";
+                      col = "#fff";
+                      shadow = "0 0 14px rgba(46,204,143,0.55)";
+                    } else if (showWrong) {
+                      bg = "linear-gradient(180deg, rgba(255,107,107,0.95), rgba(220,80,80,0.95))";
+                      bd = "2px solid #ff6b6b";
+                      col = "#fff";
+                      shadow = "0 0 12px rgba(255,107,107,0.5)";
+                    } else if (isPicked) {
+                      bg = "linear-gradient(180deg,#fce9a8,#d9a441)";
+                      bd = "1.5px solid #4fd8ff";
+                      col = "#3a2608";
+                      shadow = "0 0 12px rgba(79,216,255,0.55)";
+                    } else {
+                      bg = "rgba(255,255,255,0.95)";
+                      bd = "1.5px solid rgba(242,194,96,0.55)";
+                      col = "#3a2608";
+                      shadow = "0 2px 5px rgba(0,0,0,0.25)";
+                    }
                     return (
                       <button key={op}
                         onClick={() => onChoose(h.id, op)}
                         disabled={locked}
                         style={{
+                          position: "relative",
                           padding: "6px 16px", borderRadius: 9,
-                          background: isPicked ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.95)",
-                          color: "#3a2608",
-                          border: `1.5px solid ${isPicked ? "#4fd8ff" : "rgba(242,194,96,0.55)"}`,
+                          background: bg,
+                          color: col,
+                          border: bd,
                           fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12,
                           cursor: locked ? "default" : "pointer",
-                          boxShadow: isPicked ? "0 0 12px rgba(79,216,255,0.55)" : "0 2px 5px rgba(0,0,0,0.25)",
-                          transform: isPicked ? "translateY(-1.5px)" : "none",
+                          boxShadow: shadow,
+                          transform: (isPicked && !locked) || showCorrect ? "translateY(-1.5px)" : "none",
                           transition: "all 0.15s",
                           minWidth: 76,
                         }}>
                         {op}
+                        {showCorrect && !isPicked && (
+                          <span style={{
+                            position: "absolute", top: -7, right: -7,
+                            background: "#2ecc8f", color: "#fff",
+                            borderRadius: "50%", width: 18, height: 18,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: 11, fontWeight: 900,
+                            border: "2px solid #fff",
+                            boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+                          }}>✓</span>
+                        )}
                       </button>
                     );
                   })}
