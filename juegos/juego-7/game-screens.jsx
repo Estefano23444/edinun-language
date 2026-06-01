@@ -601,7 +601,7 @@ const USO_G_BANK = [
   {
     id: "viaje-refugio",
     titulo: "Un viaje al refugio",
-    regla: "Recuerda las reglas de uso de G y J que ya conoces.",
+    regla: "Recuerda las reglas de uso de G y J.",
     parrafo: [
       { t: "El " },
       { c: "j", g: "efe" },                    // jefe
@@ -619,7 +619,7 @@ const USO_G_BANK = [
   {
     id: "jefe-jardin",
     titulo: "El jefe del jardín",
-    regla: "Recuerda las reglas de uso de G y J que ya conoces.",
+    regla: "Recuerda las reglas de uso de G y J.",
     parrafo: [
       { t: "El " },
       { c: "j", g: "efe" },                     // jefe
@@ -637,7 +637,7 @@ const USO_G_BANK = [
   {
     id: "magia-abejas",
     titulo: "Magia y abejas",
-    regla: "Recuerda las reglas de uso de G y J que ya conoces.",
+    regla: "Recuerda las reglas de uso de G y J.",
     parrafo: [
       { t: "En la ma" },
       { c: "g", g: "ia" },                      // magia
@@ -655,7 +655,7 @@ const USO_G_BANK = [
   {
     id: "biblioteca-mix",
     titulo: "En la biblioteca",
-    regla: "Recuerda las reglas de uso de G y J que ya conoces.",
+    regla: "Recuerda las reglas de uso de G y J.",
     parrafo: [
       { t: "Tomé un libro de psicolo" },
       { c: "g", g: "ía" },                      // psicología
@@ -673,7 +673,7 @@ const USO_G_BANK = [
   {
     id: "comunicado-mix",
     titulo: "Comunicado importante",
-    regla: "Recuerda las reglas de uso de G y J que ya conoces.",
+    regla: "Recuerda las reglas de uso de G y J.",
     parrafo: [
       { t: "Se comunica a la " },
       { c: "g", g: "ente" },                    // gente
@@ -691,7 +691,7 @@ const USO_G_BANK = [
   {
     id: "escuela-mix",
     titulo: "En la escuela",
-    regla: "Recuerda las reglas de uso de G y J que ya conoces.",
+    regla: "Recuerda las reglas de uso de G y J.",
     parrafo: [
       { t: "En clase de biolo" },
       { c: "g", g: "ía" },                      // biología (biolo + g + ía)
@@ -710,7 +710,7 @@ const USO_G_BANK = [
   {
     id: "libro-magico",
     titulo: "El libro mágico",
-    regla: "Recuerda las reglas de uso de G y J que ya conoces.",
+    regla: "Recuerda las reglas de uso de G y J.",
     parrafo: [
       { t: "Tomé un libro de ma" },
       { c: "g", g: "ia" },                      // magia (ma + g + ia)
@@ -728,7 +728,7 @@ const USO_G_BANK = [
   {
     id: "tareas-hogar",
     titulo: "Tareas del hogar",
-    regla: "Recuerda las reglas de uso de G y J que ya conoces.",
+    regla: "Recuerda las reglas de uso de G y J.",
     parrafo: [
       { t: "Mamá pidió recoger las ho" },
       { c: "j", g: "as" },                      // hojas (ho + j + as)
@@ -746,7 +746,7 @@ const USO_G_BANK = [
   {
     id: "aventura-bosque",
     titulo: "Aventura en el bosque",
-    regla: "Recuerda las reglas de uso de G y J que ya conoces.",
+    regla: "Recuerda las reglas de uso de G y J.",
     parrafo: [
       { t: "Llegamos al refu" },
       { c: "g", g: "io" },                      // refugio (refu + g + io)
@@ -764,7 +764,7 @@ const USO_G_BANK = [
   {
     id: "clase-tecnologia",
     titulo: "Clase de tecnología",
-    regla: "Recuerda las reglas de uso de G y J que ya conoces.",
+    regla: "Recuerda las reglas de uso de G y J.",
     parrafo: [
       { t: "En clase de tecnolo" },
       { c: "g", g: "ía" },                      // tecnología (tecnolo + g + ía)
@@ -2738,45 +2738,48 @@ function DetectiveGCard({ pick, choices, locked, onSelectLetter }) {
             const isCorrect = locked && choice === correct;
             const isWrong = locked && choice && choice !== correct;
             const isEmpty = locked && !choice;
-            const renderOption = (letter, activeColor, activeBg) => {
+            const renderHalf = (letter, fillColor) => {
               const isSel = choice === letter;
-              let bg = "rgba(252,233,168,0.45)";
-              let bd = "1px solid rgba(116,72,32,0.25)";
-              let col = "#7a4a0e";
-              if (isSel) { bg = activeBg; bd = `2px solid ${activeColor}`; col = "#fff"; }
-              if (locked && isSel && letter === "g") { bg = "rgba(46,204,143,0.85)"; bd = "2px solid #2ecc8f"; col = "#fff"; }
-              if (locked && isSel && letter === "j") { bg = "rgba(255,107,107,0.85)"; bd = "2px solid #ff6b6b"; col = "#fff"; }
               return (
                 <span
                   onClick={() => !locked && onSelectLetter(i, letter)}
                   style={{
                     display: "inline-block",
-                    padding: "0 3px",
-                    background: bg, border: bd, borderRadius: 4,
-                    color: col, fontWeight: 800,
+                    padding: "1px 8px",
+                    background: isSel ? fillColor : "transparent",
+                    color: isSel ? "#fff" : "rgba(116,72,32,0.55)",
+                    fontWeight: 800,
                     fontFamily: "var(--ed-font-display)",
-                    fontSize: 13,
+                    fontSize: 14,
                     cursor: locked ? "default" : "pointer",
                     userSelect: "none",
-                    margin: 0,
                     transition: "all 0.15s",
                   }}>
                   {letter}
                 </span>
               );
             };
+            const pillBorder = isCorrect ? "1.5px solid #2ecc8f"
+                              : isWrong  ? "1.5px solid #ff6b6b"
+                              : "1.5px solid rgba(116,72,32,0.3)";
             return (
               <span key={`w-${j}`} style={{ display: "inline-block", margin: 0, userSelect: "none", whiteSpace: "nowrap" }}>
                 {g.prefix && <span>{g.prefix}</span>}
                 <span style={{
-                  display: "inline-block",
-                  padding: 0, borderRadius: 4,
-                  background: isCorrect ? "rgba(46,204,143,0.15)" : (isWrong ? "rgba(255,107,107,0.15)" : "transparent"),
-                  border: isCorrect ? "1px dashed #2ecc8f" : (isWrong ? "1px dashed #ff6b6b" : "none"),
+                  display: "inline-flex",
+                  alignItems: "center",
+                  margin: "0 3px",
+                  background: "rgba(255,255,255,0.85)",
+                  border: pillBorder,
+                  borderRadius: 8,
+                  overflow: "hidden",
+                  verticalAlign: "middle",
                   lineHeight: 1,
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
                 }}>
-                  {renderOption("g", "#2ecc8f", "rgba(46,204,143,0.65)")}
-                  {renderOption("j", "#ff8a3a", "rgba(255,138,58,0.65)")}
+                  {renderHalf("g", "#2ecc8f")}
+                  <span style={{ width: 1, height: 16, background: "rgba(116,72,32,0.25)" }} />
+                  {renderHalf("j", "#ff8a3a")}
                 </span>
                 <span>{g.choice.g}</span>
                 {(isWrong || isEmpty) && (
