@@ -2365,7 +2365,7 @@ function EscritorGame({ app, setApp, go, onRestart }) {
   const enunciado =
     ronda === 0 ? `Reemplaza cada nombre por el pronombre correcto.` :
     ronda === 1 ? `Forma los 3 verboides del verbo "${r2Pick.verbo}".` :
-    `Uso de la letra G — "${r3Pick.titulo}".`;
+    `"${r3Pick.titulo}".`;
 
   const bocadillo =
     ronda === 0 ? "Toca el pronombre que reemplaza cada nombre." :
@@ -2691,6 +2691,29 @@ function VerboidesCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, o
 // R3 (N2) · Pintor de verbos — texto con verbos cliclables, ciclan AZUL/ROJO/limpio
 // ─────────────────────────────────────────────────────────────
 function DetectiveGCard({ pick, choices, locked, onSelectLetter }) {
+  // Reagrupo los tokens del párrafo para que la cabeza de la palabra
+  // ("psicolo"), el selector g/j y el sufijo ("ía") queden en un mismo
+  // nowrap. Sin esto, el navegador puede romper la línea entre la cabeza
+  // (texto inline) y el selector (inline-block atómico).
+  const groups = [];
+  for (let i = 0; i < pick.parrafo.length; i++) {
+    const tk = pick.parrafo[i];
+    if (tk.c !== undefined) {
+      const last = groups[groups.length - 1];
+      if (last && last.kind === "text") {
+        const idx = last.value.lastIndexOf(" ");
+        const head = idx >= 0 ? last.value.slice(0, idx + 1) : "";
+        const tail = idx >= 0 ? last.value.slice(idx + 1) : last.value;
+        if (head) last.value = head; else groups.pop();
+        groups.push({ kind: "word", prefix: tail, choice: tk, choiceIdx: i });
+      } else {
+        groups.push({ kind: "word", prefix: "", choice: tk, choiceIdx: i });
+      }
+    } else {
+      groups.push({ kind: "text", value: tk.t });
+    }
+  }
+
   return (
     <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-around", paddingTop: 4, paddingBottom: 4 }}>
       {/* Cartel del comunicado */}
@@ -2707,15 +2730,14 @@ function DetectiveGCard({ pick, choices, locked, onSelectLetter }) {
           🔠 {pick.titulo}
         </div>
         <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 17, lineHeight: 2.5, textAlign: "center" }}>
-          {pick.parrafo.map((tk, i) => {
-            if (tk.t) return <span key={i}>{tk.t}</span>;
-            const choice = choices[i]; // "g" | "j" | undefined
-            const correct = tk.c; // letra correcta del banco
+          {groups.map((g, j) => {
+            if (g.kind === "text") return <span key={`t-${j}`}>{g.value}</span>;
+            const i = g.choiceIdx;
+            const choice = choices[i];
+            const correct = g.choice.c;
             const isCorrect = locked && choice === correct;
             const isWrong = locked && choice && choice !== correct;
             const isEmpty = locked && !choice;
-            // Selector inline g/j — compacto, sin márgenes que rompan
-            // la lectura de la palabra (\"bio\" + [g/j] + \"ía\" → biología).
             const renderOption = (letter, activeColor, activeBg) => {
               const isSel = choice === letter;
               let bg = "rgba(252,233,168,0.45)";
@@ -2744,7 +2766,8 @@ function DetectiveGCard({ pick, choices, locked, onSelectLetter }) {
               );
             };
             return (
-              <span key={i} style={{ display: "inline-block", margin: 0, userSelect: "none", whiteSpace: "nowrap" }}>
+              <span key={`w-${j}`} style={{ display: "inline-block", margin: 0, userSelect: "none", whiteSpace: "nowrap" }}>
+                {g.prefix && <span style={{ fontWeight: 700 }}>{g.prefix}</span>}
                 <span style={{
                   display: "inline-block",
                   padding: 0, borderRadius: 4,
@@ -2755,7 +2778,7 @@ function DetectiveGCard({ pick, choices, locked, onSelectLetter }) {
                   {renderOption("g", "#2ecc8f", "rgba(46,204,143,0.65)")}
                   {renderOption("j", "#ff8a3a", "rgba(255,138,58,0.65)")}
                 </span>
-                <span style={{ fontWeight: 700 }}>{tk.g}</span>
+                <span style={{ fontWeight: 700 }}>{g.choice.g}</span>
                 {(isWrong || isEmpty) && (
                   <sup style={{ fontSize: 10, color: "#c33b3b", marginLeft: 2, fontWeight: 800 }}>{correct}</sup>
                 )}
