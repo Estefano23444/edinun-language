@@ -148,7 +148,10 @@ const RECENT_KEYS = {
   escritor: "edinun_juego7_escritor_recientes_v1",
   usog:     "edinun_juego7_usog_recientes_v1",
 };
-const RECENT_LIMIT = 4;
+// FIFO por categoría — usog tiene 16 escenas, así que con 8 recientes
+// quedan 8 frescas (margen amplio anti-repetición tras recarga).
+const RECENT_LIMITS = { resena: 4, escritor: 4, usog: 8 };
+function getRecentLimit(level) { return RECENT_LIMITS[level] ?? 4; }
 
 function getRecent(level) {
   try {
@@ -162,7 +165,7 @@ function getRecent(level) {
 function pushRecent(level, key) {
   const arr = getRecent(level).filter((k) => k !== key);
   arr.unshift(key);
-  const trimmed = arr.slice(0, RECENT_LIMIT);
+  const trimmed = arr.slice(0, getRecentLimit(level));
   try { localStorage.setItem(RECENT_KEYS[level], JSON.stringify(trimmed)); } catch {}
 }
 
