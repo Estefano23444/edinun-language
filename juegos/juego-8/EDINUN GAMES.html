@@ -79,6 +79,7 @@ function EdinunLogoMini({ size = 40 }) {
 
 Object.assign(window, { EdinunLogo, EdinunLogoMini });
 
+
 // characters.jsx — Personajes EDINUN GAMES · Juegos de lenguaje.
 // Renderizan los PNG de assets/char-<id>.png. Misma API que la versión
 // SVG (props `size`, `floating`) para no romper a los consumidores
@@ -233,6 +234,7 @@ Object.assign(window, {
   CharacterAvatar,
   CHARACTERS,
 });
+
 
 // screens.jsx — HomeScreen + CharacterScreen + CosmosBg para "Juego 8".
 // Dos niveles del libro EDINUN:
@@ -636,6 +638,7 @@ function CharacterScreen({ app, setApp, go }) {
 
 Object.assign(window, { HomeScreen, CharacterScreen, CosmosBg, incrementGamesCompleted, useVisitorCount, markFirstAttempt, LEVELS_CFG });
 
+
 // game-screens.jsx — Juego 8. Dos niveles de lenguaje con mecánicas distintas:
 //   1. El escritor  (9 años)  — caza S/P · pintor de modificadores · sastre de citas
 //   2. El narrador  (10 años) — palabras mágicas · partes del cuento · ordena el cuento
@@ -779,44 +782,15 @@ function pushRecent(level, key) {
 // BANCOS — N1 · El escritor (9 años)
 // ─────────────────────────────────────────────────────────────
 
-// R1 — Sujeto / Predicado: palabras-ficha que se asignan a cada columna.
-//   Tomadas del libro EDINUN (TEMA 5, oración bimembre).
+// R1 — Sujeto / Predicado: 1 oración + 1 sola decisión: dónde cortar.
+//   splitIdx = índice del corte después de la palabra (0-based).
+//   Ej: "Cecilia y Miguel | picaron los tomates" → palabras 0..5, corte después de la 2.
 const SP_BANK = [
-  {
-    id: "tomates",
-    oracion: [
-      { w: "Cecilia",  parte: "S" },
-      { w: "y",        parte: "S" },
-      { w: "Miguel",   parte: "S" },
-      { w: "picaron",  parte: "P" },
-      { w: "los",      parte: "P" },
-      { w: "tomates",  parte: "P" },
-    ],
-  },
-  {
-    id: "alpinista",
-    oracion: [
-      { w: "El",        parte: "S" },
-      { w: "alpinista", parte: "S" },
-      { w: "escaló",    parte: "P" },
-      { w: "una",       parte: "P" },
-      { w: "montaña",   parte: "P" },
-      { w: "imponente", parte: "P" },
-    ],
-  },
-  {
-    id: "basquet",
-    oracion: [
-      { w: "Maximiliano", parte: "S" },
-      { w: "y",           parte: "S" },
-      { w: "yo",          parte: "S" },
-      { w: "jugamos",     parte: "P" },
-      { w: "básquet",     parte: "P" },
-      { w: "en",          parte: "P" },
-      { w: "la",          parte: "P" },
-      { w: "escuela",     parte: "P" },
-    ],
-  },
+  { id: "tomates",   palabras: ["Cecilia", "y", "Miguel", "picaron", "los", "tomates"],       splitIdx: 2 },
+  { id: "alpinista", palabras: ["El", "alpinista", "escaló", "una", "montaña", "imponente"],   splitIdx: 1 },
+  { id: "basquet",   palabras: ["Maximiliano", "y", "yo", "jugamos", "básquet", "en", "la", "escuela"], splitIdx: 2 },
+  { id: "mariposa",  palabras: ["La", "pequeña", "mariposa", "voló", "lejos"],                 splitIdx: 2 },
+  { id: "ajedrez",   palabras: ["El", "ajedrez", "es", "mi", "deporte", "preferido"],          splitIdx: 1 },
 ];
 
 // R2 — Pintor de modificadores: 1 frase con núcleo prefijado en rojo.
@@ -1402,8 +1376,8 @@ function EscritorGame({ app, setApp, go, onRestart }) {
 
   const [ronda, setRonda] = useStateG(0);
 
-  // R1 state — sujeto/predicado: { tokenIdx: "S" | "P" }
-  const [r1Assigned, setR1Assigned] = useStateG({});
+  // R1 state — sujeto/predicado: índice del corte elegido (null si nada)
+  const [r1Split, setR1Split] = useStateG(null);
   const [r1Locked, setR1Locked] = useStateG(false);
 
   // R2 state — pintor modificadores: { tokenIdx: "md" | "mi" }
@@ -1425,7 +1399,6 @@ function EscritorGame({ app, setApp, go, onRestart }) {
     pushRecent("escritor", "sp:" + p.id);
     return p;
   });
-  const [r1Tokens] = useStateG(() => r1Pick.oracion.map((tk, i) => ({ ...tk, idx: i })));
 
   const [r2Pick] = useStateG(() => {
     const recent = new Set(getRecent("escritor"));
@@ -1484,7 +1457,7 @@ function EscritorGame({ app, setApp, go, onRestart }) {
   }, []);
 
   // Verificación
-  const r1AllAssigned = r1Tokens.every((t) => r1Assigned[t.idx]);
+  const r1Done = r1Split !== null;
   // R2: cada token md/mi debe estar pintado; los "n" (núcleo) no se pintan
   const r2Targets = r2Pick.tokens.map((t, i) => ({ ...t, idx: i })).filter((t) => t.tipo !== "n");
   const r2AllPainted = r2Targets.every((t) => r2Colors[t.idx]);
@@ -1492,7 +1465,7 @@ function EscritorGame({ app, setApp, go, onRestart }) {
   const r3AllPlaced = r3Slots.every((s) => r3Placed[s.idx]);
 
   const canVerify =
-    ronda === 0 ? (r1AllAssigned && !r1Locked) :
+    ronda === 0 ? (r1Done && !r1Locked) :
     ronda === 1 ? (r2AllPainted && !r2Locked) :
     ronda === 2 ? (r3AllPlaced && !r3Locked) :
     false;
@@ -1502,13 +1475,14 @@ function EscritorGame({ app, setApp, go, onRestart }) {
     if (!canVerify) return;
     if (ronda === 0) {
       setR1Locked(true);
-      let correct = true;
-      for (const t of r1Tokens) {
-        if (r1Assigned[t.idx] !== t.parte) { correct = false; break; }
-      }
-      const userText = r1Tokens.map((t) => `${t.w}=${r1Assigned[t.idx] || "?"}`).join(" ");
-      const correctText = r1Tokens.map((t) => `${t.w}=${t.parte}`).join(" ");
-      setTimeout(() => answer(correct, userText, correctText, "📝"), 350);
+      const correct = r1Split === r1Pick.splitIdx;
+      const sujeto = r1Pick.palabras.slice(0, r1Split + 1).join(" ");
+      const predicado = r1Pick.palabras.slice(r1Split + 1).join(" ");
+      const sujetoOk = r1Pick.palabras.slice(0, r1Pick.splitIdx + 1).join(" ");
+      const predicadoOk = r1Pick.palabras.slice(r1Pick.splitIdx + 1).join(" ");
+      const userText = `S: ${sujeto} | P: ${predicado}`;
+      const correctText = `S: ${sujetoOk} | P: ${predicadoOk}`;
+      setTimeout(() => answer(correct, userText, correctText, "✂"), 350);
     } else if (ronda === 1) {
       setR2Locked(true);
       let correct = true;
@@ -1531,7 +1505,7 @@ function EscritorGame({ app, setApp, go, onRestart }) {
   }
 
   function handleErase() {
-    if (ronda === 0) { if (r1Locked) return; setR1Assigned({}); }
+    if (ronda === 0) { if (r1Locked) return; setR1Split(null); }
     else if (ronda === 1) { if (r2Locked) return; setR2Colors({}); setR2Selected(null); }
     else if (ronda === 2) { if (r3Locked) return; setR3Placed({}); setR3Picked(null); }
   }
@@ -1580,13 +1554,13 @@ function EscritorGame({ app, setApp, go, onRestart }) {
   }
 
   const enunciado =
-    ronda === 0 ? "Manda cada palabra a SUJETO o PREDICADO." :
+    ronda === 0 ? "Divide la oración entre sujeto y predicado." :
     ronda === 1 ? "Pinta cada palabra: AZUL (MD) o VERDE (MI)." :
     "Coloca los signos en los huecos de la cita.";
 
   const bocadillo =
-    ronda === 0 ? "Toca una palabra y luego SUJETO o PREDICADO." :
-    ronda === 1 ? "1 toque = AZUL · 2 toques = VERDE · 3 = borrar." :
+    ronda === 0 ? "Toca entre dos palabras donde se divide." :
+    ronda === 1 ? "1 toque = AZUL · 2 toques = VERDE." :
     "Toca un signo y luego el hueco donde va.";
 
   return (
@@ -1600,16 +1574,10 @@ function EscritorGame({ app, setApp, go, onRestart }) {
       }}>
         {ronda === 0 && (
           <SujetoPredicadoCard
-            tokens={r1Tokens}
-            assigned={r1Assigned}
+            pick={r1Pick}
+            split={r1Split}
             locked={r1Locked}
-            onAssign={(idx, parte) => {
-              if (r1Locked) return;
-              const next = { ...r1Assigned };
-              if (next[idx] === parte) delete next[idx];
-              else next[idx] = parte;
-              setR1Assigned(next);
-            }}
+            onChooseSplit={(idx) => { if (r1Locked) return; setR1Split(idx); }}
           />
         )}
         {ronda === 1 && (
@@ -1670,150 +1638,103 @@ function EscritorGame({ app, setApp, go, onRestart }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// N1 · R1 — Sujeto/Predicado: fichas de palabras, 2 columnas
+// N1 · R1 — Corta la oración: 1 sola decisión (dónde dividir
+// sujeto y predicado). Inspirado en el formato simple del juego-2.
 // ─────────────────────────────────────────────────────────────
-function SujetoPredicadoCard({ tokens, assigned, locked, onAssign }) {
-  // Sujeto se pinta amarillo (libro), predicado se pinta rojo (libro).
-  const sCount = tokens.filter((t) => assigned[t.idx] === "S").length;
-  const pCount = tokens.filter((t) => assigned[t.idx] === "P").length;
+function SujetoPredicadoCard({ pick, split, locked, onChooseSplit }) {
+  const palabras = pick.palabras;
+  const splitOk = pick.splitIdx;
+  const chosen = split;
+  const isCorrect = locked && chosen === splitOk;
+  const isWrong = locked && chosen !== splitOk;
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 22 }}>
-      {/* Cartel con todas las palabras (fichas) — fit-content para que se
-          adapte al texto si las palabras son pocas. */}
+    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 24 }}>
+      {/* Cartel con la oración como fichas + tijeras entre cada par de palabras */}
       <div style={{
-        width: "fit-content", maxWidth: 470,
+        width: "fit-content", maxWidth: 480,
         background: "linear-gradient(180deg, rgba(255,253,245,0.97), rgba(245,238,225,0.92))",
         border: "3px solid #f2c260",
-        borderRadius: 16, padding: "12px 14px",
-        boxShadow: "0 8px 18px rgba(0,0,0,0.45)",
+        borderRadius: 18, padding: "16px 18px",
+        boxShadow: "0 10px 22px rgba(0,0,0,0.45)",
       }}>
-        <div style={{
-          display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center", alignItems: "center",
-        }}>
-          {tokens.map((t) => {
-            const a = assigned[t.idx];
-            let bg = "rgba(252,233,168,0.65)";
-            let border = "2px dashed rgba(217,164,65,0.55)";
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, justifyContent: "center", alignItems: "center" }}>
+          {palabras.map((p, i) => {
+            const beforeSplit = chosen !== null && i <= chosen;
+            const afterSplit  = chosen !== null && i >  chosen;
+            let bg = "rgba(252,233,168,0.55)";
+            let border = "2px solid rgba(217,164,65,0.4)";
             let color = "#3a2608";
-            if (a === "S") { bg = "linear-gradient(180deg, #ffe97a, #d7b12a)"; border = "2px solid #b48817"; color = "#3a2608"; }
-            if (a === "P") { bg = "linear-gradient(180deg, #ff9a9a, #d94a4a)"; border = "2px solid #a31818"; color = "#fff"; }
+            if (beforeSplit) { bg = "linear-gradient(180deg, #ffe97a, #d7b12a)"; border = "2px solid #b48817"; }
+            if (afterSplit)  { bg = "linear-gradient(180deg, #ff9a9a, #d94a4a)"; border = "2px solid #a31818"; color = "#fff"; }
             return (
-              <span key={t.idx}
-                onClick={() => {
-                  if (locked) return;
-                  // ciclo: vacío → S → P → vacío
-                  const cur = assigned[t.idx];
-                  const next = cur === undefined ? "S" : cur === "S" ? "P" : null;
-                  if (next === null) {
-                    const c = { ...assigned }; delete c[t.idx];
-                    onAssign(t.idx, undefined);
-                    return;
-                  }
-                  onAssign(t.idx, next);
-                }}
-                style={{
+              <React.Fragment key={i}>
+                <span style={{
                   display: "inline-block",
-                  padding: "5px 11px",
-                  borderRadius: 9,
-                  background: bg, border,
-                  color, fontWeight: 700,
-                  fontFamily: "var(--ed-font-display)",
-                  fontSize: 14, lineHeight: 1.2,
-                  cursor: locked ? "default" : "pointer",
+                  padding: "7px 13px",
+                  borderRadius: 10,
+                  background: bg, border, color,
+                  fontFamily: "var(--ed-font-display)", fontWeight: 700,
+                  fontSize: 17, lineHeight: 1.2,
                   userSelect: "none",
-                  transition: "all 0.15s",
-                  boxShadow: a ? "0 2px 4px rgba(0,0,0,0.25)" : "none",
-                }}>
-                {t.w}
-              </span>
+                  boxShadow: chosen !== null ? "0 2px 4px rgba(0,0,0,0.2)" : "none",
+                  transition: "all 0.2s",
+                }}>{p}</span>
+                {i < palabras.length - 1 && (
+                  <button
+                    onClick={() => !locked && onChooseSplit(i)}
+                    disabled={locked}
+                    style={{
+                      width: chosen === i ? 6 : 26, height: 38,
+                      padding: 0,
+                      background: chosen === i
+                        ? (isCorrect ? "#2ecc8f" : isWrong ? "#ff6b6b" : "#4fd8ff")
+                        : "transparent",
+                      border: chosen === i ? "none" : "2px dashed rgba(252,233,168,0.55)",
+                      borderRadius: chosen === i ? 3 : 8,
+                      color: "#fce9a8",
+                      cursor: locked ? "default" : "pointer",
+                      fontSize: 16, fontWeight: 800,
+                      lineHeight: 1,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      transition: "all 0.2s",
+                      boxShadow: chosen === i ? "0 0 14px currentColor" : "none",
+                    }}
+                    title={chosen === i ? "Corte aquí" : "Toca para cortar aquí"}
+                  >
+                    {chosen === i ? "" : "✂"}
+                  </button>
+                )}
+              </React.Fragment>
             );
           })}
         </div>
       </div>
 
-      {/* Botonera con leyenda S / P y contadores */}
-      <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "center" }}>
-        <button
-          disabled={locked}
-          onClick={() => {
-            if (locked) return;
-            // Asigna S al primer token sin asignar
-            const next = tokens.find((t) => !assigned[t.idx]);
-            if (next) onAssign(next.idx, "S");
-          }}
-          style={{
-            display: "flex", alignItems: "center", gap: 6,
-            background: "linear-gradient(180deg, #ffe97a, #d7b12a)",
-            color: "#3a2608",
-            padding: "6px 14px", borderRadius: 10,
-            fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
-            border: "2px solid #b48817",
-            cursor: locked ? "default" : "pointer",
-            boxShadow: "0 3px 6px rgba(0,0,0,0.3)",
-            letterSpacing: "0.04em",
-          }}>
-          SUJETO · {sCount}
-        </button>
-        <span style={{ color: "#fce9a8", fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 16 }}>+</span>
-        <button
-          disabled={locked}
-          onClick={() => {
-            if (locked) return;
-            const next = tokens.find((t) => !assigned[t.idx]);
-            if (next) onAssign(next.idx, "P");
-          }}
-          style={{
-            display: "flex", alignItems: "center", gap: 6,
-            background: "linear-gradient(180deg, #ff9a9a, #d94a4a)",
-            color: "#fff",
-            padding: "6px 14px", borderRadius: 10,
-            fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
-            border: "2px solid #a31818",
-            cursor: locked ? "default" : "pointer",
-            boxShadow: "0 3px 6px rgba(0,0,0,0.3)",
-            letterSpacing: "0.04em",
-          }}>
-          PREDICADO · {pCount}
-        </button>
-      </div>
-
-      {/* Mini-pista */}
-      <div style={{
-        background: "rgba(10,6,35,0.65)",
-        border: "1px solid rgba(252,233,168,0.5)",
-        borderRadius: 999,
-        padding: "4px 14px",
-        fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 11, color: "#fce9a8",
-        textAlign: "center", letterSpacing: "0.02em",
-      }}>
-        💡 ¿Quién hace la acción? → Sujeto · ¿Qué hace? → Predicado
-      </div>
-
-      {/* Vista preview: SUJETO ─── PREDICADO */}
-      {locked && (
+      {/* Etiquetas SUJETO / PREDICADO con flechas — solo decorativas, no interactivas */}
+      <div style={{ display: "flex", gap: 16, alignItems: "center", justifyContent: "center" }}>
         <div style={{
-          width: "100%", maxWidth: 470, marginTop: 4,
-          display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6,
-        }}>
-          <div style={{
-            background: "rgba(255,233,122,0.18)", border: "1.5px solid rgba(255,233,122,0.5)",
-            borderRadius: 10, padding: "6px 10px", textAlign: "center",
-            fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12, color: "#fce9a8",
-          }}>
-            <div className="ed-label" style={{ color: "#ffe97a", fontSize: 9 }}>Sujeto correcto</div>
-            <div>{tokens.filter((t) => t.parte === "S").map((t) => t.w).join(" ")}</div>
-          </div>
-          <div style={{
-            background: "rgba(255,154,154,0.18)", border: "1.5px solid rgba(255,154,154,0.5)",
-            borderRadius: 10, padding: "6px 10px", textAlign: "center",
-            fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12, color: "#ffd0d0",
-          }}>
-            <div className="ed-label" style={{ color: "#ff9a9a", fontSize: 9 }}>Predicado correcto</div>
-            <div>{tokens.filter((t) => t.parte === "P").map((t) => t.w).join(" ")}</div>
-          </div>
-        </div>
-      )}
+          background: "linear-gradient(180deg, #ffe97a, #d7b12a)",
+          color: "#3a2608",
+          padding: "6px 16px", borderRadius: 999,
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
+          border: "2px solid #b48817",
+          letterSpacing: "0.06em",
+          boxShadow: "0 3px 7px rgba(0,0,0,0.3)",
+        }}>SUJETO ←</div>
+        <div style={{
+          color: "#fce9a8", fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 20,
+        }}>✂</div>
+        <div style={{
+          background: "linear-gradient(180deg, #ff9a9a, #d94a4a)",
+          color: "#fff",
+          padding: "6px 16px", borderRadius: 999,
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
+          border: "2px solid #a31818",
+          letterSpacing: "0.06em",
+          boxShadow: "0 3px 7px rgba(0,0,0,0.3)",
+        }}>→ PREDICADO</div>
+      </div>
     </div>
   );
 }
@@ -1894,28 +1815,26 @@ function PintorModCard({ pick, colors, locked, onCycle }) {
         })}
       </div>
 
-      {/* Leyenda de colores */}
-      <div style={{ display: "flex", gap: 8 }}>
+      {/* Leyenda compacta MD/MI — chips finos, sin texto explicativo extra */}
+      <div style={{ display: "flex", gap: 10 }}>
         <span style={{
           background: "linear-gradient(180deg, #b9e3ff, #4f9ee0)",
           color: "#0a2540",
-          padding: "4px 12px", borderRadius: 999,
-          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11,
+          padding: "4px 16px", borderRadius: 999,
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
           border: "1.5px solid #1466a6",
+          letterSpacing: "0.06em",
           boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
-        }}>
-          1 tap = MD <span style={{ fontWeight: 500, opacity: 0.85 }}>(artículo/adjetivo)</span>
-        </span>
+        }}>MD</span>
         <span style={{
           background: "linear-gradient(180deg, #b8efc4, #5fb878)",
           color: "#0a3a18",
-          padding: "4px 12px", borderRadius: 999,
-          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11,
+          padding: "4px 16px", borderRadius: 999,
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
           border: "1.5px solid #1e6e2e",
+          letterSpacing: "0.06em",
           boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
-        }}>
-          2 taps = MI <span style={{ fontWeight: 500, opacity: 0.85 }}>(con preposición)</span>
-        </span>
+        }}>MI</span>
       </div>
     </div>
   );
@@ -2071,17 +1990,6 @@ function SastreCitasCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn,
         })}
       </div>
 
-      {/* Mini-leyenda */}
-      <div style={{
-        background: "rgba(10,6,35,0.65)",
-        border: "1px solid rgba(252,233,168,0.5)",
-        borderRadius: 999,
-        padding: "4px 14px",
-        fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 11, color: "#fce9a8",
-        textAlign: "center", letterSpacing: "0.02em",
-      }}>
-        💡 Orden: el narrador habla : " la cita " .
-      </div>
     </div>
   );
 }
@@ -2922,6 +2830,7 @@ function SummaryCell({ label, value, tone = "var(--ed-ink)", emphasis = false })
 }
 
 Object.assign(window, { GameScreen, ResultsScreen });
+
 
 // app.jsx — Shell de producción EDINUN GAMES.
 // Enrutador por estado y device stage adaptativo (desktop / tablet / mobile).
