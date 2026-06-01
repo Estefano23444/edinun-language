@@ -921,7 +921,7 @@ function EscritorGame({ app, setApp, go, onRestart }) {
     "Mezcla los signos en el orden correcto.";
 
   // Bocadillo dinámico: en R2 cambia según qué lupa esté activa para
-  // explicar qué significa MD y MI.
+  // explicar qué significa Modificador Directo / Indirecto.
   const bocadillo =
     ronda === 0
       ? (r1Spinning ? "¡Girando…!"
@@ -929,17 +929,24 @@ function EscritorGame({ app, setApp, go, onRestart }) {
         : "Toca entre dos palabras donde se divide.")
       :
     ronda === 1
-      ? (r2Lupa === "md" ? "MD: artículo (el, la) o adjetivo (pequeño)."
-        : r2Lupa === "mi" ? "MI: grupo con preposición (de, con, para)."
+      ? (r2Lupa === "md" ? "MD = Modificador Directo. Es un artículo (el, la) o adjetivo (pequeño)."
+        : r2Lupa === "mi" ? "MI = Modificador Indirecto. Es un grupo con preposición (de, con, para)."
         : "Toma una lupa y marca las palabras.")
       :
     "Toma un signo y suéltalo en el hueco.";
+
+  // El enunciado vive sobre la zona central. Cada ronda lo baja un poco distinto
+  // según cuánto aire tenga su mecánica entre el HUD y el cartel principal.
+  const enunciadoTop =
+    ronda === 0 ? 90 :   // R1 ruleta — la rueda ocupa el centro, el enunciado queda cómodo arriba
+    ronda === 1 ? 150 :  // R2 detective — bajamos cerca del expediente para que respire mejor
+    100;                 // R3 laboratorio — apenas pegado a la probeta
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
       <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} app={app} setApp={setApp} />
       <CharacterCorner char={char} message={bocadillo} />
-      <GameEnunciado text={enunciado} />
+      <GameEnunciado text={enunciado} top={enunciadoTop} />
 
       <div data-qa="zona-central" style={{
         position: "absolute", top: 116, left: 244, width: 488, bottom: 14,
@@ -1347,7 +1354,7 @@ function DetectiveModCard({ pick, marks, lupa, locked, onChooseLupa, onMarkWord 
                 {t.w}
                 {(isWrong || isEmpty) && (
                   <sup style={{ fontSize: 9, color: "#1e8a5d", marginLeft: 3, fontWeight: 800, letterSpacing: "0.04em" }}>
-                    ✓{expected.toUpperCase()}
+                    ✓{expected === "md" ? "DIRECTO" : "INDIRECTO"}
                   </sup>
                 )}
               </span>
@@ -1356,7 +1363,7 @@ function DetectiveModCard({ pick, marks, lupa, locked, onChooseLupa, onMarkWord 
         </div>
       </div>
 
-      {/* Selector de lupas */}
+      {/* Selector de lupas — texto completo para que el niño no tenga que adivinar siglas */}
       <div style={{ display: "flex", gap: 12, alignItems: "center", justifyContent: "center" }}>
         <span style={{
           fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 11,
@@ -1367,7 +1374,7 @@ function DetectiveModCard({ pick, marks, lupa, locked, onChooseLupa, onMarkWord 
           disabled={locked}
           style={{
             display: "flex", alignItems: "center", gap: 6,
-            padding: "6px 14px", borderRadius: 999,
+            padding: "6px 16px", borderRadius: 999,
             background: lupa === "md" ? "linear-gradient(180deg, #b9e3ff, #4f9ee0)" : "rgba(10,6,35,0.55)",
             color: lupa === "md" ? "#0a2540" : "#b9e3ff",
             border: `2px solid ${lupa === "md" ? "#fce9a8" : "#1466a6"}`,
@@ -1378,14 +1385,14 @@ function DetectiveModCard({ pick, marks, lupa, locked, onChooseLupa, onMarkWord 
             transform: lupa === "md" ? "translateY(-2px)" : "none",
             transition: "all 0.18s",
           }}>
-          🔍 MD
+          🔍 DIRECTO
         </button>
         <button
           onClick={() => !locked && onChooseLupa("mi")}
           disabled={locked}
           style={{
             display: "flex", alignItems: "center", gap: 6,
-            padding: "6px 14px", borderRadius: 999,
+            padding: "6px 16px", borderRadius: 999,
             background: lupa === "mi" ? "linear-gradient(180deg, #b8efc4, #5fb878)" : "rgba(10,6,35,0.55)",
             color: lupa === "mi" ? "#0a3a18" : "#b8efc4",
             border: `2px solid ${lupa === "mi" ? "#fce9a8" : "#1e6e2e"}`,
@@ -1396,7 +1403,7 @@ function DetectiveModCard({ pick, marks, lupa, locked, onChooseLupa, onMarkWord 
             transform: lupa === "mi" ? "translateY(-2px)" : "none",
             transition: "all 0.18s",
           }}>
-          🔍 MI
+          🔍 INDIRECTO
         </button>
       </div>
     </div>
