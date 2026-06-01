@@ -79,7 +79,6 @@ function EdinunLogoMini({ size = 40 }) {
 
 Object.assign(window, { EdinunLogo, EdinunLogoMini });
 
-
 // characters.jsx — Personajes EDINUN GAMES · Juegos de lenguaje.
 // Renderizan los PNG de assets/char-<id>.png. Misma API que la versión
 // SVG (props `size`, `floating`) para no romper a los consumidores
@@ -234,7 +233,6 @@ Object.assign(window, {
   CharacterAvatar,
   CHARACTERS,
 });
-
 
 // screens.jsx — HomeScreen + CharacterScreen + CosmosBg para "Juego 8".
 // Dos niveles del libro EDINUN:
@@ -638,7 +636,6 @@ function CharacterScreen({ app, setApp, go }) {
 
 Object.assign(window, { HomeScreen, CharacterScreen, CosmosBg, incrementGamesCompleted, useVisitorCount, markFirstAttempt, LEVELS_CFG });
 
-
 // game-screens.jsx — Juego 8. Dos niveles de lenguaje con mecánicas distintas:
 //   1. El escritor  (9 años)  — caza S/P · pintor de modificadores · sastre de citas
 //   2. El narrador  (10 años) — palabras mágicas · partes del cuento · ordena el cuento
@@ -786,93 +783,337 @@ function pushRecent(level, key) {
 //   splitIdx = índice del corte después de la palabra (0-based).
 //   Ej: "Cecilia y Miguel | picaron los tomates" → palabras 0..5, corte después de la 2.
 const SP_BANK = [
-  { id: "tomates",   palabras: ["Cecilia", "y", "Miguel", "picaron", "los", "tomates"],       splitIdx: 2 },
-  { id: "alpinista", palabras: ["El", "alpinista", "escaló", "una", "montaña", "imponente"],   splitIdx: 1 },
-  { id: "basquet",   palabras: ["Maximiliano", "y", "yo", "jugamos", "básquet", "en", "la", "escuela"], splitIdx: 2 },
-  { id: "mariposa",  palabras: ["La", "pequeña", "mariposa", "voló", "lejos"],                 splitIdx: 2 },
-  { id: "ajedrez",   palabras: ["El", "ajedrez", "es", "mi", "deporte", "preferido"],          splitIdx: 1 },
+  { id: "tomates",     palabras: ["Cecilia", "y", "Miguel", "picaron", "los", "tomates"],         splitIdx: 2 },
+  { id: "alpinista",   palabras: ["El", "alpinista", "escaló", "una", "montaña", "imponente"],     splitIdx: 1 },
+  { id: "basquet",     palabras: ["Maximiliano", "y", "yo", "jugamos", "básquet", "en", "la", "escuela"], splitIdx: 2 },
+  { id: "mariposa",    palabras: ["La", "pequeña", "mariposa", "voló", "lejos"],                   splitIdx: 2 },
+  { id: "ajedrez",     palabras: ["El", "ajedrez", "es", "mi", "deporte", "preferido"],            splitIdx: 1 },
+  { id: "hermana",     palabras: ["Mi", "hermana", "toca", "el", "piano"],                         splitIdx: 1 },
+  { id: "ninos",       palabras: ["Los", "niños", "pintaron", "un", "mural"],                      splitIdx: 1 },
+  { id: "sol",         palabras: ["El", "sol", "calienta", "la", "arena"],                         splitIdx: 1 },
+  { id: "maestra",     palabras: ["La", "maestra", "explicó", "la", "lección"],                    splitIdx: 1 },
+  { id: "abuelo",      palabras: ["Mi", "abuelo", "cuida", "el", "huerto"],                        splitIdx: 1 },
+  { id: "perros",      palabras: ["Los", "perros", "corren", "por", "el", "parque"],               splitIdx: 1 },
+  { id: "camila",      palabras: ["Camila", "escribió", "un", "cuento", "corto"],                  splitIdx: 0 },
+  { id: "nubes",       palabras: ["Las", "nubes", "cubrieron", "el", "cielo"],                     splitIdx: 1 },
+  { id: "amigo",       palabras: ["Mi", "mejor", "amigo", "viajó", "a", "Quito"],                  splitIdx: 2 },
+  { id: "gato",        palabras: ["El", "gato", "saltó", "la", "pared"],                           splitIdx: 1 },
+  { id: "vendedora",   palabras: ["La", "vendedora", "ofreció", "frutas", "frescas"],              splitIdx: 1 },
+  { id: "lluvia",      palabras: ["La", "lluvia", "mojó", "las", "calles"],                        splitIdx: 1 },
+  { id: "papa",        palabras: ["Mi", "papá", "prepara", "el", "almuerzo"],                      splitIdx: 1 },
+  { id: "estudiantes", palabras: ["Los", "estudiantes", "leyeron", "un", "poema"],                 splitIdx: 1 },
+  { id: "rio",         palabras: ["El", "río", "atraviesa", "el", "valle"],                        splitIdx: 1 },
+  { id: "pajaro",      palabras: ["Un", "pájaro", "canta", "en", "el", "árbol"],                   splitIdx: 1 },
+  { id: "cocineros",   palabras: ["Los", "cocineros", "prepararon", "un", "banquete"],             splitIdx: 1 },
+  { id: "mochila",     palabras: ["Mi", "mochila", "guarda", "los", "cuadernos"],                  splitIdx: 1 },
+  { id: "tren",        palabras: ["El", "tren", "llegó", "muy", "tarde"],                          splitIdx: 1 },
+  { id: "carolina",    palabras: ["Carolina", "y", "Luis", "ganaron", "el", "concurso"],           splitIdx: 2 },
 ];
 
-// R2 — Pintor de modificadores: 1 frase con núcleo prefijado en rojo.
-//   md = modificador directo (artículo/adjetivo, palabra suelta)
-//   n  = núcleo (sustantivo, fijo en rojo, no se toca)
-//   mi = modificador indirecto (bloque con preposición)
+// R2 — Caza modificadores: oración completa con el núcleo (rojo, bloqueado).
+// El niño selecciona cada palabra/grupo y la manda a su carpeta:
+// DIRECTO (artículo/adjetivo) o INDIRECTO (con preposición).
 const MOD_BANK = [
   {
-    id: "restaurante",
+    id: "casa",
+    icono: "🏠",
     tokens: [
-      { w: "El",                 tipo: "md" },
-      { w: "pequeño",            tipo: "md" },
-      { w: "restaurante",        tipo: "n"  },
-      { w: "de la otra calle",   tipo: "mi" },
-    ],
-  },
-  {
-    id: "mariposa",
-    tokens: [
-      { w: "La",            tipo: "md" },
-      { w: "pequeña",       tipo: "md" },
-      { w: "mariposa",      tipo: "n"  },
-      { w: "del jardín",    tipo: "mi" },
+      { w: "La",              tipo: "md" },
+      { w: "pequeña",         tipo: "md" },
+      { w: "casa",            tipo: "n"  },
+      { w: "azul",            tipo: "md" },
+      { w: "de mi abuela",    tipo: "mi" },
+      { w: "con jardín",      tipo: "mi" },
     ],
   },
   {
     id: "perro",
+    icono: "🐶",
     tokens: [
-      { w: "Ese",           tipo: "md" },
-      { w: "perro",         tipo: "n"  },
-      { w: "de mi vecino",  tipo: "mi" },
+      { w: "El",              tipo: "md" },
+      { w: "perro",           tipo: "n"  },
+      { w: "negro",           tipo: "md" },
+      { w: "juguetón",        tipo: "md" },
+      { w: "de mi vecino",    tipo: "mi" },
+      { w: "con collar",      tipo: "mi" },
     ],
   },
   {
-    id: "libros",
+    id: "libro",
+    icono: "📕",
     tokens: [
-      { w: "Esos",            tipo: "md" },
-      { w: "libros",          tipo: "n"  },
+      { w: "Un",              tipo: "md" },
+      { w: "viejo",           tipo: "md" },
+      { w: "libro",           tipo: "n"  },
+      { w: "fascinante",      tipo: "md" },
       { w: "de aventuras",    tipo: "mi" },
+      { w: "con dibujos",     tipo: "mi" },
+    ],
+  },
+  {
+    id: "mariposa",
+    icono: "🦋",
+    tokens: [
+      { w: "La",              tipo: "md" },
+      { w: "pequeña",         tipo: "md" },
+      { w: "mariposa",        tipo: "n"  },
+      { w: "amarilla",        tipo: "md" },
+      { w: "del jardín",      tipo: "mi" },
+      { w: "con manchas",     tipo: "mi" },
+    ],
+  },
+  {
+    id: "bicicleta",
+    icono: "🚲",
+    tokens: [
+      { w: "La",              tipo: "md" },
+      { w: "nueva",           tipo: "md" },
+      { w: "bicicleta",       tipo: "n"  },
+      { w: "roja",            tipo: "md" },
+      { w: "de mi primo",     tipo: "mi" },
+      { w: "con timbre",      tipo: "mi" },
+    ],
+  },
+  {
+    id: "maestra",
+    icono: "👩‍🏫",
+    tokens: [
+      { w: "Esa",             tipo: "md" },
+      { w: "nueva",           tipo: "md" },
+      { w: "maestra",         tipo: "n"  },
+      { w: "simpática",       tipo: "md" },
+      { w: "de mi escuela",   tipo: "mi" },
+      { w: "con anteojos",    tipo: "mi" },
+    ],
+  },
+  {
+    id: "gato",
+    icono: "🐱",
+    tokens: [
+      { w: "Un",              tipo: "md" },
+      { w: "travieso",        tipo: "md" },
+      { w: "gato",            tipo: "n"  },
+      { w: "blanco",          tipo: "md" },
+      { w: "del vecindario",  tipo: "mi" },
+      { w: "con cascabel",    tipo: "mi" },
+    ],
+  },
+  {
+    id: "rio",
+    icono: "🏞️",
+    tokens: [
+      { w: "El",              tipo: "md" },
+      { w: "gran",            tipo: "md" },
+      { w: "río",             tipo: "n"  },
+      { w: "caudaloso",       tipo: "md" },
+      { w: "del valle",       tipo: "mi" },
+      { w: "con cascadas",    tipo: "mi" },
+    ],
+  },
+  {
+    id: "abuela",
+    icono: "👵",
+    tokens: [
+      { w: "Mi",              tipo: "md" },
+      { w: "cariñosa",        tipo: "md" },
+      { w: "abuela",          tipo: "n"  },
+      { w: "mayor",           tipo: "md" },
+      { w: "de la sierra",    tipo: "mi" },
+      { w: "con anteojos",    tipo: "mi" },
+    ],
+  },
+  {
+    id: "cuento",
+    icono: "📖",
+    tokens: [
+      { w: "Aquel",           tipo: "md" },
+      { w: "famoso",          tipo: "md" },
+      { w: "cuento",          tipo: "n"  },
+      { w: "emocionante",     tipo: "md" },
+      { w: "del libro",       tipo: "mi" },
+      { w: "con aventuras",   tipo: "mi" },
+    ],
+  },
+  {
+    id: "globo",
+    icono: "🎈",
+    tokens: [
+      { w: "El",              tipo: "md" },
+      { w: "gran",            tipo: "md" },
+      { w: "globo",           tipo: "n"  },
+      { w: "amarillo",        tipo: "md" },
+      { w: "del parque",      tipo: "mi" },
+      { w: "con dibujos",     tipo: "mi" },
+    ],
+  },
+  {
+    id: "arbol",
+    icono: "🌳",
+    tokens: [
+      { w: "El",              tipo: "md" },
+      { w: "alto",            tipo: "md" },
+      { w: "árbol",           tipo: "n"  },
+      { w: "frondoso",        tipo: "md" },
+      { w: "del bosque",      tipo: "mi" },
+      { w: "con frutos",      tipo: "mi" },
+    ],
+  },
+  {
+    id: "nino",
+    icono: "🧒",
+    tokens: [
+      { w: "Ese",             tipo: "md" },
+      { w: "pequeño",         tipo: "md" },
+      { w: "niño",            tipo: "n"  },
+      { w: "valiente",        tipo: "md" },
+      { w: "de la escuela",   tipo: "mi" },
+      { w: "con mochila",     tipo: "mi" },
+    ],
+  },
+  {
+    id: "ventana",
+    icono: "🪟",
+    tokens: [
+      { w: "La",              tipo: "md" },
+      { w: "antigua",         tipo: "md" },
+      { w: "ventana",         tipo: "n"  },
+      { w: "azul",            tipo: "md" },
+      { w: "de mi cuarto",    tipo: "mi" },
+      { w: "con cortinas",    tipo: "mi" },
+    ],
+  },
+  {
+    id: "zapato",
+    icono: "👟",
+    tokens: [
+      { w: "El",              tipo: "md" },
+      { w: "nuevo",           tipo: "md" },
+      { w: "zapato",          tipo: "n"  },
+      { w: "deportivo",       tipo: "md" },
+      { w: "de mi hermano",   tipo: "mi" },
+      { w: "con cordones",    tipo: "mi" },
+    ],
+  },
+  {
+    id: "tortuga",
+    icono: "🐢",
+    tokens: [
+      { w: "La",              tipo: "md" },
+      { w: "pequeña",         tipo: "md" },
+      { w: "tortuga",         tipo: "n"  },
+      { w: "verde",           tipo: "md" },
+      { w: "del estanque",    tipo: "mi" },
+      { w: "con manchas",     tipo: "mi" },
+    ],
+  },
+  {
+    id: "cocinero",
+    icono: "👨‍🍳",
+    tokens: [
+      { w: "Aquel",           tipo: "md" },
+      { w: "famoso",          tipo: "md" },
+      { w: "cocinero",        tipo: "n"  },
+      { w: "italiano",        tipo: "md" },
+      { w: "del restaurante", tipo: "mi" },
+      { w: "con delantal",    tipo: "mi" },
+    ],
+  },
+  {
+    id: "pelota",
+    icono: "⚽",
+    tokens: [
+      { w: "Una",             tipo: "md" },
+      { w: "colorida",        tipo: "md" },
+      { w: "pelota",          tipo: "n"  },
+      { w: "nueva",           tipo: "md" },
+      { w: "de mi prima",     tipo: "mi" },
+      { w: "con dibujos",     tipo: "mi" },
+    ],
+  },
+  {
+    id: "manzana",
+    icono: "🍎",
+    tokens: [
+      { w: "Esa",             tipo: "md" },
+      { w: "jugosa",          tipo: "md" },
+      { w: "manzana",         tipo: "n"  },
+      { w: "roja",            tipo: "md" },
+      { w: "del huerto",      tipo: "mi" },
+      { w: "con hojas",       tipo: "mi" },
+    ],
+  },
+  {
+    id: "cancion",
+    icono: "🎵",
+    tokens: [
+      { w: "Esa",             tipo: "md" },
+      { w: "hermosa",         tipo: "md" },
+      { w: "canción",         tipo: "n"  },
+      { w: "alegre",          tipo: "md" },
+      { w: "del coro",        tipo: "mi" },
+      { w: "con guitarras",   tipo: "mi" },
     ],
   },
 ];
 
-// R3 — Sastre de citas: frase con huecos para dos puntos + comillas + punto.
-//   Estructura: partes[] alterna entre texto fijo (t) y slot (s).
-//   Para slot, "correcto" indica qué símbolo va y el banco tiene los 4 disponibles.
+// R3 — Cazapuntuación (shooter): citas con narrativa larga y MUCHOS huecos.
+//   Estructura: partes[] alterna entre texto fijo (t), slot (s) y separador (br = nueva línea).
+//   La bandeja (globos) incluye distractores para que haya que pensar.
 const CITAS_BANK = [
   {
     id: "profesor",
     partes: [
-      { t: "Entonces el profesor dijo" },
-      { s: ":" },
-      { s: '"' },
-      { t: "Para mañana la lección siguiente" },
-      { s: '"' },
-      { s: "." },
+      { t: "Esa tarde de viernes, el profesor anunció con voz seria" }, { s: ":" }, { s: '"' },
+      { t: "Mañana tendremos un examen muy importante" }, { s: '"' }, { s: "." },
+      { br: true },
+      { t: "Después, mirando a todos sus alumnos, agregó" }, { s: ":" }, { s: '"' },
+      { t: "Por favor, estudien mucho esta noche" }, { s: '"' }, { s: "." },
     ],
-    bandeja: [":", '"', '"', "."],
+    bandeja: [":", '"', ".", ",", "!", "?"],
   },
   {
-    id: "presidente",
+    id: "abuelo",
     partes: [
-      { t: "El presidente aseguró" },
-      { s: ":" },
-      { s: '"' },
-      { t: "Arranca una nueva etapa mejor" },
-      { s: '"' },
-      { s: "." },
+      { t: "Durante el desayuno, el abuelo nos contó emocionado" }, { s: ":" }, { s: '"' },
+      { t: "Mañana iremos juntos al río del pueblo" }, { s: '"' }, { s: "." },
+      { br: true },
+      { t: "Mi pequeña hermana saltó de alegría y exclamó" }, { s: ":" }, { s: '"' },
+      { t: "¡Qué linda sorpresa nos dio el abuelo" }, { s: "!" }, { s: '"' },
     ],
-    bandeja: [":", '"', '"', "."],
+    bandeja: [":", '"', "!", ".", ",", "?"],
   },
   {
-    id: "novio",
+    id: "novios",
     partes: [
-      { t: "Cuando el novio dijo" },
-      { s: ":" },
-      { s: '"' },
-      { t: "Sí, acepto" },
-      { s: '"' },
-      { s: "." },
+      { t: "Cuando llegó el momento esperado, el novio respondió" }, { s: ":" }, { s: '"' },
+      { t: "Sí, acepto con todo mi corazón" }, { s: '"' }, { s: "." },
+      { br: true },
+      { t: "La novia, sonriendo con ternura, le dijo" }, { s: ":" }, { s: '"' },
+      { t: "Te amaré para toda la vida" }, { s: '"' }, { s: "." },
     ],
-    bandeja: [":", '"', '"', "."],
+    bandeja: [":", '"', ".", ",", "!", "?"],
+  },
+  {
+    id: "explorador",
+    partes: [
+      { t: "Al llegar a la cima de la montaña, el explorador gritó" }, { s: ":" }, { s: '"' },
+      { t: "¡Por fin alcanzamos la cumbre nevada" }, { s: "!" }, { s: '"' },
+      { br: true },
+      { t: "Su compañero, agotado pero feliz, susurró" }, { s: ":" }, { s: '"' },
+      { t: "Esto vale todo el esfuerzo del viaje" }, { s: '"' }, { s: "." },
+    ],
+    bandeja: [":", '"', "!", ".", ",", "?"],
+  },
+  {
+    id: "mama",
+    partes: [
+      { t: "Después de la cena del domingo, mamá nos preguntó" }, { s: ":" }, { s: '"' },
+      { t: "¿Quién quiere ayudar a lavar los platos" }, { s: "?" }, { s: '"' },
+      { br: true },
+      { t: "Mi hermano levantó la mano y contestó" }, { s: ":" }, { s: '"' },
+      { t: "Yo te ayudo con mucho gusto" }, { s: '"' }, { s: "." },
+    ],
+    bandeja: [":", '"', "?", ".", ",", "!"],
   },
 ];
 
@@ -1119,20 +1360,18 @@ function GameHUD({ elapsed, stars, attempted, solved, total = 3, app, setApp }) 
       </div>
 
       <div style={{
-        position: "absolute", top: 52, left: "50%", transform: "translateX(-50%)",
-        display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+        position: "absolute", top: 58, left: "50%", transform: "translateX(-50%)",
+        display: "flex", alignItems: "center", gap: 8,
       }}>
-        <span className="ed-label" style={{ color: "rgba(255,255,255,0.7)", letterSpacing: "0.14em" }}>RONDA</span>
-        <div style={{ display: "flex", gap: 6 }}>
-          {Array.from({ length: total }).map((_, i) => (
-            <div key={i} style={{
-              width: 10, height: 10, borderRadius: "50%",
-              background: i < attempted ? (i < solved ? "#fce9a8" : "#ff6b6b") : "rgba(255,255,255,0.2)",
-              boxShadow: i < attempted ? "0 0 10px currentColor" : "none",
-              color: i < solved ? "#fce9a8" : "#ff6b6b",
-            }} />
-          ))}
-        </div>
+        <span className="ed-label" style={{ color: "rgba(255,255,255,0.7)" }}>Ronda</span>
+        {Array.from({ length: total }).map((_, i) => (
+          <div key={i} style={{
+            width: 10, height: 10, borderRadius: "50%",
+            background: i < attempted ? (i < solved ? "#fce9a8" : "#ff6b6b") : "rgba(255,255,255,0.2)",
+            boxShadow: i < attempted ? "0 0 10px currentColor" : "none",
+            color: i < solved ? "#fce9a8" : "#ff6b6b",
+          }} />
+        ))}
       </div>
 
       <SwitchLevelModal
@@ -1332,7 +1571,7 @@ function CharacterCorner({ char, message }) {
         <div style={{
           position: "relative",
           width: "fit-content",   // se adapta al texto: nube chiquita si el texto es corto
-          maxWidth: 220,          // tope razonable para que no se desborde del wrapper
+          maxWidth: 180,          // angosto, así textos cortos lucen compactos
           background: "linear-gradient(180deg, rgba(20,12,55,0.95), rgba(10,6,35,0.95))",
           border: "1.5px solid rgba(242,194,96,0.65)",
           borderRadius: 16, padding: "10px 14px",
@@ -1380,15 +1619,13 @@ function EscritorGame({ app, setApp, go, onRestart }) {
 
   const [ronda, setRonda] = useStateG(0);
 
-  // R1 state — Ruleta del escritor: girando, revelada, corte elegido.
-  const [r1Spinning, setR1Spinning] = useStateG(false);
-  const [r1Revealed, setR1Revealed] = useStateG(false);
-  const [r1Split, setR1Split] = useStateG(null);
+  // R1 state — 3 oraciones simultáneas: un corte (split index) por cada una.
+  const [r1Splits, setR1Splits] = useStateG([null, null, null]);
   const [r1Locked, setR1Locked] = useStateG(false);
 
-  // R2 state — Detective literario: lupa activa (md/mi/null) + marcas por palabra.
-  const [r2Lupa, setR2Lupa] = useStateG(null);
-  const [r2Marks, setR2Marks] = useStateG({});
+  // R2 state — Caza modificadores (shooter): chip seleccionado + asignación a carpeta.
+  const [r2PickedChip, setR2PickedChip] = useStateG(null);  // idx del chip seleccionado
+  const [r2Marks, setR2Marks] = useStateG({});               // { chipIdx: "md"|"mi" }
   const [r2Locked, setR2Locked] = useStateG(false);
 
   // R3 state — sastre de citas: { slotIdx: signo }
@@ -1397,13 +1634,30 @@ function EscritorGame({ app, setApp, go, onRestart }) {
   const [r3Locked, setR3Locked] = useStateG(false);
 
   // Picks
-  const [r1Pick] = useStateG(() => {
+  const [r1Picks] = useStateG(() => {
+    // 3 oraciones distintas. Usamos FIFO anti-repetición de las usadas recientemente.
     const recent = new Set(getRecent("escritor"));
     let pool = SP_BANK.filter((p) => !recent.has("sp:" + p.id));
-    if (pool.length === 0) pool = SP_BANK;
-    const p = pool[Math.floor(Math.random() * pool.length)];
-    pushRecent("escritor", "sp:" + p.id);
-    return p;
+    if (pool.length < 3) pool = SP_BANK.slice();
+    // Mezcla
+    const picks = [];
+    const usados = new Set();
+    while (picks.length < 3 && pool.length > 0) {
+      const idx = Math.floor(Math.random() * pool.length);
+      const candidato = pool[idx];
+      if (!usados.has(candidato.id)) {
+        picks.push(candidato);
+        usados.add(candidato.id);
+        pushRecent("escritor", "sp:" + candidato.id);
+      }
+      pool.splice(idx, 1);
+    }
+    // Si quedan huecos (banco muy pequeño), rellenar de SP_BANK ignorando recencia
+    while (picks.length < 3) {
+      const c = SP_BANK[Math.floor(Math.random() * SP_BANK.length)];
+      if (!usados.has(c.id)) { picks.push(c); usados.add(c.id); }
+    }
+    return picks;
   });
 
   const [r2Pick] = useStateG(() => {
@@ -1463,11 +1717,10 @@ function EscritorGame({ app, setApp, go, onRestart }) {
   }, []);
 
   // Verificación
-  // R1: para verificar se necesita haber revelado la oración (girado) y elegido un corte.
-  const r1Done = r1Revealed && r1Split !== null;
-  // R2: cada token md/mi debe estar marcado con la lupa correcta; el núcleo no se toca.
-  const r2Targets = r2Pick.tokens.map((t, i) => ({ ...t, idx: i })).filter((t) => t.tipo !== "n");
-  const r2AllMarked = r2Targets.every((t) => r2Marks[t.idx]);
+  // R1: cada una de las 3 oraciones debe tener un corte elegido.
+  const r1Done = r1Splits.every((s) => s !== null);
+  // R2: cada modificador (no núcleo) debe estar asignado a su carpeta.
+  const r2AllMarked = r2Pick.tokens.every((t, i) => t.tipo === "n" || r2Marks[i]);
   // R3: todos los slots llenos
   const r3AllPlaced = r3Slots.every((s) => r3Placed[s.idx]);
 
@@ -1482,23 +1735,35 @@ function EscritorGame({ app, setApp, go, onRestart }) {
     if (!canVerify) return;
     if (ronda === 0) {
       setR1Locked(true);
-      const correct = r1Split === r1Pick.splitIdx;
-      const sujeto = r1Pick.palabras.slice(0, r1Split + 1).join(" ");
-      const predicado = r1Pick.palabras.slice(r1Split + 1).join(" ");
-      const sujetoOk = r1Pick.palabras.slice(0, r1Pick.splitIdx + 1).join(" ");
-      const predicadoOk = r1Pick.palabras.slice(r1Pick.splitIdx + 1).join(" ");
-      const userText = `S: ${sujeto} | P: ${predicado}`;
-      const correctText = `S: ${sujetoOk} | P: ${predicadoOk}`;
-      setTimeout(() => answer(correct, userText, correctText, "🎡"), 350);
+      // Las 3 oraciones deben estar correctamente cortadas
+      let correct = true;
+      const userParts = [];
+      const correctParts = [];
+      r1Picks.forEach((p, i) => {
+        const choice = r1Splits[i];
+        if (choice !== p.splitIdx) correct = false;
+        const userSujeto = p.palabras.slice(0, choice + 1).join(" ");
+        const userPredicado = p.palabras.slice(choice + 1).join(" ");
+        const okSujeto = p.palabras.slice(0, p.splitIdx + 1).join(" ");
+        const okPredicado = p.palabras.slice(p.splitIdx + 1).join(" ");
+        userParts.push(`${i + 1}) S:${userSujeto} | P:${userPredicado}`);
+        correctParts.push(`${i + 1}) S:${okSujeto} | P:${okPredicado}`);
+      });
+      setTimeout(() => answer(correct, userParts.join("  "), correctParts.join("  "), "✂"), 350);
     } else if (ronda === 1) {
       setR2Locked(true);
       let correct = true;
-      for (const t of r2Targets) {
-        if (r2Marks[t.idx] !== t.tipo) { correct = false; break; }
+      for (let i = 0; i < r2Pick.tokens.length; i++) {
+        const t = r2Pick.tokens[i];
+        if (t.tipo === "n") continue;
+        if (r2Marks[i] !== t.tipo) { correct = false; break; }
       }
-      const userText = r2Targets.map((t) => `${t.w}=${r2Marks[t.idx] || "?"}`).join(" ");
-      const correctText = r2Targets.map((t) => `${t.w}=${t.tipo}`).join(" ");
-      setTimeout(() => answer(correct, userText, correctText, "🔍"), 350);
+      const userText = r2Pick.tokens.filter((t) => t.tipo !== "n").map((t, _i) => {
+        const realIdx = r2Pick.tokens.indexOf(t);
+        return `${t.w}=${r2Marks[realIdx] || "?"}`;
+      }).join(" ");
+      const correctText = r2Pick.tokens.filter((t) => t.tipo !== "n").map((t) => `${t.w}=${t.tipo}`).join(" ");
+      setTimeout(() => answer(correct, userText, correctText, "🎯"), 350);
     } else if (ronda === 2) {
       setR3Locked(true);
       let correct = true;
@@ -1512,8 +1777,8 @@ function EscritorGame({ app, setApp, go, onRestart }) {
   }
 
   function handleErase() {
-    if (ronda === 0) { if (r1Locked) return; setR1Split(null); }
-    else if (ronda === 1) { if (r2Locked) return; setR2Marks({}); setR2Lupa(null); }
+    if (ronda === 0) { if (r1Locked) return; setR1Splits([null, null, null]); }
+    else if (ronda === 1) { if (r2Locked) return; setR2Marks({}); setR2PickedChip(null); }
     else if (ronda === 2) { if (r3Locked) return; setR3Placed({}); setR3Picked(null); }
   }
 
@@ -1560,32 +1825,34 @@ function EscritorGame({ app, setApp, go, onRestart }) {
     }, wait);
   }
 
+  // Enunciado = QUÉ hacer (objetivo curricular). Bocadillo = CÓMO (mecánica).
   const enunciado =
-    ronda === 0 ? "Gira la ruleta y divide la oración." :
-    ronda === 1 ? "Marca con la lupa los modificadores." :
-    "Mezcla los signos en el orden correcto.";
+    ronda === 0 ? "Divide cada oración en sujeto y predicado." :
+    ronda === 1 ? "Clasifica los modificadores como directos o indirectos." :
+    "Completa la cita con los signos de puntuación.";
 
-  // Bocadillo dinámico: en R2 cambia según qué lupa esté activa para
+  // Bocadillo dinámico: en R2 cambia según el chip seleccionado para
   // explicar qué significa Modificador Directo / Indirecto.
   const bocadillo =
     ronda === 0
-      ? (r1Spinning ? "¡Girando…!"
-        : !r1Revealed ? "Toca el botón GIRAR."
-        : "Toca entre dos palabras donde se divide.")
+      ? "Toca la ✂ que divida la oración."
       :
     ronda === 1
-      ? (r2Lupa === "md" ? "MD = Modificador Directo. Es un artículo (el, la) o adjetivo (pequeño)."
-        : r2Lupa === "mi" ? "MI = Modificador Indirecto. Es un grupo con preposición (de, con, para)."
-        : "Toma una lupa y marca las palabras.")
+      ? "Arrastra cada palabra al lugar correcto."
       :
-    "Toma un signo y suéltalo en el hueco.";
+    "Toma un globo y suéltalo en el espacio correcto.";
 
-  // El enunciado vive sobre la zona central. Cada ronda lo baja un poco distinto
-  // según cuánto aire tenga su mecánica entre el HUD y el cartel principal.
+  // Por ronda: cuán abajo está el enunciado y dónde arranca la zona-central.
+  // Mantenemos la zona-central CORTA (height auto) para que cartel+botones queden
+  // cerca del centro óptico del lienzo y no haya "huecos" arriba/abajo.
   const enunciadoTop =
-    ronda === 0 ? 90 :   // R1 ruleta — la rueda ocupa el centro, el enunciado queda cómodo arriba
-    ronda === 1 ? 150 :  // R2 detective — bajamos cerca del expediente para que respire mejor
-    100;                 // R3 laboratorio — apenas pegado a la probeta
+    ronda === 0 ? 110 :  // R1 ruleta
+    ronda === 1 ? 105 :  // R2 caza modificadores — sube para dejar más aire a chips+buckets
+    105;                 // R3 cazapuntuación
+  const zonaCentralTop =
+    ronda === 0 ? 160 :  // R1 cartel + SUJETO/PREDICADO ≈ 170px
+    ronda === 1 ? 140 :  // R2 núcleo + chips flotantes + 2 carpetas ≈ 220px
+    155;                 // R3 cita + banco globos: bajamos un poco para repartir mejor el alto
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
@@ -1594,36 +1861,49 @@ function EscritorGame({ app, setApp, go, onRestart }) {
       <GameEnunciado text={enunciado} top={enunciadoTop} />
 
       <div data-qa="zona-central" style={{
-        position: "absolute", top: 116, left: "50%", transform: "translateX(-50%)",
-        width: 440, bottom: 14,
+        position: "absolute", top: zonaCentralTop, left: "50%", transform: "translateX(-50%)",
+        width: 440,
+        // height auto: el contenido manda su altura, sin huecos forzados
       }}>
         {ronda === 0 && (
-          <RuletaEscritorCard
-            pick={r1Pick}
-            spinning={r1Spinning}
-            revealed={r1Revealed}
-            split={r1Split}
+          <SujetoPredicadoCard
+            picks={r1Picks}
+            splits={r1Splits}
             locked={r1Locked}
-            onSpin={() => {
-              if (r1Spinning || r1Revealed) return;
-              setR1Spinning(true);
-              setTimeout(() => { setR1Spinning(false); setR1Revealed(true); }, 1800);
+            onChooseSplit={(oracionIdx, palabraIdx) => {
+              if (r1Locked) return;
+              const next = r1Splits.slice();
+              next[oracionIdx] = palabraIdx;
+              setR1Splits(next);
             }}
-            onChooseSplit={(idx) => { if (r1Locked) return; setR1Split(idx); }}
           />
         )}
         {ronda === 1 && (
           <DetectiveModCard
             pick={r2Pick}
             marks={r2Marks}
-            lupa={r2Lupa}
+            pickedChip={r2PickedChip}
             locked={r2Locked}
-            onChooseLupa={(l) => { if (r2Locked) return; setR2Lupa(r2Lupa === l ? null : l); }}
-            onMarkWord={(idx) => {
-              if (r2Locked || !r2Lupa) return;
+            onPickChip={(idx) => {
+              if (r2Locked) return;
+              setR2PickedChip(r2PickedChip === idx ? null : idx);
+            }}
+            onAssignBucket={(bucket) => {
+              if (r2Locked || r2PickedChip == null) return;
+              const next = { ...r2Marks, [r2PickedChip]: bucket };
+              setR2Marks(next);
+              setR2PickedChip(null);
+            }}
+            onAssignTo={(chipIdx, bucket) => {
+              if (r2Locked) return;
+              const next = { ...r2Marks, [chipIdx]: bucket };
+              setR2Marks(next);
+              setR2PickedChip(null);
+            }}
+            onUnmark={(chipIdx) => {
+              if (r2Locked) return;
               const next = { ...r2Marks };
-              if (next[idx] === r2Lupa) delete next[idx];
-              else next[idx] = r2Lupa;
+              delete next[chipIdx];
               setR2Marks(next);
             }}
           />
@@ -1671,155 +1951,110 @@ function EscritorGame({ app, setApp, go, onRestart }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// N1 · R1 — Ruleta del escritor: gira la rueda para revelar la
-// oración del libro y corta entre sujeto y predicado.
+// N1 · R1 — Divide 3 oraciones en sujeto y predicado. Sin ruleta:
+// las 3 frases se muestran apiladas y el niño marca el corte en cada una.
 // ─────────────────────────────────────────────────────────────
-function RuletaEscritorCard({ pick, spinning, revealed, split, locked, onSpin, onChooseSplit }) {
-  const palabras = pick.palabras;
-  const splitOk = pick.splitIdx;
-  const chosen = split;
-  const isCorrect = locked && chosen === splitOk;
-  const isWrong = locked && chosen !== splitOk;
-  // Iconos de los 5 sectores (corresponden a SP_BANK)
-  const SECTORS = ["🍅", "🏔", "🏀", "🦋", "♟"];
-  const SECTOR_COLORS = ["#ff9a9a", "#b9e3ff", "#ffe97a", "#c39cff", "#9ee0a3"];
-  // Vista no revelada: ruleta grande + botón GIRAR. Vista revelada: oración con tijeras.
-  if (!revealed) {
-    return (
-      <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 18 }}>
-        <div style={{ position: "relative", width: 220, height: 220 }}>
-          {/* Flecha indicadora arriba */}
-          <div style={{
-            position: "absolute", top: -6, left: "50%", transform: "translateX(-50%)",
-            width: 0, height: 0, zIndex: 3,
-            borderLeft: "13px solid transparent", borderRight: "13px solid transparent",
-            borderTop: "22px solid #fce9a8",
-            filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))",
-          }} />
-          {/* Ruleta SVG */}
-          <svg width="220" height="220" viewBox="-110 -110 220 220" style={{
-            transition: spinning ? "transform 1.8s cubic-bezier(0.2,0.7,0.3,1)" : "none",
-            transform: spinning ? "rotate(1440deg)" : "rotate(0deg)",
-            filter: "drop-shadow(0 6px 14px rgba(0,0,0,0.5))",
-          }}>
-            <circle r="100" fill="#0a0626" stroke="#fce9a8" strokeWidth="4" />
-            {SECTORS.map((emoji, i) => {
-              const a0 = (i * 360 / 5) - 90;
-              const a1 = a0 + 72;
-              const rad = (a) => (a * Math.PI) / 180;
-              const x0 = 100 * Math.cos(rad(a0)), y0 = 100 * Math.sin(rad(a0));
-              const x1 = 100 * Math.cos(rad(a1)), y1 = 100 * Math.sin(rad(a1));
-              const aMid = a0 + 36;
-              const tx = 62 * Math.cos(rad(aMid)), ty = 62 * Math.sin(rad(aMid));
-              return (
-                <g key={i}>
-                  <path d={`M 0 0 L ${x0} ${y0} A 100 100 0 0 1 ${x1} ${y1} Z`}
-                    fill={SECTOR_COLORS[i]} stroke="rgba(0,0,0,0.25)" strokeWidth="1.5" />
-                  <text x={tx} y={ty + 12} textAnchor="middle"
-                    fontSize="32" style={{ pointerEvents: "none", userSelect: "none" }}>
-                    {emoji}
-                  </text>
-                </g>
-              );
-            })}
-            {/* Centro */}
-            <circle r="14" fill="#fce9a8" stroke="#d9a441" strokeWidth="2" />
-          </svg>
-        </div>
-        <button
-          onClick={onSpin}
-          disabled={spinning}
-          style={{
-            padding: "10px 28px", borderRadius: 14,
-            background: spinning ? "rgba(120,120,120,0.5)" : "linear-gradient(180deg, #fce9a8, #d9a441)",
-            color: "#3a2608",
-            border: "2px solid #b48817",
-            fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 17,
-            letterSpacing: "0.06em",
-            cursor: spinning ? "default" : "pointer",
-            boxShadow: spinning ? "none" : "0 6px 14px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.4)",
-            transition: "all 0.18s",
-          }}>
-          {spinning ? "🎡 GIRANDO..." : "🎡 GIRAR"}
-        </button>
-      </div>
-    );
-  }
-  // Vista revelada: cartel con palabras + tijeras tocables
+function SujetoPredicadoCard({ picks, splits, locked, onChooseSplit }) {
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 24 }}>
+    <div style={{ position: "relative", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 38 }}>
+      {/* Cartel grande con las 3 oraciones apiladas */}
       <div style={{
-        width: "fit-content", maxWidth: 430,
+        width: "100%", maxWidth: 440,
         background: "linear-gradient(180deg, rgba(255,253,245,0.97), rgba(245,238,225,0.92))",
         border: "3px solid #f2c260",
-        borderRadius: 18, padding: "16px 18px",
+        borderRadius: 18, padding: "14px 14px",
         boxShadow: "0 10px 22px rgba(0,0,0,0.45)",
+        display: "flex", flexDirection: "column", gap: 16,
       }}>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 4, justifyContent: "center", alignItems: "center" }}>
-          {palabras.map((p, i) => {
-            const beforeSplit = chosen !== null && i <= chosen;
-            const afterSplit  = chosen !== null && i >  chosen;
-            let bg = "rgba(252,233,168,0.55)";
-            let border = "2px solid rgba(217,164,65,0.4)";
-            let color = "#3a2608";
-            if (beforeSplit) { bg = "linear-gradient(180deg, #ffe97a, #d7b12a)"; border = "2px solid #b48817"; }
-            if (afterSplit)  { bg = "linear-gradient(180deg, #ff9a9a, #d94a4a)"; border = "2px solid #a31818"; color = "#fff"; }
-            return (
-              <React.Fragment key={i}>
-                <span style={{
-                  display: "inline-block",
-                  padding: "7px 13px",
-                  borderRadius: 10,
-                  background: bg, border, color,
-                  fontFamily: "var(--ed-font-display)", fontWeight: 700,
-                  fontSize: 17, lineHeight: 1.2,
-                  userSelect: "none",
-                  boxShadow: chosen !== null ? "0 2px 4px rgba(0,0,0,0.2)" : "none",
-                  transition: "all 0.2s",
-                }}>{p}</span>
-                {i < palabras.length - 1 && (
-                  <button
-                    onClick={() => !locked && onChooseSplit(i)}
-                    disabled={locked}
-                    style={{
-                      width: chosen === i ? 6 : 26, height: 38,
-                      padding: 0,
-                      background: chosen === i
-                        ? (isCorrect ? "#2ecc8f" : isWrong ? "#ff6b6b" : "#4fd8ff")
-                        : "transparent",
-                      border: chosen === i ? "none" : "2px dashed rgba(252,233,168,0.55)",
-                      borderRadius: chosen === i ? 3 : 8,
-                      color: "#fce9a8",
-                      cursor: locked ? "default" : "pointer",
-                      fontSize: 16, fontWeight: 800,
-                      lineHeight: 1,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      transition: "all 0.2s",
-                      boxShadow: chosen === i ? "0 0 14px currentColor" : "none",
-                    }}
-                    title={chosen === i ? "Corte aquí" : "Toca para cortar aquí"}
-                  >
-                    {chosen === i ? "" : "✂"}
-                  </button>
-                )}
-              </React.Fragment>
-            );
-          })}
-        </div>
+        {picks.map((pick, oracionIdx) => {
+          const palabras = pick.palabras;
+          const splitOk = pick.splitIdx;
+          const chosen = splits[oracionIdx];
+          const isCorrect = locked && chosen === splitOk;
+          const isWrong = locked && chosen !== splitOk;
+          return (
+            <div key={oracionIdx} style={{
+              display: "flex", flexWrap: "wrap", gap: 3, justifyContent: "center", alignItems: "center",
+              paddingTop: oracionIdx === 0 ? 0 : 14,
+              borderTop: oracionIdx === 0 ? "none" : "1px dashed rgba(180,136,23,0.3)",
+            }}>
+              {/* Numerito de la oración */}
+              <span style={{
+                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                width: 22, height: 22, borderRadius: "50%",
+                background: isCorrect ? "#2ecc8f" : isWrong ? "#ff6b6b" : "rgba(58,38,8,0.85)",
+                color: "#fff",
+                fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11,
+                marginRight: 4,
+                flexShrink: 0,
+              }}>{oracionIdx + 1}</span>
+              {palabras.map((p, i) => {
+                const beforeSplit = chosen !== null && i <= chosen;
+                const afterSplit  = chosen !== null && i >  chosen;
+                let bg = "rgba(252,233,168,0.55)";
+                let border = "2px solid rgba(217,164,65,0.4)";
+                let color = "#3a2608";
+                if (beforeSplit) { bg = "linear-gradient(180deg, #ffe97a, #d7b12a)"; border = "2px solid #b48817"; }
+                if (afterSplit)  { bg = "linear-gradient(180deg, #ff9a9a, #d94a4a)"; border = "2px solid #a31818"; color = "#fff"; }
+                return (
+                  <React.Fragment key={i}>
+                    <span style={{
+                      display: "inline-block",
+                      padding: "4px 9px",
+                      borderRadius: 8,
+                      background: bg, border, color,
+                      fontFamily: "var(--ed-font-display)", fontWeight: 700,
+                      fontSize: 14, lineHeight: 1.15,
+                      userSelect: "none",
+                      boxShadow: chosen !== null ? "0 2px 3px rgba(0,0,0,0.2)" : "none",
+                      transition: "all 0.18s",
+                    }}>{p}</span>
+                    {i < palabras.length - 1 && (
+                      <button
+                        onClick={() => !locked && onChooseSplit(oracionIdx, i)}
+                        disabled={locked}
+                        style={{
+                          width: chosen === i ? 5 : 20, height: 28,
+                          padding: 0,
+                          background: chosen === i
+                            ? (isCorrect ? "#2ecc8f" : isWrong ? "#ff6b6b" : "#4fd8ff")
+                            : "transparent",
+                          border: chosen === i ? "none" : "2px dashed rgba(180,136,23,0.5)",
+                          borderRadius: chosen === i ? 3 : 6,
+                          color: "#b48817",
+                          cursor: locked ? "default" : "pointer",
+                          fontSize: 12, fontWeight: 800,
+                          lineHeight: 1,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          transition: "all 0.18s",
+                          boxShadow: chosen === i ? "0 0 10px currentColor" : "none",
+                        }}
+                        title={chosen === i ? "Corte aquí" : "Toca para cortar aquí"}
+                      >
+                        {chosen === i ? "" : "✂"}
+                      </button>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          );
+        })}
       </div>
-      <div style={{ display: "flex", gap: 16, alignItems: "center", justifyContent: "center" }}>
+      {/* Leyenda compartida abajo */}
+      <div style={{ display: "flex", gap: 12, alignItems: "center", justifyContent: "center" }}>
         <div style={{
           background: "linear-gradient(180deg, #ffe97a, #d7b12a)", color: "#3a2608",
-          padding: "6px 16px", borderRadius: 999,
-          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
+          padding: "5px 14px", borderRadius: 999,
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11,
           border: "2px solid #b48817", letterSpacing: "0.06em",
           boxShadow: "0 3px 7px rgba(0,0,0,0.3)",
         }}>SUJETO ←</div>
-        <div style={{ color: "#fce9a8", fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 20 }}>✂</div>
+        <div style={{ color: "#fce9a8", fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 17 }}>✂</div>
         <div style={{
           background: "linear-gradient(180deg, #ff9a9a, #d94a4a)", color: "#fff",
-          padding: "6px 16px", borderRadius: 999,
-          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
+          padding: "5px 14px", borderRadius: 999,
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11,
           border: "2px solid #a31818", letterSpacing: "0.06em",
           boxShadow: "0 3px 7px rgba(0,0,0,0.3)",
         }}>→ PREDICADO</div>
@@ -1928,74 +2163,188 @@ function _SujetoPredicadoCard_DEPRECATED({ pick, split, locked, onChooseSplit })
 }
 
 // ─────────────────────────────────────────────────────────────
-// N1 · R2 — Detective literario: el niño toma una lupa (MD o MI)
-// y marca las palabras del expediente. El núcleo ya está marcado
-// en rojo como "víctima del caso".
+// N1 · R2 — Oración completa con el núcleo bloqueado (rojo).
+// El niño toca cada palabra/grupo y la manda a DIRECTO o INDIRECTO.
 // ─────────────────────────────────────────────────────────────
-function DetectiveModCard({ pick, marks, lupa, locked, onChooseLupa, onMarkWord }) {
+function DetectiveModCard({ pick, marks, pickedChip, locked, onPickChip, onAssignBucket, onAssignTo, onUnmark }) {
+  const colorMD = { bg: "linear-gradient(180deg, #b9e3ff, #4f9ee0)", border: "#1466a6", text: "#0a2540" };
+  const colorMI = { bg: "linear-gradient(180deg, #b8efc4, #5fb878)", border: "#1e6e2e", text: "#0a3a18" };
+  const pickedTokenIdx = pickedChip; // renombrado conceptualmente — sigue siendo el idx seleccionado
+
+  // 2 carpetas — sirven como botones (tap) y como dropzones (arrastrar).
+  // Muestran las palabras que han recibido dentro.
+  const Bucket = ({ tipo }) => {
+    const cfg = tipo === "md" ? colorMD : colorMI;
+    const label = tipo === "md" ? "DIRECTO" : "INDIRECTO";
+    const icono = tipo === "md" ? "📘" : "📗";
+    const tip = tipo === "md" ? "artículo o adjetivo" : "con preposición";
+    const canDrop = !locked && pickedTokenIdx != null;
+    // Tokens asignados a esta carpeta
+    const dentro = pick.tokens
+      .map((t, i) => ({ ...t, _i: i }))
+      .filter((t) => marks[t._i] === tipo);
+    return (
+      <div
+        onClick={() => canDrop && onAssignBucket(tipo)}
+        data-dropzone={`bucket:${tipo}`}
+        style={{
+          minWidth: 200, padding: "10px 14px 12px 14px",
+          background: cfg.bg,
+          border: `3px ${canDrop ? "solid #fce9a8" : "dashed " + cfg.border}`,
+          borderRadius: 14,
+          color: cfg.text,
+          fontFamily: "var(--ed-font-display)", fontWeight: 800,
+          cursor: canDrop ? "pointer" : "default",
+          boxShadow: canDrop ? "0 0 16px rgba(252,233,168,0.55)" : "0 6px 14px rgba(0,0,0,0.35), inset 0 -3px 0 rgba(0,0,0,0.15)",
+          transform: canDrop ? "translateY(-2px)" : "none",
+          transition: "all 0.18s",
+          display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+          fontSize: 13, letterSpacing: "0.06em",
+          position: "relative",
+        }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+          <span>{icono} {label}</span>
+          <span style={{ fontSize: 10, fontWeight: 700, opacity: 0.8 }}>· {tip}</span>
+        </div>
+        {/* Área donde caen las palabras */}
+        <div style={{
+          width: "100%", minHeight: 38,
+          background: "rgba(255,255,255,0.45)",
+          border: `1.5px dashed ${cfg.border}`,
+          borderRadius: 10,
+          padding: "5px 7px",
+          display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: 5,
+          marginTop: 2,
+        }}>
+          {dentro.length === 0 ? (
+            <span style={{ fontSize: 10, fontStyle: "italic", opacity: 0.55, fontWeight: 700, letterSpacing: "0.04em" }}>
+              ⤵ suelta aquí
+            </span>
+          ) : dentro.map((t) => {
+            const isWrong = locked && t.tipo !== tipo;
+            const isCorrect = locked && t.tipo === tipo;
+            return (
+              <div
+                key={t._i}
+                className="ed-draggable"
+                onPointerDown={locked ? undefined : makeDragHandler({
+                  item: t._i,
+                  ghostHtml: `<div style="padding:6px 11px;border-radius:8px;background:${cfg.bg};color:${cfg.text};border:2px solid ${cfg.border};font-family:Fredoka,Nunito,sans-serif;font-weight:700;font-size:13px;box-shadow:0 10px 22px rgba(0,0,0,0.5);white-space:nowrap;">${t.w}</div>`,
+                  onTap: () => onUnmark(t._i),
+                  onDrop: (zoneId) => {
+                    if (zoneId && zoneId.startsWith("bucket:") && onAssignTo) {
+                      const newBucket = zoneId.slice("bucket:".length);
+                      if (newBucket !== tipo) onAssignTo(t._i, newBucket);
+                    }
+                  },
+                  disabled: locked,
+                })}
+                style={{
+                  display: "inline-flex", alignItems: "center",
+                  padding: "3px 9px", borderRadius: 8,
+                  background: "rgba(255,255,255,0.85)",
+                  border: `2px solid ${isCorrect ? "#2ecc8f" : isWrong ? "#ff6b6b" : cfg.border}`,
+                  color: cfg.text,
+                  fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13,
+                  cursor: locked ? "default" : "grab",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                  userSelect: "none",
+                  touchAction: "none",
+                }}
+                title={locked ? "" : "Arrástrala a la otra carpeta o tócala para devolver"}
+              >{t.w}</div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 18 }}>
-      {/* Expediente (cartel principal) */}
+    <div style={{ position: "relative", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 32 }}>
+      {/* Cartel con la oración completa — núcleo en rojo, modificadores tocables */}
       <div style={{
-        width: "fit-content", maxWidth: 430,
+        width: "fit-content", maxWidth: 450,
         background: "linear-gradient(180deg, rgba(255,253,245,0.97), rgba(245,238,225,0.92))",
         border: "3px solid #f2c260",
-        borderRadius: 18, padding: "14px 18px 16px 18px",
-        boxShadow: "0 12px 26px rgba(0,0,0,0.5)",
-        color: "#3a2608",
+        borderRadius: 18,
+        padding: "14px 18px",
+        boxShadow: "0 10px 22px rgba(0,0,0,0.45)",
       }}>
         <div style={{
-          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11,
-          color: "#7a4a0e", letterSpacing: "0.1em",
-          textAlign: "center", marginBottom: 10,
-          textTransform: "uppercase",
+          display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center", alignItems: "center",
         }}>
-          📓 Expediente del caso
-        </div>
-        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: 6 }}>
           {pick.tokens.map((t, i) => {
+            // Núcleo: rojo, bloqueado
             if (t.tipo === "n") {
               return (
                 <span key={i} style={{
-                  display: "inline-block",
-                  padding: "6px 14px", borderRadius: 10,
+                  display: "inline-flex", alignItems: "center", gap: 4,
+                  padding: "7px 14px", borderRadius: 10,
                   background: "linear-gradient(180deg, #ff9a9a, #d94a4a)",
-                  color: "#fff", fontWeight: 800,
-                  fontFamily: "var(--ed-font-display)", fontSize: 17,
+                  color: "#fff",
+                  fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 17,
                   border: "2px solid #a31818",
                   boxShadow: "0 3px 7px rgba(0,0,0,0.3)",
+                  cursor: "not-allowed",
+                  userSelect: "none",
                 }}>
+                  {pick.icono && <span style={{ fontSize: 15 }}>{pick.icono}</span>}
                   {t.w}
-                  <span style={{ fontSize: 8.5, opacity: 0.9, marginLeft: 4, letterSpacing: "0.06em" }}>· NÚCLEO</span>
+                  <span style={{ fontSize: 9, opacity: 0.85, letterSpacing: "0.06em", marginLeft: 2 }}>NÚCLEO</span>
                 </span>
               );
             }
             const choice = marks[i];
             const expected = t.tipo;
+            const isPicked = pickedTokenIdx === i;
             const isCorrect = locked && choice === expected;
             const isWrong = locked && choice && choice !== expected;
             const isEmpty = locked && !choice;
 
-            let bg = "rgba(252,233,168,0.55)";
-            let border = "2px dashed rgba(217,164,65,0.6)";
+            let bg = "rgba(252,233,168,0.85)";
+            let border = "2px solid rgba(217,164,65,0.7)";
             let color = "#3a2608";
-            if (choice === "md") { bg = "linear-gradient(180deg, #b9e3ff, #4f9ee0)"; border = "2px solid #1466a6"; color = "#0a2540"; }
-            if (choice === "mi") { bg = "linear-gradient(180deg, #b8efc4, #5fb878)"; border = "2px solid #1e6e2e"; color = "#0a3a18"; }
-            if (isCorrect) { border = "2px solid #2ecc8f"; }
-            if (isWrong)   { bg = "rgba(255,107,107,0.4)"; border = "2px solid #ff6b6b"; }
+            if (choice === "md") { bg = colorMD.bg; border = `2px solid ${colorMD.border}`; color = colorMD.text; }
+            if (choice === "mi") { bg = colorMI.bg; border = `2px solid ${colorMI.border}`; color = colorMI.text; }
+            if (isCorrect) border = "2px solid #2ecc8f";
+            if (isWrong)   { bg = "rgba(255,107,107,0.5)"; border = "2px solid #ff6b6b"; }
+            if (isPicked)  border = "2px solid #4fd8ff";
+
+            // Color del ghost al arrastrar (visible mientras se mueve)
+            const ghostColor = choice === "md" ? colorMD : choice === "mi" ? colorMI : { bg: "linear-gradient(180deg, #fce9a8, #d9a441)", border: "#b48817", text: "#3a2608" };
             return (
-              <span key={i}
-                onClick={() => !locked && lupa && onMarkWord(i)}
+              <div
+                key={i}
+                className="ed-draggable"
+                onPointerDown={locked ? undefined : makeDragHandler({
+                  item: i,
+                  ghostHtml: `<div style="padding:8px 14px;border-radius:10px;background:${ghostColor.bg};color:${ghostColor.text};border:2.5px solid ${ghostColor.border};font-family:Fredoka,Nunito,sans-serif;font-weight:800;font-size:16px;box-shadow:0 10px 22px rgba(0,0,0,0.5);white-space:nowrap;">${t.w}</div>`,
+                  onTap: () => {
+                    if (choice) onUnmark(i);
+                    else onPickChip(i);
+                  },
+                  onDrop: (zoneId) => {
+                    if (zoneId && zoneId.startsWith("bucket:") && onAssignTo) {
+                      const bucket = zoneId.slice("bucket:".length);
+                      onAssignTo(i, bucket);
+                    }
+                  },
+                  disabled: locked,
+                })}
                 style={{
-                  display: "inline-block",
-                  padding: "6px 14px", borderRadius: 10,
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  padding: "7px 13px", borderRadius: 10,
                   background: bg, border, color,
-                  fontWeight: 700, fontFamily: "var(--ed-font-display)", fontSize: 17,
-                  cursor: locked ? "default" : (lupa ? "pointer" : "not-allowed"),
-                  boxShadow: choice ? "0 3px 7px rgba(0,0,0,0.3)" : "none",
+                  fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 16,
+                  cursor: locked ? "default" : "grab",
+                  boxShadow: isPicked
+                    ? "0 0 16px rgba(79,216,255,0.7)"
+                    : (choice ? "0 3px 6px rgba(0,0,0,0.25)" : "0 2px 4px rgba(0,0,0,0.18)"),
+                  transform: isPicked ? "translateY(-3px) scale(1.04)" : "none",
+                  transition: "all 0.18s",
                   userSelect: "none",
-                  opacity: !locked && !lupa ? 0.85 : 1,
-                  transition: "all 0.15s",
+                  touchAction: "none",
                 }}>
                 {t.w}
                 {(isWrong || isEmpty) && (
@@ -2003,54 +2352,16 @@ function DetectiveModCard({ pick, marks, lupa, locked, onChooseLupa, onMarkWord 
                     ✓{expected === "md" ? "DIRECTO" : "INDIRECTO"}
                   </sup>
                 )}
-              </span>
+              </div>
             );
           })}
         </div>
       </div>
 
-      {/* Selector de lupas — texto completo para que el niño no tenga que adivinar siglas */}
-      <div style={{ display: "flex", gap: 12, alignItems: "center", justifyContent: "center" }}>
-        <span style={{
-          fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 11,
-          color: "#fce9a8", letterSpacing: "0.06em",
-        }}>TU LUPA:</span>
-        <button
-          onClick={() => !locked && onChooseLupa("md")}
-          disabled={locked}
-          style={{
-            display: "flex", alignItems: "center", gap: 6,
-            padding: "6px 16px", borderRadius: 999,
-            background: lupa === "md" ? "linear-gradient(180deg, #b9e3ff, #4f9ee0)" : "rgba(10,6,35,0.55)",
-            color: lupa === "md" ? "#0a2540" : "#b9e3ff",
-            border: `2px solid ${lupa === "md" ? "#fce9a8" : "#1466a6"}`,
-            fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
-            letterSpacing: "0.06em",
-            cursor: locked ? "default" : "pointer",
-            boxShadow: lupa === "md" ? "0 0 14px rgba(79,158,224,0.65)" : "0 3px 6px rgba(0,0,0,0.3)",
-            transform: lupa === "md" ? "translateY(-2px)" : "none",
-            transition: "all 0.18s",
-          }}>
-          🔍 DIRECTO
-        </button>
-        <button
-          onClick={() => !locked && onChooseLupa("mi")}
-          disabled={locked}
-          style={{
-            display: "flex", alignItems: "center", gap: 6,
-            padding: "6px 16px", borderRadius: 999,
-            background: lupa === "mi" ? "linear-gradient(180deg, #b8efc4, #5fb878)" : "rgba(10,6,35,0.55)",
-            color: lupa === "mi" ? "#0a3a18" : "#b8efc4",
-            border: `2px solid ${lupa === "mi" ? "#fce9a8" : "#1e6e2e"}`,
-            fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
-            letterSpacing: "0.06em",
-            cursor: locked ? "default" : "pointer",
-            boxShadow: lupa === "mi" ? "0 0 14px rgba(95,184,120,0.65)" : "0 3px 6px rgba(0,0,0,0.3)",
-            transform: lupa === "mi" ? "translateY(-2px)" : "none",
-            transition: "all 0.18s",
-          }}>
-          🔍 INDIRECTO
-        </button>
+      {/* 2 carpetas como botones */}
+      <div style={{ display: "flex", gap: 16, alignItems: "stretch", justifyContent: "center" }}>
+        <Bucket tipo="md" />
+        <Bucket tipo="mi" />
       </div>
     </div>
   );
@@ -2155,8 +2466,8 @@ function _PintorModCard_DEPRECATED({ pick, colors, locked, onCycle }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// N1 · R3 — Laboratorio de citas: una "probeta" con la frase del
-// narrador y los signos como reactivos en la estantería inferior.
+// N1 · R3 — Cazapuntuación (shooter): cita con varios huecos arriba,
+// banco de globos con signos abajo (incluye distractores).
 // ─────────────────────────────────────────────────────────────
 function LabCitasCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, onSetPlaced }) {
   const usadosPorSigno = {};
@@ -2167,88 +2478,105 @@ function LabCitasCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, on
   for (const s of pick.bandeja) {
     disponiblesPorSigno[s] = (disponiblesPorSigno[s] || 0) + 1;
   }
+  // Orden estable de signos en el banco: por aparición en la bandeja original
+  const ordenSignos = [];
+  const visto = new Set();
+  for (const s of pick.bandeja) {
+    if (!visto.has(s)) { visto.add(s); ordenSignos.push(s); }
+  }
+
+  // Render del cartel de cita: soporta {t}, {s}, {br}
+  const renderCita = () => {
+    const lineas = [[]];
+    pick.partes.forEach((p, i) => {
+      if (p.br) { lineas.push([]); return; }
+      lineas[lineas.length - 1].push({ ...p, _i: i });
+    });
+    return lineas.map((linea, lineaIdx) => (
+      <div key={lineaIdx} style={{
+        display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center",
+        gap: 4, width: "100%",
+        marginTop: lineaIdx === 0 ? 0 : 18,
+      }}>
+        {linea.map((p) => {
+          if (p.t) {
+            return <span key={p._i} style={{ padding: "0 4px" }}>{p.t}</span>;
+          }
+          const val = placed[p._i];
+          const expected = p.s;
+          const isCorrect = locked && val === expected;
+          const isWrong = locked && val && val !== expected;
+          const isEmpty = locked && !val;
+
+          let bg = "rgba(255,255,255,0.85)";
+          let border = "2px dashed rgba(30,110,46,0.6)";
+          let color = "#0a3a18";
+          if (val) {
+            bg = "linear-gradient(180deg, #fce9a8, #d9a441)";
+            border = "2px solid #b48817";
+            color = "#3a2608";
+          }
+          if (isCorrect) { bg = "rgba(46,204,143,0.55)"; border = "2px solid #2ecc8f"; }
+          if (isWrong)   { bg = "rgba(255,107,107,0.5)"; border = "2px solid #ff6b6b"; }
+
+          return (
+            <span key={p._i}
+              data-dropzone={`citaslot:${p._i}`}
+              onClick={() => onPlaceIn(p._i)}
+              style={{
+                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                minWidth: 26, minHeight: 30,
+                padding: "0 5px", margin: "0 1px",
+                borderRadius: 8,
+                background: bg, border, color,
+                fontWeight: 800,
+                fontFamily: "var(--ed-font-display)", fontSize: 16,
+                cursor: locked ? "default" : "pointer",
+                userSelect: "none",
+                boxShadow: val ? "0 2px 5px rgba(0,0,0,0.25)" : "none",
+                transition: "all 0.15s",
+              }}>
+              {val || "▢"}
+              {(isWrong || isEmpty) && (
+                <sup style={{ fontSize: 9, color: "#1e8a5d", marginLeft: 2, fontWeight: 800 }}>
+                  ✓{expected === '"' ? "”" : expected}
+                </sup>
+              )}
+            </span>
+          );
+        })}
+      </div>
+    ));
+  };
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14 }}>
-      {/* Probeta = cartel verde de "tubo de ensayo" con la cita */}
+    <div style={{ position: "relative", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 36 }}>
+      {/* Cartel verde con la cita */}
       <div style={{
-        width: "fit-content", maxWidth: 430,
+        width: "100%", maxWidth: 430,
         background: "linear-gradient(180deg, rgba(229,252,239,0.97), rgba(200,238,220,0.92))",
         border: "3px solid #5fb878",
         borderRadius: 22,
-        padding: "12px 20px 14px 20px",
+        padding: "14px 20px 16px 20px",
         boxShadow: "0 12px 26px rgba(0,0,0,0.5), inset 0 -6px 0 rgba(95,184,120,0.25)",
         color: "#0a3a18",
         position: "relative",
       }}>
         <div style={{
-          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11,
-          color: "#1e6e2e", letterSpacing: "0.1em",
-          textAlign: "center", marginBottom: 8,
-          textTransform: "uppercase",
-        }}>🧪 Probeta — cita en proceso</div>
-        <div style={{
-          display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: 4,
-          fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 16, lineHeight: 1.6,
+          fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 14, lineHeight: 1.55,
         }}>
-          {pick.partes.map((p, i) => {
-            if (p.t) {
-              return <span key={i} style={{ padding: "0 4px" }}>{p.t}</span>;
-            }
-            const val = placed[i];
-            const expected = p.s;
-            const isCorrect = locked && val === expected;
-            const isWrong = locked && val && val !== expected;
-            const isEmpty = locked && !val;
-
-            let bg = "rgba(255,255,255,0.85)";
-            let border = "2px dashed rgba(30,110,46,0.6)";
-            let color = "#0a3a18";
-            if (val) {
-              bg = "linear-gradient(180deg, #fce9a8, #d9a441)";
-              border = "2px solid #b48817";
-              color = "#3a2608";
-            }
-            if (isCorrect) { bg = "rgba(46,204,143,0.55)"; border = "2px solid #2ecc8f"; }
-            if (isWrong)   { bg = "rgba(255,107,107,0.5)"; border = "2px solid #ff6b6b"; }
-
-            return (
-              <span key={i}
-                data-dropzone={`citaslot:${i}`}
-                onClick={() => onPlaceIn(i)}
-                style={{
-                  display: "inline-flex", alignItems: "center", justifyContent: "center",
-                  minWidth: 28, minHeight: 32,
-                  padding: "0 6px", margin: "0 1px",
-                  borderRadius: 8,
-                  background: bg, border, color,
-                  fontWeight: 800,
-                  fontFamily: "var(--ed-font-display)", fontSize: 18,
-                  cursor: locked ? "default" : "pointer",
-                  userSelect: "none",
-                  boxShadow: val ? "0 2px 5px rgba(0,0,0,0.25)" : "none",
-                  transition: "all 0.15s",
-                }}>
-                {val || "▢"}
-                {(isWrong || isEmpty) && (
-                  <sup style={{ fontSize: 9, color: "#1e8a5d", marginLeft: 2, fontWeight: 800 }}>
-                    ✓{expected === '"' ? "”" : expected}
-                  </sup>
-                )}
-              </span>
-            );
-          })}
+          {renderCita()}
         </div>
       </div>
 
-      {/* Estantería de reactivos */}
+      {/* Banco de GLOBOS — flotan con animación */}
       <div data-qa="bandeja" style={{
-        width: "fit-content",
+        width: "fit-content", maxWidth: 440,
         background: "rgba(10,6,35,0.55)",
         border: "1.5px solid rgba(95,184,120,0.45)",
         borderRadius: 16,
-        padding: "8px 14px",
-        display: "flex", gap: 10, justifyContent: "center", alignItems: "center",
+        padding: "14px 16px 14px 16px",
+        display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center", alignItems: "flex-end",
         position: "relative",
       }}>
         <div style={{
@@ -2258,28 +2586,28 @@ function LabCitasCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, on
           fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 9.5,
           letterSpacing: "0.1em",
           border: "1px solid rgba(95,184,120,0.5)",
-        }}>REACTIVOS</div>
-        {Object.keys(disponiblesPorSigno).map((signo) => {
-          const restante = disponiblesPorSigno[signo] - (usadosPorSigno[signo] || 0);
+        }}>🎯 GLOBOS</div>
+        {ordenSignos.map((signo, idx) => {
           const isPicked = picked === signo;
-          if (restante <= 0) return (
-            <div key={signo} style={{
-              padding: "8px 14px", borderRadius: 10,
-              background: "rgba(255,255,255,0.05)",
-              border: "2px dashed rgba(252,233,168,0.2)",
-              color: "rgba(252,233,168,0.3)",
-              fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 20,
-              minWidth: 50, textAlign: "center",
-            }}>
-              {signo === '"' ? "”" : signo}
-            </div>
-          );
+          const agotado = false;  // globos ilimitados — siempre disponibles
+          // Color del globo por signo (variedad visual)
+          const palettes = [
+            ["#fce9a8", "#d9a441", "#b48817"],
+            ["#b9e3ff", "#4f9ee0", "#1466a6"],
+            ["#b8efc4", "#5fb878", "#1e6e2e"],
+            ["#ffb9d4", "#d94a8a", "#a31866"],
+            ["#d6c7ff", "#9670d9", "#532a99"],
+            ["#ffcfa3", "#d9824a", "#a3501e"],
+          ];
+          const pal = palettes[idx % palettes.length];
+          // Animación bobbing: cada globo flota con delay distinto
+          const delay = (idx * 0.18).toFixed(2) + "s";
           return (
             <div key={signo}
-              className="ed-draggable"
-              onPointerDown={makeDragHandler({
+              className="ed-draggable ed-float-soft"
+              onPointerDown={agotado ? undefined : makeDragHandler({
                 item: signo,
-                ghostHtml: `<div style="background:#fce9a8;color:#3a2608;padding:8px 18px;border-radius:10px;font-family:Fredoka,Nunito,sans-serif;font-weight:800;font-size:20px;border:2px solid #4fd8ff;box-shadow:0 8px 22px rgba(0,0,0,0.5);">${signo === '"' ? '&quot;' : signo}</div>`,
+                ghostHtml: `<div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(180deg,${pal[0]},${pal[1]});border:3px solid ${pal[2]};display:flex;align-items:center;justify-content:center;font-family:Fredoka,Nunito,sans-serif;font-weight:800;font-size:24px;color:#3a2608;box-shadow:0 8px 22px rgba(0,0,0,0.5);">${signo === '"' ? '&quot;' : signo}</div>`,
                 onTap: () => onPickLabel(signo),
                 onDrop: (zoneId, item) => {
                   if (zoneId && zoneId.startsWith("citaslot:") && onSetPlaced) {
@@ -2292,31 +2620,36 @@ function LabCitasCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, on
                 disabled: locked,
               })}
               style={{
-                padding: "8px 14px", borderRadius: 10,
-                background: isPicked ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.94)",
-                color: "#3a2608",
-                border: `2px solid ${isPicked ? "#4fd8ff" : "rgba(242,194,96,0.6)"}`,
-                fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 22,
-                cursor: locked ? "default" : "grab",
-                boxShadow: isPicked ? "0 0 16px rgba(79,216,255,0.65)" : "0 3px 7px rgba(0,0,0,0.3)",
-                transform: isPicked ? "translateY(-2px)" : "none",
-                transition: "all 0.15s",
-                minWidth: 50, textAlign: "center",
-                userSelect: "none",
                 position: "relative",
+                width: 46, height: 46, borderRadius: "50%",
+                background: agotado
+                  ? "rgba(255,255,255,0.05)"
+                  : `linear-gradient(180deg, ${pal[0]}, ${pal[1]})`,
+                border: agotado
+                  ? "2px dashed rgba(252,233,168,0.2)"
+                  : `3px solid ${isPicked ? "#4fd8ff" : pal[2]}`,
+                color: agotado ? "rgba(252,233,168,0.3)" : "#3a2608",
+                fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 22,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: agotado || locked ? "default" : "grab",
+                boxShadow: agotado
+                  ? "none"
+                  : (isPicked ? "0 0 18px rgba(79,216,255,0.7)" : "0 4px 10px rgba(0,0,0,0.4), inset 0 -3px 0 rgba(0,0,0,0.15)"),
+                transform: isPicked ? "translateY(-3px) scale(1.05)" : "none",
+                transition: "transform 0.18s, box-shadow 0.18s",
+                userSelect: "none",
+                animationDelay: delay,
               }}>
               {signo === '"' ? "”" : signo}
-              {restante > 1 && (
-                <span style={{
-                  position: "absolute", top: -8, right: -8,
-                  width: 22, height: 22, borderRadius: "50%",
-                  background: "#4fd8ff", color: "#0a2540",
-                  fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  border: "2px solid #fff",
-                  boxShadow: "0 2px 5px rgba(0,0,0,0.4)",
-                }}>×{restante}</span>
-              )}
+              {/* Cordel del globo (decoración) */}
+              <span style={{
+                position: "absolute", bottom: -8, left: "50%",
+                width: 2, height: 8,
+                background: agotado ? "rgba(252,233,168,0.15)" : pal[2],
+                transform: "translateX(-50%)",
+                borderRadius: 2,
+                pointerEvents: "none",
+              }} />
             </div>
           );
         })}
@@ -3314,7 +3647,6 @@ function SummaryCell({ label, value, tone = "var(--ed-ink)", emphasis = false })
 }
 
 Object.assign(window, { GameScreen, ResultsScreen });
-
 
 // app.jsx — Shell de producción EDINUN GAMES.
 // Enrutador por estado y device stage adaptativo (desktop / tablet / mobile).
