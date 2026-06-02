@@ -636,7 +636,7 @@ function CharacterScreen({ app, setApp, go }) {
 
 Object.assign(window, { HomeScreen, CharacterScreen, CosmosBg, incrementGamesCompleted, useVisitorCount, markFirstAttempt, LEVELS_CFG });
 
-// game-screens.jsx — Juego 8. Dos niveles de lenguaje con mecánicas distintas:
+﻿// game-screens.jsx — Juego 8. Dos niveles de lenguaje con mecánicas distintas:
 //   1. El escritor  (9 años)  — caza S/P · pintor de modificadores · sastre de citas
 //   2. El narrador  (10 años) — palabras mágicas · partes del cuento · ordena el cuento
 //
@@ -758,7 +758,10 @@ const RECENT_KEYS = {
   escritor: "edinun_juego8_escritor_recientes_v1",
   narrador: "edinun_juego8_narrador_recientes_v1",
 };
-const RECENT_LIMIT = 4;
+// FIFO compartido sp/mod/cit (escritor) y mag/elem/par (narrador). Como cada
+// sesión pushea ~5 entradas y el banco más chico tiene 5, ponemos el límite alto
+// para retener historia de 5–6 sesiones y evitar repeticiones consecutivas.
+const RECENT_LIMIT = 30;
 
 function getRecent(level) {
   try {
@@ -1056,64 +1059,142 @@ const MOD_BANK = [
   },
 ];
 
-// R3 — Cazapuntuación (shooter): citas con narrativa larga y MUCHOS huecos.
-//   Estructura: partes[] alterna entre texto fijo (t), slot (s) y separador (br = nueva línea).
-//   La bandeja (globos) incluye distractores para que haya que pensar.
+// R3 — Cazapuntuación: citas con foco curricular en COMILLAS (citas
+// textuales), DOS PUNTOS (introducir cita) y COMA (en frases explicativas).
+// Cada cita: 2 oraciones, cada una con UNA frase explicativa entre comas.
+//   Estructura: partes[] alterna texto fijo (t), slot (s) y separador (br).
 const CITAS_BANK = [
   {
     id: "profesor",
     partes: [
-      { t: "Esa tarde de viernes, el profesor anunció con voz seria" }, { s: ":" }, { s: '"' },
+      { t: "El profesor" }, { s: "," }, { t: "muy serio aquella mañana" }, { s: "," },
+      { t: "anunció" }, { s: ":" }, { s: '"' },
       { t: "Mañana tendremos un examen muy importante" }, { s: '"' }, { s: "." },
       { br: true },
-      { t: "Después, mirando a todos sus alumnos, agregó" }, { s: ":" }, { s: '"' },
-      { t: "Por favor, estudien mucho esta noche" }, { s: '"' }, { s: "." },
+      { t: "Después agregó" }, { s: ":" }, { s: '"' },
+      { t: "Estudien con calma" }, { s: '"' }, { s: "." },
     ],
-    bandeja: [":", '"', ".", ",", "!", "?"],
+    bandeja: [":", '"', ",", "."],
   },
   {
     id: "abuelo",
     partes: [
-      { t: "Durante el desayuno, el abuelo nos contó emocionado" }, { s: ":" }, { s: '"' },
+      { t: "El abuelo" }, { s: "," }, { t: "sentado en el sillón viejo" }, { s: "," },
+      { t: "nos contó" }, { s: ":" }, { s: '"' },
       { t: "Mañana iremos juntos al río del pueblo" }, { s: '"' }, { s: "." },
       { br: true },
-      { t: "Mi pequeña hermana saltó de alegría y exclamó" }, { s: ":" }, { s: '"' },
-      { t: "¡Qué linda sorpresa nos dio el abuelo" }, { s: "!" }, { s: '"' },
+      { t: "Mi hermana respondió" }, { s: ":" }, { s: '"' },
+      { t: "Pondremos los zapatos viejos" }, { s: '"' }, { s: "." },
     ],
-    bandeja: [":", '"', "!", ".", ",", "?"],
+    bandeja: [":", '"', ",", "."],
   },
   {
     id: "novios",
     partes: [
-      { t: "Cuando llegó el momento esperado, el novio respondió" }, { s: ":" }, { s: '"' },
+      { t: "El novio" }, { s: "," }, { t: "muy emocionado en la ceremonia" }, { s: "," },
+      { t: "respondió" }, { s: ":" }, { s: '"' },
       { t: "Sí, acepto con todo mi corazón" }, { s: '"' }, { s: "." },
       { br: true },
-      { t: "La novia, sonriendo con ternura, le dijo" }, { s: ":" }, { s: '"' },
-      { t: "Te amaré para toda la vida" }, { s: '"' }, { s: "." },
+      { t: "La novia sonrió y dijo" }, { s: ":" }, { s: '"' },
+      { t: "Te amaré para siempre" }, { s: '"' }, { s: "." },
     ],
-    bandeja: [":", '"', ".", ",", "!", "?"],
+    bandeja: [":", '"', ",", "."],
   },
   {
     id: "explorador",
     partes: [
-      { t: "Al llegar a la cima de la montaña, el explorador gritó" }, { s: ":" }, { s: '"' },
-      { t: "¡Por fin alcanzamos la cumbre nevada" }, { s: "!" }, { s: '"' },
+      { t: "El explorador" }, { s: "," }, { t: "cansado pero feliz al fin" }, { s: "," },
+      { t: "anunció" }, { s: ":" }, { s: '"' },
+      { t: "Por fin alcanzamos la cumbre nevada" }, { s: '"' }, { s: "." },
       { br: true },
-      { t: "Su compañero, agotado pero feliz, susurró" }, { s: ":" }, { s: '"' },
+      { t: "Su compañero respondió en voz baja" }, { s: ":" }, { s: '"' },
       { t: "Esto vale todo el esfuerzo del viaje" }, { s: '"' }, { s: "." },
     ],
-    bandeja: [":", '"', "!", ".", ",", "?"],
+    bandeja: [":", '"', ",", "."],
   },
   {
     id: "mama",
     partes: [
-      { t: "Después de la cena del domingo, mamá nos preguntó" }, { s: ":" }, { s: '"' },
-      { t: "¿Quién quiere ayudar a lavar los platos" }, { s: "?" }, { s: '"' },
+      { t: "Mamá" }, { s: "," }, { t: "después de la cena del domingo" }, { s: "," },
+      { t: "nos pidió" }, { s: ":" }, { s: '"' },
+      { t: "Lavemos todos los platos juntos" }, { s: '"' }, { s: "." },
       { br: true },
-      { t: "Mi hermano levantó la mano y contestó" }, { s: ":" }, { s: '"' },
+      { t: "Mi hermano contestó con energía" }, { s: ":" }, { s: '"' },
       { t: "Yo te ayudo con mucho gusto" }, { s: '"' }, { s: "." },
     ],
-    bandeja: [":", '"', "?", ".", ",", "!"],
+    bandeja: [":", '"', ",", "."],
+  },
+  {
+    id: "maestro",
+    partes: [
+      { t: "El maestro de música" }, { s: "," }, { t: "muy emocionado aquella mañana" }, { s: "," },
+      { t: "nos dijo" }, { s: ":" }, { s: '"' },
+      { t: "La música es un viaje al alma" }, { s: '"' }, { s: "." },
+      { br: true },
+      { t: "Luego añadió con orgullo" }, { s: ":" }, { s: '"' },
+      { t: "Toquen con todo el corazón" }, { s: '"' }, { s: "." },
+    ],
+    bandeja: [":", '"', ",", "."],
+  },
+  {
+    id: "medico",
+    partes: [
+      { t: "El médico" }, { s: "," }, { t: "revisando al paciente con cuidado" }, { s: "," },
+      { t: "anunció" }, { s: ":" }, { s: '"' },
+      { t: "Pronto te sentirás mucho mejor" }, { s: '"' }, { s: "." },
+      { br: true },
+      { t: "La mamá sonrió y respondió" }, { s: ":" }, { s: '"' },
+      { t: "Mil gracias por su atención" }, { s: '"' }, { s: "." },
+    ],
+    bandeja: [":", '"', ",", "."],
+  },
+  {
+    id: "astronauta",
+    partes: [
+      { t: "El astronauta" }, { s: "," }, { t: "viendo el planeta azul desde la nave" }, { s: "," },
+      { t: "comentó" }, { s: ":" }, { s: '"' },
+      { t: "Es hermoso nuestro mundo" }, { s: '"' }, { s: "." },
+      { br: true },
+      { t: "Su compañera respondió en voz baja" }, { s: ":" }, { s: '"' },
+      { t: "Nadie creerá esta vista maravillosa" }, { s: '"' }, { s: "." },
+    ],
+    bandeja: [":", '"', ",", "."],
+  },
+  {
+    id: "cocinero",
+    partes: [
+      { t: "El cocinero" }, { s: "," }, { t: "probando la sopa caliente" }, { s: "," },
+      { t: "declaró" }, { s: ":" }, { s: '"' },
+      { t: "Está perfecta para servir hoy" }, { s: '"' }, { s: "." },
+      { br: true },
+      { t: "Después invitó a todos los presentes" }, { s: ":" }, { s: '"' },
+      { t: "Pasen al comedor por favor" }, { s: '"' }, { s: "." },
+    ],
+    bandeja: [":", '"', ",", "."],
+  },
+  {
+    id: "viajera",
+    partes: [
+      { t: "La viajera" }, { s: "," }, { t: "caminando por el bosque tranquilo" }, { s: "," },
+      { t: "murmuró" }, { s: ":" }, { s: '"' },
+      { t: "Aquí cantan muchos pájaros" }, { s: '"' }, { s: "." },
+      { br: true },
+      { t: "De pronto susurró asustada" }, { s: ":" }, { s: '"' },
+      { t: "Algo se mueve entre los árboles" }, { s: '"' }, { s: "." },
+    ],
+    bandeja: [":", '"', ",", "."],
+  },
+  {
+    id: "capitan",
+    partes: [
+      { t: "El capitán" }, { s: "," }, { t: "desde la proa del barco" }, { s: "," },
+      { t: "anunció" }, { s: ":" }, { s: '"' },
+      { t: "Por fin llegamos a la costa" }, { s: '"' }, { s: "." },
+      { br: true },
+      { t: "Los marineros respondieron con alegría" }, { s: ":" }, { s: '"' },
+      { t: "Bajemos rápido para celebrar" }, { s: '"' }, { s: "." },
+    ],
+    bandeja: [":", '"', ",", "."],
   },
 ];
 
@@ -1121,107 +1202,194 @@ const CITAS_BANK = [
 // BANCOS — N2 · El narrador (10 años)
 // ─────────────────────────────────────────────────────────────
 
-// R1 — Palabras mágicas: frase con 1 hueco, 4 opciones.
-const MAGICAS_BANK = [
+// R1 — Laboratorio del cuentacuentos: receta con 3 huecos por categoría.
+// 3 frascos: tiempo (conectores), sonido (verbos de decir), color (adjetivos).
+// Cada frase trae un ANCLA explícita en el texto para que solo UNA opción del
+// frasco encaje (ej. "a gritos" → solo "exclamó"; "altísimo" → solo "imponente").
+const LAB_BANK = [
   {
-    id: "bosque",
-    titulo: "En el bosque",
-    huecos: [
-      { id: "h1", frase: "El bosque parecía  ___  y silencioso.",   correcta: "misterioso",  opciones: ["misterioso", "ruidoso", "rápido", "alegre"] },
-      { id: "h2", frase: " ___ , se escuchó un crujido entre las hojas.", correcta: "De repente", opciones: ["Más tarde", "De repente", "Despacio", "Siempre"] },
-      { id: "h3", frase: "Una voz  ___  algo, pero nadie pudo entenderlo.", correcta: "susurró",   opciones: ["gritó", "cantó", "susurró", "olvidó"] },
+    id: "faro",
+    titulo: "La carta del faro",
+    frases: [
+      { categoria: "tiempo", texto: "El sol se hundía rojo en el mar. ___, llegó un sobre amarillento al puerto.", correcta: "Aquella tarde" },
+      { categoria: "sonido", texto: "El cartero saltó de su silla y ___ a gritos el nombre del marinero.",         correcta: "exclamó" },
+      { categoria: "color",  texto: "El faro, altísimo y antiguo, se veía ___ contra el cielo gris.",              correcta: "imponente" },
+    ],
+    frascos: {
+      tiempo: ["Aquella tarde", "A medianoche", "Por la mañana", "En invierno"],
+      sonido: ["exclamó", "susurró", "murmuró", "balbuceó"],
+      color:  ["imponente", "diminuto", "polvoriento", "perfumado"],
+    },
+  },
+  {
+    id: "paraguas",
+    titulo: "El paraguas que voló",
+    frases: [
+      { categoria: "tiempo", texto: "El día era soleado y tranquilo. ___, una ráfaga muy fuerte sopló sobre la plaza.", correcta: "Sin avisar" },
+      { categoria: "sonido", texto: "Doña Rosa ___ tan fuerte que se oyó en toda la plaza.",                            correcta: "gritó" },
+      { categoria: "color",  texto: "Su paraguas, ya muy lejos entre las nubes, se veía ___ desde abajo.",              correcta: "diminuto" },
+    ],
+    frascos: {
+      tiempo: ["Sin avisar", "Mañana mismo", "El año pasado", "Cada lunes"],
+      sonido: ["gritó", "susurró", "balbuceó", "tartamudeó"],
+      color:  ["diminuto", "imponente", "perfumado", "deslumbrante"],
+    },
+  },
+  {
+    id: "tejado",
+    titulo: "El gato del tejado",
+    frases: [
+      { categoria: "tiempo", texto: "Todos dormían y la luna brillaba alto. ___, un maullido suave salía del tejado.", correcta: "Por la noche" },
+      { categoria: "sonido", texto: "Doña Clara, para no asustarlo, ___ muy bajito el nombre del gato.",               correcta: "murmuró" },
+      { categoria: "color",  texto: "Los ojos del gato, como dos esmeraldas, brillaban ___ en la oscuridad.",           correcta: "verdosos" },
+    ],
+    frascos: {
+      tiempo: ["Por la noche", "Al mediodía", "En el verano", "Mañana temprano"],
+      sonido: ["murmuró", "gritó", "rugió", "anunció"],
+      color:  ["verdosos", "rojizos", "blancos", "azulados"],
+    },
+  },
+  {
+    id: "reloj",
+    titulo: "La torre del reloj",
+    frases: [
+      { categoria: "tiempo", texto: "El reloj había marcado las horas sin fallar durante mil años. ___, se detuvo de golpe.", correcta: "De pronto" },
+      { categoria: "sonido", texto: "El relojero subió a la plaza y ___ ante todos los vecinos la mala noticia.",             correcta: "anunció" },
+      { categoria: "color",  texto: "Los engranajes, sin aceite desde hacía años, se veían ___ y marrones.",                  correcta: "oxidados" },
+    ],
+    frascos: {
+      tiempo: ["De pronto", "Muy despacio", "Como siempre", "Lunes a lunes"],
+      sonido: ["anunció", "susurró", "tartamudeó", "balbuceó"],
+      color:  ["oxidados", "perfumados", "diminutos", "azules"],
+    },
+  },
+  {
+    id: "tren",
+    titulo: "El silbato del tren viejo",
+    frases: [
+      { categoria: "tiempo", texto: "Las primeras luces aparecían sobre los cerros. ___, sonó el silbato del tren.",   correcta: "Al amanecer" },
+      { categoria: "sonido", texto: "El maquinista, asomado a la ventana, ___ un saludo a los del andén.",             correcta: "exclamó" },
+      { categoria: "color",  texto: "Las vías, mojadas por el rocío de la madrugada, se veían ___ bajo el sol.",       correcta: "relucientes" },
+    ],
+    frascos: {
+      tiempo: ["Al amanecer", "A medianoche", "En el verano", "El otro día"],
+      sonido: ["exclamó", "gimió", "murmuró", "rugió"],
+      color:  ["relucientes", "polvorientas", "diminutas", "perfumadas"],
+    },
+  },
+  {
+    id: "globos",
+    titulo: "La tienda de globos",
+    frases: [
+      { categoria: "tiempo", texto: "Eduardo no había fallado un solo día en treinta años. ___, abría su tienda de globos.", correcta: "Cada mañana" },
+      { categoria: "sonido", texto: "Una niña muy tímida ___ casi sin voz pidiendo un globo azul.",                          correcta: "tartamudeó" },
+      { categoria: "color",  texto: "Los globos, llenos de colores brillantes y recién hinchados, se veían ___ del techo.", correcta: "alegres" },
+    ],
+    frascos: {
+      tiempo: ["Cada mañana", "Por última vez", "Aquel jueves", "El próximo año"],
+      sonido: ["tartamudeó", "gritó", "rugió", "anunció"],
+      color:  ["alegres", "tristes", "oxidados", "polvorientos"],
+    },
+  },
+];
+
+// R2 — Camino del cuentacuentos: 5 piedras (lugar → personajes → conflicto
+// → acciones → final). En cada piedra, 3 frases del cuento; el niño elige
+// la que corresponde al elemento de esa piedra. Acertar → personaje avanza.
+const CAMINO_BANK = [
+  {
+    id: "molino",
+    titulo: "El molino del pueblo",
+    pasos: [
+      { elemento: "lugar",      opciones: ["En el viejo molino del pueblo de Chimbo.",         "Don Tomás y su nieta Sara.",                     "Las aspas volaron lejos por el viento."],     correctaIdx: 0 },
+      { elemento: "personajes", opciones: ["Cierta noche, sopló un viento fuerte.",            "Don Tomás y su nieta Sara, vecinos del lugar.",  "Recorrieron los campos con linternas."],       correctaIdx: 1 },
+      { elemento: "conflicto",  opciones: ["Buscaron por toda la pradera.",                    "Encontraron las aspas en un cerezo viejo.",      "Una noche, el viento se llevó las aspas."],    correctaIdx: 2 },
+      { elemento: "acciones",   opciones: ["Buscaron por horas con linternas y herramientas.", "Don Tomás vivía con su nieta Sara.",             "El molino estaba en lo alto del pueblo."],     correctaIdx: 0 },
+      { elemento: "resolucion", opciones: ["Sara escuchaba al abuelo contar historias.",       "Al amanecer, hallaron las aspas en un cerezo.",  "El viento soplaba muy fuerte cada noche."],    correctaIdx: 1 },
     ],
   },
   {
-    id: "cabana",
-    titulo: "La cabaña oculta",
-    huecos: [
-      { id: "h1", frase: "Al mirar bien, María  ___  una pequeña cabaña.", correcta: "descubrió", opciones: ["perdió", "descubrió", "rompió", "lavó"] },
-      { id: "h2", frase: "La cabaña estaba  ___  de árboles altísimos.",   correcta: "rodeada",  opciones: ["rodeada", "vacía", "sucia", "abierta"] },
-      { id: "h3", frase: "Una luz  ___  salió desde la ventana.",          correcta: "misteriosa", opciones: ["aburrida", "lenta", "misteriosa", "rota"] },
+    id: "biblioteca",
+    titulo: "La biblioteca olvidada",
+    pasos: [
+      { elemento: "lugar",      opciones: ["En una vieja biblioteca al fondo del barrio.",     "Camila, una niña curiosa de diez años.",          "Camila ordenó los libros por colores."],         correctaIdx: 0 },
+      { elemento: "personajes", opciones: ["Los libros estaban llenos de polvo.",              "Camila y su perro Tomate, fieles amigos.",        "Encontraron un libro que brillaba."],            correctaIdx: 1 },
+      { elemento: "conflicto",  opciones: ["Llegaron a la puerta de la biblioteca.",           "Hallaron un cofre con monedas viejas.",           "Nadie había entrado a esa biblioteca en años."], correctaIdx: 2 },
+      { elemento: "acciones",   opciones: ["Limpiaron, leyeron y clasificaron cada estante.",  "La biblioteca estaba en la esquina del barrio.",  "Camila tenía diez años y mucha imaginación."],   correctaIdx: 0 },
+      { elemento: "resolucion", opciones: ["Camila vivía cerca de la biblioteca.",             "Reabrieron la biblioteca para todo el barrio.",   "El polvo cubría todos los libros."],             correctaIdx: 1 },
     ],
   },
   {
-    id: "barco",
-    titulo: "El barco escondido",
-    huecos: [
-      { id: "h1", frase: "El capitán  ___  un viejo mapa en el cajón.", correcta: "descubrió", opciones: ["olvidó", "descubrió", "rompió", "ignoró"] },
-      { id: "h2", frase: "El mar estaba  ___  de niebla espesa.",        correcta: "rodeado",  opciones: ["lleno", "vacío", "rodeado", "alegre"] },
-      { id: "h3", frase: " ___ , una ola enorme golpeó el barco.",       correcta: "De repente", opciones: ["Despacio", "De repente", "Suavemente", "Luego"] },
+    id: "luciernaga",
+    titulo: "La luciérnaga del jardín",
+    pasos: [
+      { elemento: "lugar",      opciones: ["En el jardín de la abuela Marta.",                 "La pequeña Pía y su gata Luna.",                  "Buscaron entre los rosales y los geranios."],   correctaIdx: 0 },
+      { elemento: "personajes", opciones: ["Una noche oscura y muy tranquila.",                "La pequeña Pía y su gata Luna, inseparables.",    "La luz desapareció al amanecer."],              correctaIdx: 1 },
+      { elemento: "conflicto",  opciones: ["Caminaron despacio por el sendero.",               "Pusieron la luciérnaga en un frasco.",            "Una luciérnaga perdió su luz por la lluvia."],  correctaIdx: 2 },
+      { elemento: "acciones",   opciones: ["La cuidaron toda la noche con paciencia.",         "El jardín estaba lleno de flores.",                "Pía era una niña muy curiosa."],                correctaIdx: 0 },
+      { elemento: "resolucion", opciones: ["Pía y Luna jugaban en el jardín.",                 "Al amanecer, la luciérnaga volvió a brillar.",     "La lluvia caía sobre el jardín."],              correctaIdx: 1 },
+    ],
+  },
+  {
+    id: "panaderia",
+    titulo: "La panadería de la calle larga",
+    pasos: [
+      { elemento: "lugar",      opciones: ["En la panadería de la calle larga.",                 "Don Pancho, el panadero del barrio.",            "Hizo galletas de canela durante toda la noche."], correctaIdx: 0 },
+      { elemento: "personajes", opciones: ["El horno se apagó en plena madrugada.",              "Don Pancho, el panadero más querido del barrio.", "Repartió pan caliente a todos."],                correctaIdx: 1 },
+      { elemento: "conflicto",  opciones: ["Abrieron las puertas muy temprano.",                 "El barrio celebró con un desayuno especial.",     "El horno se apagó justo antes del amanecer."],   correctaIdx: 2 },
+      { elemento: "acciones",   opciones: ["Encendieron el horno con leña vieja y paciencia.",   "Don Pancho llevaba treinta años amasando pan.",   "La panadería quedaba en una calle larga."],     correctaIdx: 0 },
+      { elemento: "resolucion", opciones: ["Don Pancho horneaba todos los días.",                "El pan caliente alegró a todo el vecindario.",     "El horno funcionaba con leña."],                correctaIdx: 1 },
     ],
   },
 ];
 
-// R2 — Partes de la narración: 5 etiquetas, 5 fragmentos para clasificar
-const PARTES_BANK = [
-  {
-    id: "alicia",
-    titulo: "El bosque sin nombre",
-    fragmentos: [
-      { id: "f1", texto: "En un bosque mágico, oscuro y silencioso.",                     parte: "lugar" },
-      { id: "f2", texto: "Alicia y un pequeño cervato caminaban juntos.",                  parte: "personajes" },
-      { id: "f3", texto: "El cervato no podía recordar su nombre.",                        parte: "conflicto" },
-      { id: "f4", texto: "Caminaron hasta el final del bosque, hablando en voz baja.",     parte: "acciones" },
-      { id: "f5", texto: "Al salir del bosque, el cervato recordó: ¡soy un cervato!",      parte: "resolucion" },
-    ],
-  },
-  {
-    id: "gatitos",
-    titulo: "Niños salvan a gatitos",
-    fragmentos: [
-      { id: "f1", texto: "En el patio del Centro Educativo Las Cimas.",                    parte: "lugar" },
-      { id: "f2", texto: "María Elena, Camilo y otros niños de 5to de básica.",            parte: "personajes" },
-      { id: "f3", texto: "Encontraron una camada de gatitos abandonados.",                 parte: "conflicto" },
-      { id: "f4", texto: "Envolvieron a cada gatito en su uniforme con cuidado.",          parte: "acciones" },
-      { id: "f5", texto: "Los padres adoptaron a los ocho gatitos en sus casas.",          parte: "resolucion" },
-    ],
-  },
-  {
-    id: "tesoro",
-    titulo: "El tesoro del abuelo",
-    fragmentos: [
-      { id: "f1", texto: "En la casa antigua junto al río.",                              parte: "lugar" },
-      { id: "f2", texto: "Lucía y su abuelo Aníbal, gran cuentacuentos.",                  parte: "personajes" },
-      { id: "f3", texto: "El abuelo no recordaba dónde había guardado un tesoro.",         parte: "conflicto" },
-      { id: "f4", texto: "Buscaron juntos por el jardín, el desván y la cocina.",          parte: "acciones" },
-      { id: "f5", texto: "Encontraron una caja con fotos viejas: el verdadero tesoro.",    parte: "resolucion" },
-    ],
-  },
-];
-
-// R3 — Ordena el cuento: 5 escenas con emoji + texto, hay que ordenarlas tap-tap
+// R3 — Ordena el cuento: 5 frases de un cuento desordenadas; el niño las
+// arrastra a su orden correcto (1 → 5). Cada frase trae un MARCADOR TEMPORAL
+// explícito al inicio (Una mañana, De repente, Más tarde, Al final, etc.)
+// para que solo exista UN orden cronológico posible.
 const ORDEN_BANK = [
   {
-    id: "alicia",
-    titulo: "Alicia y el cervato",
-    escenas: [
-      { n: 1, emoji: "🌲", texto: "Alicia entró a un bosque silencioso." },
-      { n: 2, emoji: "🦌", texto: "Encontró a un pequeño cervato perdido." },
-      { n: 3, emoji: "❓", texto: "Ninguno recordaba su propio nombre." },
-      { n: 4, emoji: "🚶", texto: "Caminaron juntos buscando la salida." },
-      { n: 5, emoji: "✨", texto: "Al salir, recordaron quiénes eran." },
+    id: "globo",
+    titulo: "El globo perdido",
+    frases: [
+      { id: "f1", orden: 1, texto: "Esa mañana, Tomás ataba con cuidado su globo amarillo en el parque." },
+      { id: "f2", orden: 2, texto: "De repente, un viento fuerte se llevó el globo hacia las nubes." },
+      { id: "f3", orden: 3, texto: "Mientras se alejaba, Tomás corrió detrás siguiendo la cuerda." },
+      { id: "f4", orden: 4, texto: "Minutos después, el globo se enredó en la rama más alta de un sauce." },
+      { id: "f5", orden: 5, texto: "Por fin, un pájaro amistoso bajó la cuerda con el pico." },
     ],
   },
   {
-    id: "gatitos",
-    titulo: "El rescate de los gatitos",
-    escenas: [
-      { n: 1, emoji: "🏫", texto: "Era un día normal en la escuela." },
-      { n: 2, emoji: "🐱", texto: "Los niños encontraron gatitos abandonados." },
-      { n: 3, emoji: "🤔", texto: "Pensaron qué hacer para ayudarlos." },
-      { n: 4, emoji: "🧥", texto: "Los envolvieron en sus uniformes." },
-      { n: 5, emoji: "🏠", texto: "Cada familia adoptó un gatito." },
+    id: "biblioteca",
+    titulo: "La biblioteca del bosque",
+    frases: [
+      { id: "f1", orden: 1, texto: "Cada sábado, Sofía paseaba por el bosque junto al arroyo." },
+      { id: "f2", orden: 2, texto: "Un día, encontró una puertita escondida en el tronco de un roble." },
+      { id: "f3", orden: 3, texto: "Al abrirla con cuidado, descubrió cientos de libros muy pequeños." },
+      { id: "f4", orden: 4, texto: "Esa misma noche, vio cómo los animales del bosque llegaban a leer." },
+      { id: "f5", orden: 5, texto: "Desde entonces, Sofía guarda el secreto del lugar para siempre." },
     ],
   },
   {
-    id: "abuelo",
-    titulo: "El tesoro del abuelo",
-    escenas: [
-      { n: 1, emoji: "🏚️", texto: "Lucía visitó la casa antigua del abuelo." },
-      { n: 2, emoji: "💭", texto: "El abuelo le contó de un tesoro perdido." },
-      { n: 3, emoji: "🔎", texto: "Buscaron por toda la casa." },
-      { n: 4, emoji: "📦", texto: "Hallaron una caja vieja en el desván." },
-      { n: 5, emoji: "📷", texto: "Adentro había fotos: el verdadero tesoro." },
+    id: "tortuga",
+    titulo: "La carrera de la tortuga",
+    frases: [
+      { id: "f1", orden: 1, texto: "Un día, Lola la tortuga decidió inscribirse en la carrera del valle." },
+      { id: "f2", orden: 2, texto: "Al llegar a la salida, los demás animales se rieron al verla." },
+      { id: "f3", orden: 3, texto: "Cuando sonó la campana, Lola avanzó muy despacio sin parar." },
+      { id: "f4", orden: 4, texto: "A mitad del recorrido, los otros animales se distrajeron jugando." },
+      { id: "f5", orden: 5, texto: "Al final, Lola cruzó la meta primera y todos aplaudieron su paciencia." },
+    ],
+  },
+  {
+    id: "pintor",
+    titulo: "El pintor del cielo",
+    frases: [
+      { id: "f1", orden: 1, texto: "Durante años, don Manuel pintó los atardeceres de su pueblo." },
+      { id: "f2", orden: 2, texto: "Una mañana, descubrió que se le había acabado el color naranja." },
+      { id: "f3", orden: 3, texto: "Esa misma tarde, subió a la montaña buscando flores brillantes." },
+      { id: "f4", orden: 4, texto: "Antes del amanecer, mezcló los pétalos con el rocío fresco." },
+      { id: "f5", orden: 5, texto: "Al caer la tarde, pintó el atardecer más hermoso de su vida." },
     ],
   },
 ];
@@ -1660,23 +1828,26 @@ function EscritorGame({ app, setApp, go, onRestart }) {
     return picks;
   });
 
-  const [r2Pick] = useStateG(() => {
-    const recent = new Set(getRecent("escritor"));
-    let pool = MOD_BANK.filter((p) => !recent.has("mod:" + p.id));
-    if (pool.length === 0) pool = MOD_BANK;
+  // FIFO con anti-repetición fuerte para N1 (mismo patrón que N2):
+  // cuando el pool filtrado queda vacío, excluimos el más reciente del prefijo
+  // para garantizar que nunca repetimos dos veces seguidas la misma lectura.
+  function pickEscritorFIFO(bank, prefix) {
+    const recentArr = getRecent("escritor");
+    const recent = new Set(recentArr);
+    let pool = bank.filter((p) => !recent.has(prefix + p.id));
+    if (pool.length === 0) {
+      const lastSameCat = recentArr.find((k) => k.startsWith(prefix));
+      const lastId = lastSameCat ? lastSameCat.slice(prefix.length) : null;
+      pool = bank.filter((p) => p.id !== lastId);
+      if (pool.length === 0) pool = bank;
+    }
     const p = pool[Math.floor(Math.random() * pool.length)];
-    pushRecent("escritor", "mod:" + p.id);
+    pushRecent("escritor", prefix + p.id);
     return p;
-  });
+  }
 
-  const [r3Pick] = useStateG(() => {
-    const recent = new Set(getRecent("escritor"));
-    let pool = CITAS_BANK.filter((p) => !recent.has("cit:" + p.id));
-    if (pool.length === 0) pool = CITAS_BANK;
-    const p = pool[Math.floor(Math.random() * pool.length)];
-    pushRecent("escritor", "cit:" + p.id);
-    return p;
-  });
+  const [r2Pick] = useStateG(() => pickEscritorFIFO(MOD_BANK,   "mod:"));
+  const [r3Pick] = useStateG(() => pickEscritorFIFO(CITAS_BANK, "cit:"));
 
   // Lista plana de slots para R3 (con su signo correcto e índice)
   const r3Slots = r3Pick.partes.map((pt, i) => pt.s != null ? { idx: i, signo: pt.s } : null).filter(Boolean);
@@ -1770,9 +1941,29 @@ function EscritorGame({ app, setApp, go, onRestart }) {
       for (const s of r3Slots) {
         if (r3Placed[s.idx] !== s.signo) { correct = false; break; }
       }
-      const userText = r3Slots.map((s) => `${r3Placed[s.idx] || "?"}`).join(" ");
-      const correctText = r3Slots.map((s) => s.signo).join(" ");
-      setTimeout(() => answer(correct, userText, correctText, "🧪"), 350);
+      // Texto completo de la cita, con los signos en su lugar — más útil en el reporte.
+      const armar = (mapSlot) => {
+        const out = [];
+        r3Pick.partes.forEach((pt, i) => {
+          if (pt.br) { out.push(" / "); return; }
+          if (pt.t != null) out.push(pt.t);
+          else out.push(mapSlot(i, pt.s));
+        });
+        // Junta texto+signo sin espacio (el signo va pegado a la palabra anterior).
+        return out
+          .map((piece, idx) => {
+            const next = out[idx + 1];
+            const isSignSingleChar = piece && piece.length === 1 && '.,:;!?"”¡¿'.includes(piece);
+            const sep = (isSignSingleChar || (next && next === " / ")) ? "" : " ";
+            return piece + sep;
+          })
+          .join("")
+          .replace(/\s+\//g, " /")
+          .trim();
+      };
+      const userText = armar((i) => r3Placed[i] || "▢");
+      const correctText = armar((i, esperado) => esperado);
+      setTimeout(() => answer(correct, userText, correctText, "✒️"), 350);
     }
   }
 
@@ -1851,7 +2042,7 @@ function EscritorGame({ app, setApp, go, onRestart }) {
     105;                 // R3 cazapuntuación
   const zonaCentralTop =
     ronda === 0 ? 160 :  // R1 cartel + SUJETO/PREDICADO ≈ 170px
-    ronda === 1 ? 140 :  // R2 núcleo + chips flotantes + 2 carpetas ≈ 220px
+    ronda === 1 ? 185 :  // R2 oración + 2 cajones — más aire entre enunciado y oración
     155;                 // R3 cita + banco globos: bajamos un poco para repartir mejor el alto
 
   return (
@@ -2188,7 +2379,8 @@ function DetectiveModCard({ pick, marks, pickedChip, locked, onPickChip, onAssig
         onClick={() => canDrop && onAssignBucket(tipo)}
         data-dropzone={`bucket:${tipo}`}
         style={{
-          minWidth: 200, padding: "10px 14px 12px 14px",
+          width: 200, height: 130,
+          padding: "10px 14px 12px 14px",
           background: cfg.bg,
           border: `3px ${canDrop ? "solid #fce9a8" : "dashed " + cfg.border}`,
           borderRadius: 14,
@@ -2198,23 +2390,30 @@ function DetectiveModCard({ pick, marks, pickedChip, locked, onPickChip, onAssig
           boxShadow: canDrop ? "0 0 16px rgba(252,233,168,0.55)" : "0 6px 14px rgba(0,0,0,0.35), inset 0 -3px 0 rgba(0,0,0,0.15)",
           transform: canDrop ? "translateY(-2px)" : "none",
           transition: "all 0.18s",
-          display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+          display: "flex", flexDirection: "column", alignItems: "center",
           fontSize: 13, letterSpacing: "0.06em",
           position: "relative",
+          boxSizing: "border-box",
         }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+        {/* Encabezado fijo: nunca se mueve */}
+        <div style={{
+          height: 28, flex: "0 0 auto",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+          whiteSpace: "nowrap",
+        }}>
           <span>{icono} {label}</span>
           <span style={{ fontSize: 10, fontWeight: 700, opacity: 0.8 }}>· {tip}</span>
         </div>
-        {/* Área donde caen las palabras */}
+        {/* Área donde caen las palabras — altura flexible que no toca el encabezado */}
         <div style={{
-          width: "100%", minHeight: 38,
+          width: "100%", flex: "1 1 auto", minHeight: 0,
           background: "rgba(255,255,255,0.45)",
           border: `1.5px dashed ${cfg.border}`,
           borderRadius: 10,
           padding: "5px 7px",
           display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: 5,
-          marginTop: 2,
+          marginTop: 4,
+          overflow: "hidden",
         }}>
           {dentro.length === 0 ? (
             <span style={{ fontSize: 10, fontStyle: "italic", opacity: 0.55, fontWeight: 700, letterSpacing: "0.04em" }}>
@@ -2486,69 +2685,113 @@ function LabCitasCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, on
   }
 
   // Render del cartel de cita: soporta {t}, {s}, {br}
+  // Agrupamos cada texto con los slots que le siguen (hasta el próximo texto)
+  // en un span nowrap, así el wrap nunca deja signos colgados sin su frase.
   const renderCita = () => {
     const lineas = [[]];
     pick.partes.forEach((p, i) => {
       if (p.br) { lineas.push([]); return; }
       lineas[lineas.length - 1].push({ ...p, _i: i });
     });
+    const renderSlot = (p) => {
+      const val = placed[p._i];
+      const expected = p.s;
+      const isCorrect = locked && val === expected;
+      const isWrong = locked && val && val !== expected;
+      const isEmpty = locked && !val;
+      let bg = "rgba(255,255,255,0.85)";
+      let border = "2px dashed rgba(30,110,46,0.6)";
+      let color = "#0a3a18";
+      if (val) {
+        bg = "linear-gradient(180deg, #fce9a8, #d9a441)";
+        border = "2px solid #b48817";
+        color = "#3a2608";
+      }
+      if (isCorrect) { bg = "rgba(46,204,143,0.55)"; border = "2px solid #2ecc8f"; }
+      if (isWrong)   { bg = "rgba(255,107,107,0.5)"; border = "2px solid #ff6b6b"; }
+      const isFilled = val != null && !locked;
+      return (
+        <span key={p._i}
+          data-dropzone={`citaslot:${p._i}`}
+          className={isFilled ? "ed-draggable" : ""}
+          onClick={!isFilled ? () => onPlaceIn(p._i) : undefined}
+          onPointerDown={isFilled ? makeDragHandler({
+            item: val,
+            ghostHtml: `<div style="display:inline-flex;align-items:center;justify-content:center;min-width:26px;min-height:30px;padding:0 5px;border-radius:8px;background:linear-gradient(180deg,#fce9a8,#d9a441);color:#3a2608;border:2px solid #b48817;font-family:Fredoka,Nunito,sans-serif;font-weight:800;font-size:16px;box-shadow:0 8px 18px rgba(0,0,0,0.45);">${val === '"' ? "”" : val}</div>`,
+            onTap: () => onPlaceIn(p._i),
+            onDrop: (zoneId) => {
+              if (zoneId && zoneId.startsWith("citaslot:") && onSetPlaced) {
+                const newSlotIdx = parseInt(zoneId.slice("citaslot:".length), 10);
+                if (newSlotIdx === p._i) return;
+                const next = { ...placed };
+                next[newSlotIdx] = val;
+                delete next[p._i];
+                onSetPlaced(next);
+              }
+            },
+            disabled: locked,
+          }) : undefined}
+          style={{
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            minWidth: 26, minHeight: 30,
+            padding: "0 5px", margin: "0 1px",
+            borderRadius: 8,
+            background: bg, border, color,
+            fontWeight: 800,
+            fontFamily: "var(--ed-font-display)", fontSize: 16,
+            cursor: locked ? "default" : (isFilled ? "grab" : "pointer"),
+            userSelect: "none",
+            touchAction: isFilled ? "none" : "auto",
+            boxShadow: val ? "0 2px 5px rgba(0,0,0,0.25)" : "none",
+            transition: "all 0.15s",
+            verticalAlign: "middle",
+          }}>
+          {val || "▢"}
+          {(isWrong || isEmpty) && (
+            <sup style={{ fontSize: 9, color: "#1e8a5d", marginLeft: 2, fontWeight: 800 }}>
+              ✓{expected === '"' ? "”" : expected}
+            </sup>
+          )}
+        </span>
+      );
+    };
+    // Agrupa una línea: cada {t} arranca un grupo nuevo, y los {s} siguientes
+    // se acumulan en el mismo grupo. Cada grupo va en un span nowrap.
+    const buildGroups = (linea) => {
+      const groups = [];
+      let cur = null;
+      for (const p of linea) {
+        if (p.t != null) {
+          if (cur) groups.push(cur);
+          cur = [p];
+        } else {
+          if (!cur) cur = [];
+          cur.push(p);
+        }
+      }
+      if (cur) groups.push(cur);
+      return groups;
+    };
     return lineas.map((linea, lineaIdx) => (
       <div key={lineaIdx} style={{
         display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center",
         gap: 4, width: "100%",
         marginTop: lineaIdx === 0 ? 0 : 18,
       }}>
-        {linea.map((p) => {
-          if (p.t) {
-            return <span key={p._i} style={{ padding: "0 4px" }}>{p.t}</span>;
-          }
-          const val = placed[p._i];
-          const expected = p.s;
-          const isCorrect = locked && val === expected;
-          const isWrong = locked && val && val !== expected;
-          const isEmpty = locked && !val;
-
-          let bg = "rgba(255,255,255,0.85)";
-          let border = "2px dashed rgba(30,110,46,0.6)";
-          let color = "#0a3a18";
-          if (val) {
-            bg = "linear-gradient(180deg, #fce9a8, #d9a441)";
-            border = "2px solid #b48817";
-            color = "#3a2608";
-          }
-          if (isCorrect) { bg = "rgba(46,204,143,0.55)"; border = "2px solid #2ecc8f"; }
-          if (isWrong)   { bg = "rgba(255,107,107,0.5)"; border = "2px solid #ff6b6b"; }
-
-          return (
-            <span key={p._i}
-              data-dropzone={`citaslot:${p._i}`}
-              onClick={() => onPlaceIn(p._i)}
-              style={{
-                display: "inline-flex", alignItems: "center", justifyContent: "center",
-                minWidth: 26, minHeight: 30,
-                padding: "0 5px", margin: "0 1px",
-                borderRadius: 8,
-                background: bg, border, color,
-                fontWeight: 800,
-                fontFamily: "var(--ed-font-display)", fontSize: 16,
-                cursor: locked ? "default" : "pointer",
-                userSelect: "none",
-                boxShadow: val ? "0 2px 5px rgba(0,0,0,0.25)" : "none",
-                transition: "all 0.15s",
-              }}>
-              {val || "▢"}
-              {(isWrong || isEmpty) && (
-                <sup style={{ fontSize: 9, color: "#1e8a5d", marginLeft: 2, fontWeight: 800 }}>
-                  ✓{expected === '"' ? "”" : expected}
-                </sup>
-              )}
-            </span>
-          );
-        })}
+        {buildGroups(linea).map((grupo, gIdx) => (
+          <span key={gIdx} style={{
+            whiteSpace: "nowrap",
+            display: "inline-flex", alignItems: "center", gap: 2,
+          }}>
+            {grupo.map((p) => p.t != null
+              ? <span key={p._i} style={{ padding: "0 4px" }}>{p.t}</span>
+              : renderSlot(p)
+            )}
+          </span>
+        ))}
       </div>
     ));
   };
-
   return (
     <div style={{ position: "relative", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 36 }}>
       {/* Cartel verde con la cita */}
@@ -2569,14 +2812,14 @@ function LabCitasCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, on
         </div>
       </div>
 
-      {/* Banco de GLOBOS — flotan con animación */}
+      {/* Banco de GLOBOS — flotan con animación, todos en una sola fila */}
       <div data-qa="bandeja" style={{
         width: "fit-content", maxWidth: 440,
         background: "rgba(10,6,35,0.55)",
         border: "1.5px solid rgba(95,184,120,0.45)",
         borderRadius: 16,
-        padding: "14px 16px 14px 16px",
-        display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center", alignItems: "flex-end",
+        padding: "14px 14px 14px 14px",
+        display: "flex", flexWrap: "nowrap", gap: 7, justifyContent: "center", alignItems: "flex-end",
         position: "relative",
       }}>
         <div style={{
@@ -2621,7 +2864,7 @@ function LabCitasCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, on
               })}
               style={{
                 position: "relative",
-                width: 46, height: 46, borderRadius: "50%",
+                width: 42, height: 42, borderRadius: "50%",
                 background: agotado
                   ? "rgba(255,255,255,0.05)"
                   : `linear-gradient(180deg, ${pal[0]}, ${pal[1]})`,
@@ -2629,7 +2872,8 @@ function LabCitasCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, on
                   ? "2px dashed rgba(252,233,168,0.2)"
                   : `3px solid ${isPicked ? "#4fd8ff" : pal[2]}`,
                 color: agotado ? "rgba(252,233,168,0.3)" : "#3a2608",
-                fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 22,
+                fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 20,
+                flexShrink: 0,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 cursor: agotado || locked ? "default" : "grab",
                 boxShadow: agotado
@@ -2819,57 +3063,44 @@ function NarradorGame({ app, setApp, go, onRestart }) {
 
   const [ronda, setRonda] = useStateG(0);
 
-  // R1 — Palabras mágicas: { huecoId: opcionElegida }
-  const [r1Selections, setR1Selections] = useStateG({});
+  // R1 — Laboratorio del cuentacuentos: { categoria: palabraElegida }
+  const [r1Placed, setR1Placed] = useStateG({});
   const [r1Locked, setR1Locked] = useStateG(false);
 
-  // R2 — Partes del cuento: { fragmentoId: parteAsignada }
-  const [r2Assigned, setR2Assigned] = useStateG({});
-  const [r2SelectedPart, setR2SelectedPart] = useStateG(null);
+  // R2 — Camino del cuentacuentos: pasoActual (0..5). En cada paso, idx elegido + locked
+  const [r2Step, setR2Step] = useStateG(0);             // paso actual (0..4 piedras + 5 = ganó)
+  const [r2Picks, setR2Picks] = useStateG([]);          // {pasoIdx, idxElegido, ok}
   const [r2Locked, setR2Locked] = useStateG(false);
 
-  // R3 — Ordena el cuento: array de orden (escenas)
-  const [r3Pick] = useStateG(() => {
-    const recent = new Set(getRecent("narrador"));
-    let pool = ORDEN_BANK.filter((p) => !recent.has("ord:" + p.id));
-    if (pool.length === 0) pool = ORDEN_BANK;
-    const p = pool[Math.floor(Math.random() * pool.length)];
-    pushRecent("narrador", "ord:" + p.id);
-    return p;
-  });
-  const [r3Order, setR3Order] = useStateG(() => {
-    // mezclar pero asegurando no quedar ya ordenado
-    let mixed = shuffle(r3Pick.escenas);
-    let safety = 0;
-    while (mixed.every((e, i) => e.n === i + 1) && safety < 5) {
-      mixed = shuffle(r3Pick.escenas);
-      safety++;
-    }
-    return mixed;
-  });
-  const [r3Selected, setR3Selected] = useStateG(null);
+  // R3 — Ordena el cuento: { slotIdx (1..5): fraseId }
+  const [r3Orden, setR3Orden] = useStateG({});
   const [r3Locked, setR3Locked] = useStateG(false);
 
-  // Picks R1/R2
-  const [r1Pick] = useStateG(() => {
-    const recent = new Set(getRecent("narrador"));
-    let pool = MAGICAS_BANK.filter((p) => !recent.has("mag:" + p.id));
-    if (pool.length === 0) pool = MAGICAS_BANK;
+  // Picks — FIFO con anti-repetición fuerte.
+  // Cuando el pool filtrado queda vacío (banco entero ya está en recent),
+  // excluimos al menos el ID MÁS RECIENTE para garantizar que nunca repetimos
+  // dos veces seguidas la misma lectura.
+  function pickWithFIFO(bank, prefix) {
+    const recentArr = getRecent("narrador");
+    const recent = new Set(recentArr);
+    let pool = bank.filter((p) => !recent.has(prefix + p.id));
+    if (pool.length === 0) {
+      // Buscar el más reciente del mismo prefijo y excluirlo
+      const lastSameCat = recentArr.find((k) => k.startsWith(prefix));
+      const lastId = lastSameCat ? lastSameCat.slice(prefix.length) : null;
+      pool = bank.filter((p) => p.id !== lastId);
+      if (pool.length === 0) pool = bank;
+    }
     const p = pool[Math.floor(Math.random() * pool.length)];
-    pushRecent("narrador", "mag:" + p.id);
+    pushRecent("narrador", prefix + p.id);
     return p;
-  });
+  }
 
-  const [r2Pick] = useStateG(() => {
-    const recent = new Set(getRecent("narrador"));
-    let pool = PARTES_BANK.filter((p) => !recent.has("part:" + p.id));
-    if (pool.length === 0) pool = PARTES_BANK;
-    const p = pool[Math.floor(Math.random() * pool.length)];
-    pushRecent("narrador", "part:" + p.id);
-    return p;
-  });
-  // Fragmentos en orden mezclado para que no aparezcan ya bien
-  const [r2Fragmentos] = useStateG(() => shuffle(r2Pick.fragmentos));
+  const [r1Pick] = useStateG(() => pickWithFIFO(LAB_BANK,    "lab:"));
+  const [r2Pick] = useStateG(() => pickWithFIFO(CAMINO_BANK, "cam:"));
+  const [r3Pick] = useStateG(() => pickWithFIFO(ORDEN_BANK,  "ord:"));
+  // Frases mezcladas (banco visible) — el niño las arrastra a los slots 1..5
+  const [r3FrasesShuffled] = useStateG(() => shuffle(r3Pick.frases));
 
   // Shell state
   const [elapsed, setElapsed] = useStateG(0);
@@ -2906,14 +3137,17 @@ function NarradorGame({ app, setApp, go, onRestart }) {
     return () => { window.__currentChalkGlyphs = null; };
   }, []);
 
-  const r1AllSelected = r1Pick.huecos.every((h) => r1Selections[h.id]);
-  const r2AllAssigned = r2Fragmentos.every((f) => r2Assigned[f.id]);
-  const r3InOrder = true; // R3 siempre puede verificar; el chequeo es contra el orden actual
+  // R1 — todos los 3 huecos del cuento llenos
+  const r1AllPlaced = r1Pick.frases.every((f) => r1Placed[f.categoria]);
+  // R2 — el camino llega al final cuando se completaron los 5 pasos
+  const r2Done = r2Step >= r2Pick.pasos.length;
+  // R3 — todos los 5 slots están llenos
+  const r3AllPlaced = [1, 2, 3, 4, 5].every((s) => r3Orden[s]);
 
   const canVerify =
-    ronda === 0 ? (r1AllSelected && !r1Locked) :
-    ronda === 1 ? (r2AllAssigned && !r2Locked) :
-    ronda === 2 ? (!r3Locked) :
+    ronda === 0 ? (r1AllPlaced && !r1Locked) :
+    ronda === 1 ? (r2Done && !r2Locked) :
+    ronda === 2 ? (r3AllPlaced && !r3Locked) :
     false;
   const showErase = true;
 
@@ -2922,42 +3156,53 @@ function NarradorGame({ app, setApp, go, onRestart }) {
     if (ronda === 0) {
       setR1Locked(true);
       let correct = true;
-      for (const h of r1Pick.huecos) {
-        if (r1Selections[h.id] !== h.correcta) { correct = false; break; }
+      for (const f of r1Pick.frases) {
+        if (r1Placed[f.categoria] !== f.correcta) { correct = false; break; }
       }
-      const userText = r1Pick.huecos.map((h) => `${r1Selections[h.id] || "?"}`).join(" / ");
-      const correctText = r1Pick.huecos.map((h) => h.correcta).join(" / ");
-      setTimeout(() => answer(correct, userText, correctText, "🪄"), 350);
+      const userText = r1Pick.frases.map((f) => `${f.categoria}: ${r1Placed[f.categoria] || "?"}`).join(" · ");
+      const correctText = r1Pick.frases.map((f) => `${f.categoria}: ${f.correcta}`).join(" · ");
+      setTimeout(() => answer(correct, userText, correctText, "🧪"), 350);
     } else if (ronda === 1) {
       setR2Locked(true);
-      let correct = true;
-      for (const f of r2Fragmentos) {
-        if (r2Assigned[f.id] !== f.parte) { correct = false; break; }
-      }
-      const userText = r2Fragmentos.map((f) => `${f.id}=${r2Assigned[f.id] || "?"}`).join(", ");
-      const correctText = r2Fragmentos.map((f) => `${f.id}=${f.parte}`).join(", ");
-      setTimeout(() => answer(correct, userText, correctText, "🗂"), 350);
+      // El correct se computa por la cantidad de pasos acertados en primera elección
+      const aciertos = r2Picks.filter((p) => p.ok).length;
+      const correct = aciertos === r2Pick.pasos.length;
+      const userText = r2Pick.pasos.map((p, i) => {
+        const elegido = r2Picks.find((x) => x.pasoIdx === i);
+        return `${p.elemento}: ${elegido ? p.opciones[elegido.idxElegido] : "?"}`;
+      }).join(" → ");
+      const correctText = r2Pick.pasos.map((p) => `${p.elemento}: ${p.opciones[p.correctaIdx]}`).join(" → ");
+      setTimeout(() => answer(correct, userText, correctText, "🪜"), 350);
     } else if (ronda === 2) {
       setR3Locked(true);
       let correct = true;
-      for (let i = 0; i < r3Order.length; i++) {
-        if (r3Order[i].n !== i + 1) { correct = false; break; }
+      for (let s = 1; s <= 5; s++) {
+        const fraseId = r3Orden[s];
+        const frase = r3Pick.frases.find((f) => f.id === fraseId);
+        if (!frase || frase.orden !== s) { correct = false; break; }
       }
-      const userText = r3Order.map((e) => `${e.n}`).join(" → ");
-      const correctText = r3Order.map((_, i) => `${i + 1}`).join(" → ");
-      setTimeout(() => answer(correct, userText, correctText, "📚"), 350);
+      const userText = [1, 2, 3, 4, 5].map((s) => {
+        const fid = r3Orden[s];
+        const f = r3Pick.frases.find((x) => x.id === fid);
+        return `${s}. ${f ? f.texto : "?"}`;
+      }).join(" | ");
+      const correctText = [1, 2, 3, 4, 5].map((s) => {
+        const f = r3Pick.frases.find((x) => x.orden === s);
+        return `${s}. ${f.texto}`;
+      }).join(" | ");
+      setTimeout(() => answer(correct, userText, correctText, "📖"), 350);
     }
   }
 
   function handleErase() {
-    if (ronda === 0) { if (r1Locked) return; setR1Selections({}); }
-    else if (ronda === 1) { if (r2Locked) return; setR2Assigned({}); setR2SelectedPart(null); }
+    if (ronda === 0) { if (r1Locked) return; setR1Placed({}); }
+    else if (ronda === 1) {
+      if (r2Locked) return;
+      setR2Step(0); setR2Picks([]);
+    }
     else if (ronda === 2) {
       if (r3Locked) return;
-      let mixed = shuffle(r3Pick.escenas);
-      let safety = 0;
-      while (mixed.every((e, i) => e.n === i + 1) && safety < 5) { mixed = shuffle(r3Pick.escenas); safety++; }
-      setR3Order(mixed); setR3Selected(null);
+      setR3Orden({});
     }
   }
 
@@ -3004,68 +3249,93 @@ function NarradorGame({ app, setApp, go, onRestart }) {
     }, wait);
   }
 
+  // Enunciado = QUÉ hacer (objetivo curricular). Bocadillo = CÓMO (mecánica, estático).
   const enunciado =
-    ronda === 0 ? `Completa con la palabra mágica — ${r1Pick.titulo}.` :
-    ronda === 1 ? `Clasifica cada parte del cuento — ${r2Pick.titulo}.` :
-    `Ordena las escenas del cuento — ${r3Pick.titulo}.`;
+    ronda === 0 ? "Completa el cuento con las palabras mágicas." :
+    ronda === 1 ? "Avanza por el camino reconociendo cada parte del cuento." :
+    "Ordena las frases del cuento del 1 al 5.";
 
   const bocadillo =
-    ronda === 0 ? "Toca la palabra que encaja en cada frase." :
-    ronda === 1 ? "Toca una etiqueta y luego una frase." :
-    "Toca dos escenas para intercambiarlas.";
+    ronda === 0 ? "Arrastra una palabra de cada caja a su espacio." :
+    ronda === 1 ? "Elige la frase que pertenece a cada elemento." :
+    "Arrastra cada frase al número que le toca.";
+
+  // Por ronda: dónde está el enunciado y dónde arranca la zona-central.
+  // Enunciados de 2 líneas (R1, R2) necesitan más aire abajo; R3 cabe en 1 línea.
+  const enunciadoTop =
+    ronda === 0 ? 105 :  // R1 receta + 3 frascos
+    ronda === 1 ? 105 :  // R2 camino con piedras
+    105;                 // R3 cuento + 3 cajas de tono
+  const zonaCentralTop =
+    ronda === 0 ? 160 :  // R1: enunciado 2 líneas → cartel parte en 160
+    ronda === 1 ? 160 :  // R2: enunciado 2 líneas → camino parte en 160
+    150;                 // R3: enunciado 1 línea → frases parten en 150
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
       <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} app={app} setApp={setApp} />
       <CharacterCorner char={char} message={bocadillo} />
-      <GameEnunciado text={enunciado} />
+      <GameEnunciado text={enunciado} top={enunciadoTop} />
 
       <div data-qa="zona-central" style={{
-        position: "absolute", top: 116, left: "50%", transform: "translateX(-50%)",
-        width: 440, bottom: 14,
+        position: "absolute", top: zonaCentralTop, left: "50%", transform: "translateX(-50%)",
+        width: 440,
+        // height auto: el contenido manda su altura, sin huecos forzados
       }}>
         {ronda === 0 && (
-          <PalabrasMagicasCard
+          <LaboratorioCuentacuentosCard
             pick={r1Pick}
-            selections={r1Selections}
+            placed={r1Placed}
             locked={r1Locked}
-            onChoose={(huecoId, op) => {
+            onPlace={(categoria, palabra) => {
               if (r1Locked) return;
-              setR1Selections({ ...r1Selections, [huecoId]: op });
+              setR1Placed({ ...r1Placed, [categoria]: palabra });
+            }}
+            onClear={(categoria) => {
+              if (r1Locked) return;
+              const next = { ...r1Placed };
+              delete next[categoria];
+              setR1Placed(next);
             }}
           />
         )}
         {ronda === 1 && (
-          <PartesCuentoCard
+          <CaminoNarradorCard
             pick={r2Pick}
-            fragmentos={r2Fragmentos}
-            assigned={r2Assigned}
-            selectedPart={r2SelectedPart}
+            step={r2Step}
+            picks={r2Picks}
             locked={r2Locked}
-            onSelectPart={(p) => { if (r2Locked) return; setR2SelectedPart(r2SelectedPart === p ? null : p); }}
-            onAssign={(fid, parte) => {
-              if (r2Locked) return;
-              const next = { ...r2Assigned };
-              if (parte) next[fid] = parte;
-              else delete next[fid];
-              setR2Assigned(next);
+            char={char}
+            onChoose={(idxElegido) => {
+              if (r2Locked || r2Step >= r2Pick.pasos.length) return;
+              const pasoActual = r2Pick.pasos[r2Step];
+              const ok = idxElegido === pasoActual.correctaIdx;
+              const nuevaPick = { pasoIdx: r2Step, idxElegido, ok };
+              setR2Picks([...r2Picks, nuevaPick]);
+              if (ok) setR2Step(r2Step + 1);
             }}
           />
         )}
         {ronda === 2 && (
           <OrdenaCuentoCard
-            cuento={r3Pick}
-            order={r3Order}
-            selected={r3Selected}
+            pick={r3Pick}
+            frases={r3FrasesShuffled}
+            orden={r3Orden}
             locked={r3Locked}
-            onTap={(i) => {
+            onPlace={(slot, fraseId) => {
               if (r3Locked) return;
-              if (r3Selected === null) { setR3Selected(i); return; }
-              if (r3Selected === i) { setR3Selected(null); return; }
-              const next = [...r3Order];
-              [next[r3Selected], next[i]] = [next[i], next[r3Selected]];
-              setR3Order(next);
-              setR3Selected(null);
+              const next = { ...r3Orden };
+              for (const s of Object.keys(next)) {
+                if (next[s] === fraseId) delete next[s];
+              }
+              next[slot] = fraseId;
+              setR3Orden(next);
+            }}
+            onClear={(slot) => {
+              if (r3Locked) return;
+              const next = { ...r3Orden };
+              delete next[slot];
+              setR3Orden(next);
             }}
           />
         )}
@@ -3088,317 +3358,469 @@ function NarradorGame({ app, setApp, go, onRestart }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// N2 · R1 — Palabras mágicas (multi-choice por hueco)
+// N2 · R1 — Laboratorio del cuentacuentos
+// 3 frases del cuento con huecos por categoría. 3 frascos abajo con palabras
+// agrupadas por tipo (tiempo, sonido, color). El niño arrastra UNA palabra
+// de cada frasco a su hueco. Si una palabra ya está colocada, se puede
+// arrastrar de vuelta al frasco o reemplazar.
 // ─────────────────────────────────────────────────────────────
-function PalabrasMagicasCard({ pick, selections, locked, onChoose }) {
+const CATEGORIAS = {
+  tiempo: { icono: "🕰️",  label: "TIEMPO",   color: "#ffb87a", border: "#a3501e", ink: "#3a2608" },
+  sonido: { icono: "🔊",  label: "SONIDO",   color: "#b9e3ff", border: "#1466a6", ink: "#0a2540" },
+  color:  { icono: "🎨",  label: "COLOR",    color: "#d6c7ff", border: "#532a99", ink: "#1a0a3a" },
+};
+
+function LaboratorioCuentacuentosCard({ pick, placed, locked, onPlace, onClear }) {
+  const renderHueco = (categoria) => {
+    const cfg = CATEGORIAS[categoria];
+    const val = placed[categoria];
+    const correcta = pick.frases.find((f) => f.categoria === categoria).correcta;
+    const isCorrect = locked && val === correcta;
+    const isWrong = locked && val && val !== correcta;
+    const isEmpty = locked && !val;
+    const isFilled = val != null && !locked;
+    return (
+      <span
+        data-dropzone={`hueco:${categoria}`}
+        className={isFilled ? "ed-draggable" : ""}
+        onClick={!isFilled ? undefined : undefined}
+        onPointerDown={isFilled ? makeDragHandler({
+          item: val,
+          ghostHtml: `<div style="padding:4px 11px;border-radius:8px;background:${cfg.color};color:${cfg.ink};border:2px solid ${cfg.border};font-family:Fredoka,Nunito,sans-serif;font-weight:800;font-size:13px;box-shadow:0 8px 18px rgba(0,0,0,0.45);white-space:nowrap;">${val}</div>`,
+          onTap: () => onClear(categoria),
+          onDrop: (zoneId) => {
+            if (zoneId && zoneId.startsWith("hueco:")) {
+              const otraCat = zoneId.slice("hueco:".length);
+              if (otraCat === categoria) return;
+              onClear(categoria);
+              onPlace(otraCat, val);
+            }
+          },
+          disabled: locked,
+        }) : undefined}
+        style={{
+          display: "inline-flex", alignItems: "center", justifyContent: "center",
+          minWidth: 92, minHeight: 24,
+          padding: "2px 8px", margin: "0 2px",
+          borderRadius: 7,
+          background: isCorrect ? "rgba(46,204,143,0.55)"
+            : isWrong ? "rgba(255,107,107,0.5)"
+            : val ? cfg.color
+            : "rgba(255,255,255,0.6)",
+          color: val ? cfg.ink : "rgba(58,38,8,0.5)",
+          border: `2px ${val ? "solid" : "dashed"} ${isCorrect ? "#2ecc8f" : isWrong ? "#ff6b6b" : cfg.border}`,
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
+          cursor: locked ? "default" : (isFilled ? "grab" : "default"),
+          userSelect: "none",
+          touchAction: isFilled ? "none" : "auto",
+          verticalAlign: "middle",
+        }}>
+        {val || `${cfg.icono} ___`}
+        {isWrong && (
+          <sup style={{ fontSize: 8, marginLeft: 3, color: "#1e8a5d", fontWeight: 900 }}>✓{correcta}</sup>
+        )}
+      </span>
+    );
+  };
+
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14 }}>
+    <div style={{ position: "relative", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+      {/* Cartel del cuento con huecos */}
       <div style={{
-        width: "fit-content", maxWidth: 430,
+        width: "100%", maxWidth: 430,
         background: "linear-gradient(180deg, rgba(255,253,245,0.97), rgba(245,238,225,0.92))",
         border: "3px solid #f2c260",
-        borderRadius: 16, padding: "12px 14px",
+        borderRadius: 14, padding: "10px 14px 12px 14px",
         boxShadow: "0 10px 22px rgba(0,0,0,0.45)",
         color: "#3a2608",
       }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-          {pick.huecos.map((h, i) => {
-            const userPick = selections[h.id];
-            const isCorrect = locked && userPick === h.correcta;
-            const isWrong = locked && userPick && userPick !== h.correcta;
-            return (
-              <div key={h.id} style={{
-                display: "flex", flexDirection: "column", gap: 5,
-                padding: "6px 8px",
-                background: isCorrect ? "rgba(46,204,143,0.18)" : isWrong ? "rgba(255,107,107,0.18)" : "rgba(252,233,168,0.18)",
-                borderRadius: 10,
-                border: isCorrect ? "1.5px solid #2ecc8f" : isWrong ? "1.5px solid #ff6b6b" : "1.5px solid rgba(217,164,65,0.35)",
-              }}>
-                <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12.5, lineHeight: 1.3, textAlign: "center" }}>
-                  <span style={{ color: "#999", fontWeight: 600, marginRight: 4 }}>{i + 1}.</span>
-                  {h.frase.split("___").map((segment, idx, arr) => (
-                    <React.Fragment key={idx}>
-                      <span>{segment}</span>
-                      {idx < arr.length - 1 && (
-                        <span style={{
-                          display: "inline-block",
-                          minWidth: 90, padding: "1px 6px",
-                          background: userPick ? "rgba(252,233,168,0.85)" : "rgba(0,0,0,0.08)",
-                          border: "1.5px dashed rgba(217,164,65,0.6)",
-                          borderRadius: 6,
-                          fontWeight: 800, color: userPick ? "#3a2608" : "rgba(58,38,8,0.4)",
-                        }}>
-                          {userPick || "___"}
-                        </span>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </div>
-                <div style={{ display: "flex", gap: 5, justifyContent: "center", flexWrap: "wrap" }}>
-                  {h.opciones.map((op) => {
-                    const isPicked = userPick === op;
-                    const isCorrectAns = op === h.correcta;
-                    const showCorrect = locked && isCorrectAns;
-                    const showWrong = locked && isPicked && !isCorrectAns;
-                    let bg, bd, col, shadow;
-                    if (showCorrect) {
-                      bg = "linear-gradient(180deg, rgba(46,204,143,0.95), rgba(34,160,108,0.95))";
-                      bd = "2px solid #2ecc8f";
-                      col = "#fff";
-                      shadow = "0 0 14px rgba(46,204,143,0.55)";
-                    } else if (showWrong) {
-                      bg = "linear-gradient(180deg, rgba(255,107,107,0.95), rgba(220,80,80,0.95))";
-                      bd = "2px solid #ff6b6b";
-                      col = "#fff";
-                      shadow = "0 0 12px rgba(255,107,107,0.5)";
-                    } else if (isPicked) {
-                      bg = "linear-gradient(180deg,#fce9a8,#d9a441)";
-                      bd = "1.5px solid #4fd8ff";
-                      col = "#3a2608";
-                      shadow = "0 0 12px rgba(79,216,255,0.55)";
-                    } else {
-                      bg = "rgba(255,255,255,0.95)";
-                      bd = "1.5px solid rgba(242,194,96,0.55)";
-                      col = "#3a2608";
-                      shadow = "0 2px 5px rgba(0,0,0,0.25)";
-                    }
-                    return (
-                      <button key={op}
-                        onClick={() => onChoose(h.id, op)}
-                        disabled={locked}
-                        style={{
-                          position: "relative",
-                          padding: "5px 12px", borderRadius: 9,
-                          background: bg,
-                          color: col,
-                          border: bd,
-                          fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 11.5,
-                          cursor: locked ? "default" : "pointer",
-                          boxShadow: shadow,
-                          transform: (isPicked && !locked) || showCorrect ? "translateY(-1.5px)" : "none",
-                          transition: "all 0.15s",
-                          minWidth: 80,
-                        }}>
-                        {op}
-                        {showCorrect && !isPicked && (
-                          <span style={{
-                            position: "absolute", top: -7, right: -7,
-                            background: "#2ecc8f", color: "#fff",
-                            borderRadius: "50%", width: 18, height: 18,
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            fontSize: 11, fontWeight: 900,
-                            border: "2px solid #fff",
-                            boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-                          }}>✓</span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
+        <div style={{
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 10.5,
+          color: "#7a4a0e", letterSpacing: "0.1em",
+          textAlign: "center", marginBottom: 6,
+          textTransform: "uppercase",
+        }}>
+          📜 {pick.titulo}
+        </div>
+        <div style={{
+          fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12.5, lineHeight: 1.6,
+          textAlign: "center",
+        }}>
+          {pick.frases.map((f, idx) => (
+            <div key={idx} style={{ marginBottom: idx < pick.frases.length - 1 ? 6 : 0 }}>
+              {f.texto.split("___").map((seg, i, arr) => (
+                <React.Fragment key={i}>
+                  <span>{seg}</span>
+                  {i < arr.length - 1 && renderHueco(f.categoria)}
+                </React.Fragment>
+              ))}
+            </div>
+          ))}
         </div>
       </div>
-    </div>
-  );
-}
 
-// ─────────────────────────────────────────────────────────────
-// N2 · R2 — Partes del cuento: 5 etiquetas + 5 fragmentos
-// ─────────────────────────────────────────────────────────────
-function PartesCuentoCard({ pick, fragmentos, assigned, selectedPart, locked, onSelectPart, onAssign }) {
-  const PARTES = [
-    { id: "lugar",      label: "LUGAR",      emoji: "📍", color: "#7ab8ff", ink: "#08264d" },
-    { id: "personajes", label: "PERSONAJES", emoji: "👤", color: "#ffb87a", ink: "#3a2608" },
-    { id: "conflicto",  label: "CONFLICTO",  emoji: "❗",  color: "#ff8ab4", ink: "#5c1f3a" },
-    { id: "acciones",   label: "ACCIONES",   emoji: "🏃", color: "#c39cff", ink: "#2a0a4a" },
-    { id: "resolucion", label: "FINAL",      emoji: "✨", color: "#9ee0a3", ink: "#0a3a18" },
-  ];
-
-  return (
-    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14 }}>
-      {/* Fila de 5 etiquetas selectoras */}
-      <div style={{
-        width: "100%", maxWidth: 470,
-        display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4,
-      }}>
-        {PARTES.map((p) => {
-          const isSel = selectedPart === p.id;
+      {/* 3 frascos */}
+      <div style={{ display: "flex", gap: 8, width: "100%", justifyContent: "center" }}>
+        {Object.keys(CATEGORIAS).map((cat) => {
+          const cfg = CATEGORIAS[cat];
+          const palabras = pick.frascos[cat];
+          const usada = placed[cat];
           return (
-            <button key={p.id}
-              onClick={() => !locked && onSelectPart(p.id)}
-              disabled={locked}
+            <div key={cat}
+              data-dropzone={`hueco:${cat}`}
               style={{
-                display: "flex", flexDirection: "column", alignItems: "center", gap: 1,
-                background: isSel ? "linear-gradient(180deg,#fce9a8,#d9a441)" : p.color,
-                color: isSel ? "#3a2608" : p.ink,
-                padding: "5px 4px", borderRadius: 9,
-                border: `2px solid ${isSel ? "#4fd8ff" : "rgba(255,255,255,0.6)"}`,
-                fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 10,
-                letterSpacing: "0.03em",
-                boxShadow: isSel ? "0 0 12px rgba(79,216,255,0.6)" : "0 3px 6px rgba(0,0,0,0.3)",
-                cursor: locked ? "default" : "pointer",
-                transform: isSel ? "translateY(-2px)" : "none",
-                transition: "all 0.15s",
-              }}>
-              <span style={{ fontSize: 14 }}>{p.emoji}</span>
-              <span>{p.label}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Lista de fragmentos — fit-content para que se adapte al texto. */}
-      <div style={{
-        width: "fit-content", maxWidth: 430,
-        display: "flex", flexDirection: "column", gap: 4,
-      }}>
-        {fragmentos.map((f) => {
-          const a = assigned[f.id];
-          const isCorrect = locked && a === f.parte;
-          const isWrong = locked && a && a !== f.parte;
-          const isEmpty = locked && !a;
-          const partInfo = PARTES.find((p) => p.id === a);
-          const correctPart = PARTES.find((p) => p.id === f.parte);
-          return (
-            <div key={f.id}
-              onClick={() => {
-                if (locked) return;
-                if (a) { onAssign(f.id, null); return; } // 2do click = quitar
-                if (selectedPart) { onAssign(f.id, selectedPart); }
-              }}
-              style={{
-                display: "flex", alignItems: "center", gap: 8,
-                background: isCorrect
-                  ? "linear-gradient(180deg, rgba(46,204,143,0.32), rgba(255,255,255,0.95))"
-                  : isWrong
-                  ? "linear-gradient(180deg, rgba(255,107,107,0.28), rgba(255,255,255,0.95))"
-                  : a ? `linear-gradient(180deg, ${partInfo.color}44, rgba(255,255,255,0.95))`
-                      : "rgba(255,255,255,0.94)",
-                color: "#3a2608",
-                border: `2px solid ${isCorrect ? "#2ecc8f" : isWrong ? "#ff6b6b" : a ? partInfo.color : "rgba(242,194,96,0.6)"}`,
-                borderRadius: 10, padding: "6px 10px",
-                cursor: locked ? "default" : "pointer",
-                fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 11.5, lineHeight: 1.25,
-                boxShadow: "0 2px 5px rgba(0,0,0,0.25)",
-                transition: "all 0.15s",
-              }}>
-              <div style={{ flex: 1, minWidth: 0 }}>{f.texto}</div>
-              {a && !isWrong && (
-                <div style={{
-                  flexShrink: 0,
-                  background: partInfo.color, color: partInfo.ink,
-                  padding: "2px 8px", borderRadius: 999,
-                  fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 9.5,
-                  border: "1.5px solid rgba(255,255,255,0.7)",
-                  letterSpacing: "0.04em",
-                }}>
-                  {partInfo.emoji} {partInfo.label}
-                </div>
-              )}
-              {isWrong && correctPart && (
-                <div style={{
-                  flexShrink: 0,
-                  background: "#2ecc8f", color: "#fff",
-                  padding: "2px 8px", borderRadius: 999,
-                  fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 9.5,
-                  letterSpacing: "0.04em",
-                }}>
-                  ✓ {correctPart.label}
-                </div>
-              )}
-              {isEmpty && correctPart && (
-                <div style={{
-                  flexShrink: 0,
-                  background: "rgba(46,204,143,0.2)", color: "#1e8a5d",
-                  border: "1px solid rgba(46,204,143,0.6)",
-                  padding: "2px 8px", borderRadius: 999,
-                  fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 9.5,
-                }}>
-                  ✓ {correctPart.label}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// N2 · R3 — Ordena el cuento (tap-tap intercambia)
-// ─────────────────────────────────────────────────────────────
-function OrdenaCuentoCard({ cuento, order, selected, locked, onTap }) {
-  return (
-    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14 }}>
-      <div style={{
-        fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13.5, color: "#fce9a8", textAlign: "center",
-        background: "rgba(10,6,35,0.55)",
-        border: "1px solid rgba(242,194,96,0.45)",
-        borderRadius: 999,
-        padding: "5px 18px",
-      }}>
-        📖 {cuento.titulo}
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 5, width: "fit-content", maxWidth: 430 }}>
-        {order.map((escena, i) => {
-          const isSelected = selected === i;
-          const isCorrect = locked && escena.n === i + 1;
-          const isWrong = locked && escena.n !== i + 1;
-          return (
-            <div key={`${escena.n}-${i}`}
-              onClick={() => onTap(i)}
-              style={{
-                display: "flex", alignItems: "center", gap: 10,
-                background: isCorrect
-                  ? "linear-gradient(180deg, rgba(46,204,143,0.28), rgba(255,255,255,0.94))"
-                  : isWrong
-                  ? "linear-gradient(180deg, rgba(255,107,107,0.22), rgba(255,255,255,0.94))"
-                  : isSelected
-                  ? "linear-gradient(180deg, rgba(79,216,255,0.45), rgba(252,233,168,0.88))"
-                  : "rgba(255,255,255,0.95)",
-                color: "#3a2608",
-                border: `2.5px solid ${isCorrect ? "#2ecc8f" : isWrong ? "#ff6b6b" : isSelected ? "#4fd8ff" : "#f2c260"}`,
-                borderRadius: 12, padding: "6px 10px",
-                cursor: locked ? "default" : "pointer",
-                boxShadow: isSelected ? "0 0 18px rgba(79,216,255,0.65)" : "0 3px 8px rgba(0,0,0,0.35)",
-                transform: isSelected ? "translateX(5px)" : "none",
-                transition: "all 0.18s",
+                width: 132, minHeight: 110,
+                background: `linear-gradient(180deg, ${cfg.color}cc, ${cfg.color}66)`,
+                border: `2.5px solid ${cfg.border}`,
+                borderRadius: 12, padding: "6px 8px 8px 8px",
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+                position: "relative", boxSizing: "border-box",
               }}>
               <div style={{
-                width: 26, height: 26, borderRadius: "50%",
-                background: "linear-gradient(180deg, #f2c260, #d9a441)",
-                color: "#3a2608", fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 13,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                flexShrink: 0,
-                border: "2px solid rgba(255,255,255,0.9)",
-                boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
+                fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 10,
+                color: cfg.ink, letterSpacing: "0.08em",
+                display: "flex", alignItems: "center", gap: 3,
               }}>
-                {i + 1}
+                <span style={{ fontSize: 13 }}>{cfg.icono}</span>{cfg.label}
               </div>
-              <div style={{ fontSize: 20, lineHeight: 1, flexShrink: 0 }}>{escena.emoji}</div>
-              <div style={{ flex: 1, minWidth: 0, fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 11.5, lineHeight: 1.25 }}>
-                {escena.texto}
+              <div style={{
+                width: "100%", display: "flex", flexWrap: "wrap", gap: 4, justifyContent: "center", alignItems: "center",
+              }}>
+                {palabras.map((p) => {
+                  if (p === usada) return null;
+                  return (
+                    <div key={p}
+                      className="ed-draggable ed-float-soft"
+                      onPointerDown={locked ? undefined : makeDragHandler({
+                        item: p,
+                        ghostHtml: `<div style="padding:5px 11px;border-radius:8px;background:${cfg.color};color:${cfg.ink};border:2px solid ${cfg.border};font-family:Fredoka,Nunito,sans-serif;font-weight:800;font-size:12px;box-shadow:0 10px 22px rgba(0,0,0,0.55);white-space:nowrap;">${p}</div>`,
+                        onTap: () => { if (!placed[cat]) onPlace(cat, p); },
+                        onDrop: (zoneId) => {
+                          if (zoneId && zoneId.startsWith("hueco:")) {
+                            const destinoCat = zoneId.slice("hueco:".length);
+                            onPlace(destinoCat, p);
+                          }
+                        },
+                        disabled: locked,
+                      })}
+                      style={{
+                        padding: "3px 9px", borderRadius: 7,
+                        background: "rgba(255,255,255,0.92)",
+                        border: `2px solid ${cfg.border}`,
+                        color: cfg.ink,
+                        fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 11,
+                        cursor: locked ? "default" : "grab",
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.25)",
+                        userSelect: "none", touchAction: "none",
+                        animationDelay: `${(palabras.indexOf(p) * 0.2) % 1.4}s`,
+                      }}>{p}</div>
+                  );
+                })}
               </div>
-              {isWrong && (
-                <div style={{
-                  flexShrink: 0,
-                  fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 10,
-                  color: "#fff",
-                  background: "linear-gradient(180deg, #2ecc8f, #15a06a)",
-                  padding: "2px 8px", borderRadius: 999,
-                  letterSpacing: "0.04em",
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
-                }}>
-                  ✓ Iba en {escena.n}
-                </div>
-              )}
             </div>
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// N2 · R2 — Camino del cuentacuentos (Personaje avanza)
+// 5 piedras en columna: lugar → personajes → conflicto → acciones → final.
+// En cada piedra, 3 frases del cuento. El niño elige la correcta.
+// Acertar → el personaje salta a la próxima piedra. Fallar → reintenta.
+// ─────────────────────────────────────────────────────────────
+const ELEMENTOS = {
+  lugar:      { icono: "📍", label: "LUGAR",        color: "#7ab8ff", ink: "#08264d" },
+  personajes: { icono: "👤", label: "PERSONAJES",   color: "#ffb87a", ink: "#3a2608" },
+  conflicto:  { icono: "❗",  label: "CONFLICTO",    color: "#ff8ab4", ink: "#5c1f3a" },
+  acciones:   { icono: "🏃", label: "ACCIONES",     color: "#c39cff", ink: "#2a0a4a" },
+  resolucion: { icono: "✨", label: "FINAL",        color: "#9ee0a3", ink: "#0a3a18" },
+};
+
+function CaminoNarradorCard({ pick, step, picks, locked, char, onChoose }) {
+  const totalPasos = pick.pasos.length;
+  const pasoActual = step < totalPasos ? pick.pasos[step] : null;
+  const meta = step >= totalPasos;
+  const pickActual = picks.filter((p) => p.pasoIdx === step);
+
+  return (
+    <div style={{ position: "relative", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+      {/* Título del cuento + camino visual */}
+      <div style={{
+        fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11,
+        color: "#fce9a8", letterSpacing: "0.1em", textTransform: "uppercase",
+        background: "rgba(10,6,35,0.55)", padding: "3px 14px", borderRadius: 999,
+        border: "1px solid rgba(242,194,96,0.5)",
+      }}>
+        📜 {pick.titulo}
+      </div>
+
+      {/* Camino con 5 piedras + personaje */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
+        width: "100%",
+      }}>
+        {pick.pasos.map((p, i) => {
+          const cfg = ELEMENTOS[p.elemento];
+          const done = i < step;
+          const active = i === step && !meta;
+          return (
+            <React.Fragment key={i}>
+              <div style={{
+                width: 50, height: 50, borderRadius: 12,
+                background: done ? `linear-gradient(180deg, ${cfg.color}, ${cfg.color}88)` : active ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(10,6,35,0.5)",
+                border: `2.5px solid ${done ? cfg.ink : active ? "#4fd8ff" : "rgba(255,255,255,0.25)"}`,
+                color: done ? cfg.ink : active ? "#3a2608" : "rgba(255,255,255,0.4)",
+                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 9,
+                boxShadow: active ? "0 0 16px rgba(79,216,255,0.7)" : done ? "0 3px 7px rgba(0,0,0,0.4)" : "none",
+                transform: active ? "translateY(-3px)" : "none",
+                transition: "all 0.3s",
+                position: "relative",
+              }}>
+                <span style={{ fontSize: 18, lineHeight: 1 }}>{cfg.icono}</span>
+                <span style={{ fontSize: 7, letterSpacing: "0.04em", marginTop: 1 }}>{cfg.label}</span>
+                {active && (
+                  <div style={{
+                    position: "absolute", bottom: -34, left: "50%", transform: "translateX(-50%)",
+                    fontSize: 22, lineHeight: 1,
+                    filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.4))",
+                  }}>🚶</div>
+                )}
+              </div>
+              {i < pick.pasos.length - 1 && (
+                <div style={{
+                  flex: "0 0 8px", height: 3,
+                  background: done ? "linear-gradient(90deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.18)",
+                  borderRadius: 2,
+                }} />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
+
+      {/* Caja de opciones del paso actual */}
+      {!meta && (
+        <div style={{
+          width: "100%", maxWidth: 430, marginTop: 24,
+          background: "linear-gradient(180deg, rgba(255,253,245,0.97), rgba(245,238,225,0.92))",
+          border: "3px solid #f2c260",
+          borderRadius: 14, padding: "8px 12px 10px 12px",
+          boxShadow: "0 10px 22px rgba(0,0,0,0.45)",
+          color: "#3a2608",
+        }}>
+          <div style={{
+            fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11,
+            color: "#7a4a0e", textAlign: "center", marginBottom: 6,
+            letterSpacing: "0.04em",
+          }}>
+            ¿Qué frase pertenece a <span style={{ background: ELEMENTOS[pasoActual.elemento].color, color: ELEMENTOS[pasoActual.elemento].ink, padding: "1px 6px", borderRadius: 4 }}>
+              {ELEMENTOS[pasoActual.elemento].icono} {ELEMENTOS[pasoActual.elemento].label}
+            </span>?
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+            {pasoActual.opciones.map((op, idx) => {
+              const elegidoFallido = pickActual.find((x) => x.idxElegido === idx && !x.ok);
+              return (
+                <button key={idx}
+                  onClick={() => !locked && onChoose(idx)}
+                  disabled={locked || !!elegidoFallido}
+                  style={{
+                    width: "100%", textAlign: "left",
+                    padding: "6px 10px", borderRadius: 9,
+                    background: elegidoFallido ? "rgba(255,107,107,0.35)" : "rgba(255,255,255,0.92)",
+                    border: `2px solid ${elegidoFallido ? "#ff6b6b" : "#f2c260"}`,
+                    color: "#3a2608",
+                    fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 11.5, lineHeight: 1.3,
+                    cursor: (locked || elegidoFallido) ? "default" : "pointer",
+                    opacity: elegidoFallido ? 0.6 : 1,
+                    transition: "all 0.18s",
+                  }}>
+                  {elegidoFallido && "❌ "}{op}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Meta alcanzada */}
+      {meta && (
+        <div style={{
+          marginTop: 16,
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 14,
+          color: "#3a2608",
+          background: "linear-gradient(180deg, #fce9a8, #f2c260)",
+          border: "2px solid #d9a441",
+          borderRadius: 12, padding: "8px 16px",
+          boxShadow: "0 4px 16px rgba(252,233,168,0.45)",
+        }}>
+          ✨ ¡Llegaste al final! Pulsa ¡VERIFICAR!
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// N2 · R3 — Ordena el cuento
+// El niño recibe 5 frases desordenadas y 5 slots numerados (1..5).
+// Arrastra cada frase al número que le corresponde para reconstruir
+// el cuento en su orden cronológico.
+// ─────────────────────────────────────────────────────────────
+function OrdenaCuentoCard({ pick, frases, orden, locked, onPlace, onClear }) {
+  const SLOTS = [1, 2, 3, 4, 5];
+  // Frases que aún no están en ningún slot
+  const placedIds = new Set(SLOTS.map((s) => orden[s]).filter(Boolean));
+  const bankFrases = frases.filter((f) => !placedIds.has(f.id));
+
+  const renderChip = (f, fromSlot) => {
+    return (
+      <div key={f.id + (fromSlot ? "-s" + fromSlot : "-b")}
+        className={!locked ? "ed-draggable" : ""}
+        onPointerDown={locked ? undefined : makeDragHandler({
+          item: f.id,
+          ghostHtml: `<div style="padding:5px 10px;border-radius:9px;background:rgba(255,255,255,0.96);color:#3a2608;border:2px solid #f2c260;font-family:Fredoka,Nunito,sans-serif;font-weight:600;font-size:11px;max-width:330px;box-shadow:0 10px 22px rgba(0,0,0,0.55);">${f.texto}</div>`,
+          onTap: () => { if (fromSlot) onClear(fromSlot); },
+          onDrop: (zoneId) => {
+            if (zoneId && zoneId.startsWith("slot:")) {
+              const destino = parseInt(zoneId.slice("slot:".length), 10);
+              onPlace(destino, f.id);
+            } else if (zoneId === "bank" && fromSlot) {
+              onClear(fromSlot);
+            }
+          },
+          disabled: locked,
+        })}
+        style={{
+          background: "rgba(255,255,255,0.94)",
+          color: "#3a2608",
+          border: "2px solid #f2c260",
+          borderRadius: 9, padding: "4px 8px",
+          cursor: locked ? "default" : "grab",
+          fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 11, lineHeight: 1.2,
+          boxShadow: "0 2px 5px rgba(0,0,0,0.25)",
+          userSelect: "none", touchAction: "none",
+          flex: "0 0 auto",
+        }}>
+        {f.texto}
+      </div>
+    );
+  };
+
+  const renderSlot = (s) => {
+    const fraseId = orden[s];
+    const frase = fraseId ? frases.find((f) => f.id === fraseId) : null;
+    const isCorrect = locked && frase && frase.orden === s;
+    const isWrong = locked && frase && frase.orden !== s;
+    const correctFrase = locked ? frases.find((f) => f.orden === s) : null;
+
+    return (
+      <div key={s}
+        data-dropzone={`slot:${s}`}
+        style={{
+          display: "flex", alignItems: "center", gap: 7,
+          minHeight: 30,
+          background: isCorrect ? "linear-gradient(180deg, rgba(46,204,143,0.30), rgba(255,255,255,0.92))"
+            : isWrong ? "linear-gradient(180deg, rgba(255,107,107,0.28), rgba(255,255,255,0.92))"
+            : frase ? "rgba(252,233,168,0.55)"
+            : "rgba(255,255,255,0.10)",
+          border: `2px ${frase ? "solid" : "dashed"} ${isCorrect ? "#2ecc8f" : isWrong ? "#ff6b6b" : frase ? "#f2c260" : "rgba(252,233,168,0.55)"}`,
+          borderRadius: 9, padding: "3px 8px 3px 5px",
+          boxSizing: "border-box",
+        }}>
+        <div style={{
+          flex: "0 0 auto",
+          width: 22, height: 22, borderRadius: "50%",
+          background: isCorrect ? "#2ecc8f" : isWrong ? "#ff6b6b" : "#0a0623",
+          color: "#fff", border: "2px solid #fce9a8",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
+        }}>{s}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {frase ? (
+            <div
+              className={!locked ? "ed-draggable" : ""}
+              onPointerDown={locked ? undefined : makeDragHandler({
+                item: frase.id,
+                ghostHtml: `<div style="padding:5px 10px;border-radius:9px;background:rgba(255,255,255,0.96);color:#3a2608;border:2px solid #f2c260;font-family:Fredoka,Nunito,sans-serif;font-weight:600;font-size:11px;max-width:330px;box-shadow:0 10px 22px rgba(0,0,0,0.55);">${frase.texto}</div>`,
+                onTap: () => onClear(s),
+                onDrop: (zoneId) => {
+                  if (zoneId && zoneId.startsWith("slot:")) {
+                    const destino = parseInt(zoneId.slice("slot:".length), 10);
+                    onPlace(destino, frase.id);
+                  } else if (zoneId === "bank") {
+                    onClear(s);
+                  }
+                },
+                disabled: locked,
+              })}
+              style={{
+                color: "#3a2608",
+                fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 11, lineHeight: 1.2,
+                cursor: locked ? "default" : "grab",
+                userSelect: "none", touchAction: "none",
+              }}>
+              {frase.texto}
+            </div>
+          ) : (
+            <div style={{
+              color: "rgba(252,233,168,0.55)",
+              fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 10.5, fontStyle: "italic",
+            }}>arrastra una frase aquí…</div>
+          )}
+        </div>
+        {isWrong && correctFrase && (
+          <div style={{
+            flex: "0 0 auto",
+            background: "#2ecc8f", color: "#fff",
+            padding: "1px 6px", borderRadius: 999,
+            fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 9,
+          }}>
+            ✓
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ position: "relative", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+      {/* Título del cuento */}
+      <div style={{
+        fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11,
+        color: "#fce9a8", letterSpacing: "0.1em", textTransform: "uppercase",
+        background: "rgba(10,6,35,0.55)", padding: "3px 14px", borderRadius: 999,
+        border: "1px solid rgba(242,194,96,0.5)",
+      }}>
+        📖 {pick.titulo}
+      </div>
+
+      {/* 5 slots numerados */}
+      <div style={{
+        width: "100%", maxWidth: 430,
+        display: "flex", flexDirection: "column", gap: 4,
+      }}>
+        {SLOTS.map((s) => renderSlot(s))}
+      </div>
+
+      {/* Banco de frases sin colocar (dropzone para devolver al banco) */}
+      {!locked && bankFrases.length > 0 && (
+        <div
+          data-dropzone="bank"
+          style={{
+            width: "100%", maxWidth: 430, marginTop: 2,
+            background: "rgba(10,6,35,0.35)",
+            border: "1.5px dashed rgba(252,233,168,0.45)",
+            borderRadius: 10, padding: "5px 7px",
+            display: "flex", flexDirection: "column", gap: 4,
+          }}>
+          {bankFrases.map((f) => renderChip(f, null))}
+        </div>
+      )}
     </div>
   );
 }
