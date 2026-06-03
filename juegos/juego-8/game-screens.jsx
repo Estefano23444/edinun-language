@@ -1145,7 +1145,7 @@ function CharacterCorner({ char, message }) {
 // ─────────────────────────────────────────────────────────────
 function EscritorGame({ app, setApp, go, onRestart }) {
   const char = CHARACTERS.find((c) => c.id === app.character) || CHARACTERS[0];
-  const catLabel = app.currentCatLabel || "El escritor";
+  const catLabel = app.currentCatLabel || "Planificar la escritura";
 
   const [ronda, setRonda] = useStateG(0);
 
@@ -1282,7 +1282,7 @@ function EscritorGame({ app, setApp, go, onRestart }) {
         userParts.push(`${i + 1}) S:${userSujeto} | P:${userPredicado}`);
         correctParts.push(`${i + 1}) S:${okSujeto} | P:${okPredicado}`);
       });
-      setTimeout(() => answer(correct, userParts.join("  "), correctParts.join("  "), "✂"), 350);
+      setTimeout(() => answer(correct, userParts.join("  "), correctParts.join("  "), "✂"), correct ? 350 : 2500);
     } else if (ronda === 1) {
       setR2Locked(true);
       let correct = true;
@@ -1296,7 +1296,7 @@ function EscritorGame({ app, setApp, go, onRestart }) {
         return `${t.w}=${r2Marks[realIdx] || "?"}`;
       }).join(" ");
       const correctText = r2Pick.tokens.filter((t) => t.tipo !== "n").map((t) => `${t.w}=${t.tipo}`).join(" ");
-      setTimeout(() => answer(correct, userText, correctText, "🎯"), 350);
+      setTimeout(() => answer(correct, userText, correctText, "🎯"), correct ? 350 : 2500);
     } else if (ronda === 2) {
       setR3Locked(true);
       let correct = true;
@@ -1325,7 +1325,7 @@ function EscritorGame({ app, setApp, go, onRestart }) {
       };
       const userText = armar((i) => r3Placed[i] || "▢");
       const correctText = armar((i, esperado) => esperado);
-      setTimeout(() => answer(correct, userText, correctText, "✒️"), 350);
+      setTimeout(() => answer(correct, userText, correctText, "✒️"), correct ? 350 : 2500);
     }
   }
 
@@ -2421,7 +2421,7 @@ function _SastreCitasCard_DEPRECATED({ pick, placed, picked, locked, onPickLabel
 // ─────────────────────────────────────────────────────────────
 function NarradorGame({ app, setApp, go, onRestart }) {
   const char = CHARACTERS.find((c) => c.id === app.character) || CHARACTERS[0];
-  const catLabel = app.currentCatLabel || "El narrador";
+  const catLabel = app.currentCatLabel || "Dar vida a las historias";
 
   const [ronda, setRonda] = useStateG(0);
 
@@ -2523,7 +2523,7 @@ function NarradorGame({ app, setApp, go, onRestart }) {
       }
       const userText = r1Pick.frases.map((f) => `${f.categoria}: ${r1Placed[f.categoria] || "?"}`).join(" · ");
       const correctText = r1Pick.frases.map((f) => `${f.categoria}: ${f.correcta}`).join(" · ");
-      setTimeout(() => answer(correct, userText, correctText, "🧪"), 350);
+      setTimeout(() => answer(correct, userText, correctText, "🧪"), correct ? 350 : 2500);
     } else if (ronda === 1) {
       setR2Locked(true);
       // El correct se computa por la cantidad de pasos acertados en primera elección
@@ -2534,7 +2534,7 @@ function NarradorGame({ app, setApp, go, onRestart }) {
         return `${p.elemento}: ${elegido ? p.opciones[elegido.idxElegido] : "?"}`;
       }).join(" → ");
       const correctText = r2Pick.pasos.map((p) => `${p.elemento}: ${p.opciones[p.correctaIdx]}`).join(" → ");
-      setTimeout(() => answer(correct, userText, correctText, "🪜"), 350);
+      setTimeout(() => answer(correct, userText, correctText, "🪜"), correct ? 350 : 2500);
     } else if (ronda === 2) {
       setR3Locked(true);
       let correct = true;
@@ -2552,7 +2552,7 @@ function NarradorGame({ app, setApp, go, onRestart }) {
         const f = r3Pick.frases.find((x) => x.orden === s);
         return `${s}. ${f.texto}`;
       }).join(" | ");
-      setTimeout(() => answer(correct, userText, correctText, "📖"), 350);
+      setTimeout(() => answer(correct, userText, correctText, "📖"), correct ? 350 : 2500);
     }
   }
 
@@ -2908,7 +2908,7 @@ function CaminoNarradorCard({ pick, step, picks, locked, char, onChoose }) {
   const pickActual = picks.filter((p) => p.pasoIdx === step);
 
   return (
-    <div style={{ position: "relative", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+    <div style={{ position: "relative", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
       {/* Título del cuento + camino visual */}
       <div style={{
         fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11,
@@ -2967,10 +2967,10 @@ function CaminoNarradorCard({ pick, step, picks, locked, char, onChoose }) {
       {/* Caja de opciones del paso actual */}
       {!meta && (
         <div style={{
-          width: "100%", maxWidth: 430, marginTop: 24,
+          width: "100%", maxWidth: 430, marginTop: 38,
           background: "linear-gradient(180deg, rgba(255,253,245,0.97), rgba(245,238,225,0.92))",
           border: "3px solid #f2c260",
-          borderRadius: 14, padding: "8px 12px 10px 12px",
+          borderRadius: 14, padding: "12px 14px 14px 14px",
           boxShadow: "0 10px 22px rgba(0,0,0,0.45)",
           color: "#3a2608",
         }}>

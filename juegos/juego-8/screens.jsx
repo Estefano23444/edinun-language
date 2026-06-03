@@ -124,19 +124,19 @@ function PeopleIcon({ size = 18, color = "#fce9a8" }) {
 const LEVELS_CFG = [
   {
     id: "escritor",
-    label: "El escritor",
+    label: "Planificar la escritura",
     grad: "linear-gradient(180deg, #ffc06e, #e4881a)",
     ink: "#3a2608",
-    description: "Sujeto, modificadores y comillas.",
-    catLabel: "El escritor",
+    description: "Oraciones, modificadores y comillas.",
+    catLabel: "Planificar la escritura",
   },
   {
     id: "narrador",
-    label: "El narrador",
+    label: "Dar vida a las historias",
     grad: "linear-gradient(180deg, #b9e3ff, #4f9ee0)",
     ink: "#0a2540",
     description: "Palabras mágicas y partes de un cuento.",
-    catLabel: "El narrador",
+    catLabel: "Dar vida a las historias",
   },
 ];
 
