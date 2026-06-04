@@ -986,9 +986,11 @@ function CSZ_CompletaCard({ onAnswer, verifyRef, setVerifyReady, clearRef, setCl
     // R0 es la primera ronda del nivel CSZ → limpia el Set de palabras de la
     // sesión para que el anti-repetición cross-ronda arranque desde cero.
     clearCszSessionWords();
-    const recent = new Set(getRecent("csz_r0"));
-    let candidates = CSZ_COMPLETA_POOL.filter((p) => !recent.has(p.id));
-    if (candidates.length === 0) candidates = CSZ_COMPLETA_POOL;
+    // Ventana FIFO = floor(N/2) más recientes de ESTE pool (estándar 12).
+    const windowN = Math.floor(CSZ_COMPLETA_POOL.length / 2);
+    const blocked = new Set(getRecent("csz_r0").slice(0, windowN));
+    let candidates = CSZ_COMPLETA_POOL.filter((p) => !blocked.has(p.id));
+    if (candidates.length < 1) candidates = CSZ_COMPLETA_POOL;
     const pick = candidates[Math.floor(Math.random() * candidates.length)];
     pushRecent("csz_r0", pick.id);
     addCszSessionWord(pick.word);
@@ -1095,18 +1097,20 @@ function CSZ_CompletaCard({ onAnswer, verifyRef, setVerifyReady, clearRef, setCl
 // ─────────────────────────────────────────────────────────────
 function CSZ_TriviaCard({ onAnswer, verifyRef, setVerifyReady, clearRef, setClearReady }) {
   const problem = useMemoG(() => {
-    const recent = new Set(getRecent("csz_r1"));
-    // Excluir IDs recientes Y ejercicios cuya palabra correcta ya salió en R0.
+    // Ventana FIFO = floor(N/2) más recientes de ESTE pool (estándar 12).
+    const windowN = Math.floor(CSZ_TRIVIA_POOL.length / 2);
+    const blocked = new Set(getRecent("csz_r1").slice(0, windowN));
+    // Excluir IDs bloqueados Y ejercicios cuya palabra correcta ya salió en R0.
     let candidates = CSZ_TRIVIA_POOL.filter((p) => {
-      if (recent.has(p.id)) return false;
+      if (blocked.has(p.id)) return false;
       const correctWord = p.opciones[p.correctIdx];
       return !hasCszSessionWord(correctWord);
     });
-    if (candidates.length === 0) {
+    if (candidates.length < 1) {
       // Si la sesión bloqueó todo, ignorar el filtro cross-ronda.
-      candidates = CSZ_TRIVIA_POOL.filter((p) => !recent.has(p.id));
+      candidates = CSZ_TRIVIA_POOL.filter((p) => !blocked.has(p.id));
     }
-    if (candidates.length === 0) candidates = CSZ_TRIVIA_POOL;
+    if (candidates.length < 1) candidates = CSZ_TRIVIA_POOL;
     const pick = candidates[Math.floor(Math.random() * candidates.length)];
     pushRecent("csz_r1", pick.id);
     addCszSessionWord(pick.opciones[pick.correctIdx]);
@@ -1597,11 +1601,17 @@ function LP_CarreraCard({ onFinish, verifyRef, setVerifyReady, clearRef, setClea
   // Elegir 3 frases: 2 de un tipo + 1 del otro al azar, evitando frases que ya
   // salieron en sesiones recientes (localStorage).
   const queueInit = useMemoG(() => {
-    const recent = new Set(getRecent("lp_r0"));
+    const recent = getRecent("lp_r0");
     const allPrej = LP_PE_POOL.filter((p) => p.correct === "PREJUICIO");
     const allEste = LP_PE_POOL.filter((p) => p.correct === "ESTEREOTIPO");
-    const freshPrej = allPrej.filter((p) => !recent.has(p.id));
-    const freshEste = allEste.filter((p) => !recent.has(p.id));
+    // Ventana FIFO = floor(N/2) más recientes de CADA tipo (estándar 12).
+    const prejIds = new Set(allPrej.map((p) => p.id));
+    const esteIds = new Set(allEste.map((p) => p.id));
+    const blockedPrej = new Set(recent.filter((id) => prejIds.has(id)).slice(0, Math.floor(allPrej.length / 2)));
+    const blockedEste = new Set(recent.filter((id) => esteIds.has(id)).slice(0, Math.floor(allEste.length / 2)));
+    const freshPrej = allPrej.filter((p) => !blockedPrej.has(p.id));
+    const freshEste = allEste.filter((p) => !blockedEste.has(p.id));
+    // Solo se necesitan hasta 2 de cada tipo; la ventana garantiza fresh ≥ 2.
     const prejPool = freshPrej.length >= 2 ? freshPrej : allPrej;
     const estePool = freshEste.length >= 2 ? freshEste : allEste;
     // Balance variable: 2+1 o 1+2 al azar para que no siempre haya más de un tipo.
@@ -1883,9 +1893,11 @@ function LP_CarreraCard({ onFinish, verifyRef, setVerifyReady, clearRef, setClea
 function LP_ComicCard({ onFinish, verifyRef, setVerifyReady, clearRef, setClearReady }) {
   // 1 viñeta sola, con anti-repetición respecto a sesiones recientes.
   const current = useMemoG(() => {
-    const recent = new Set(getRecent("lp_r1"));
-    let candidates = LP_COMIC_POOL.filter((c) => !recent.has(c.id));
-    if (candidates.length === 0) candidates = LP_COMIC_POOL;
+    // Ventana FIFO = floor(N/2) más recientes de ESTE pool (estándar 12).
+    const windowN = Math.floor(LP_COMIC_POOL.length / 2);
+    const blocked = new Set(getRecent("lp_r1").slice(0, windowN));
+    let candidates = LP_COMIC_POOL.filter((c) => !blocked.has(c.id));
+    if (candidates.length < 1) candidates = LP_COMIC_POOL;
     const pick = candidates[Math.floor(Math.random() * candidates.length)];
     pushRecent("lp_r1", pick.id);
     return pick;

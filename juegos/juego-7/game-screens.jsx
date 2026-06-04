@@ -1302,9 +1302,14 @@ function ResenaGame({ app, setApp, go, onRestart }) {
 
   // Picks de cada ronda
   const [r1Pick] = useStateG(() => {
-    const recent = new Set(getRecent("resena"));
-    let pool = RESENAS_BANK.filter((p) => !recent.has(p.id));
-    if (pool.length === 0) pool = RESENAS_BANK;
+    // Ventana FIFO ≈ floor(N/2) sobre ESTE banco (estándar 12): bloquea solo
+    // los más recientes de RESENAS_BANK, no toda la lista compartida "resena".
+    const bankIds = new Set(RESENAS_BANK.map((p) => p.id));
+    const recentIds = getRecent("resena").filter((id) => bankIds.has(id));
+    const windowN = Math.floor(RESENAS_BANK.length / 2);
+    const blocked = new Set(recentIds.slice(0, windowN));
+    let pool = RESENAS_BANK.filter((p) => !blocked.has(p.id));
+    if (pool.length < 1) pool = RESENAS_BANK;
     const p = pool[Math.floor(Math.random() * pool.length)];
     pushRecent("resena", p.id);
     return p;
@@ -1314,9 +1319,13 @@ function ResenaGame({ app, setApp, go, onRestart }) {
   const [r1Parrafos] = useStateG(() => shuffle(r1Pick.parrafos));
 
   const [r2Pick] = useStateG(() => {
-    const recent = new Set(getRecent("resena"));
-    let pool = DETERMINANTES_BANK.filter((d) => !recent.has(d.id));
-    if (pool.length === 0) pool = DETERMINANTES_BANK;
+    // Ventana FIFO ≈ floor(N/2) sobre ESTE banco (estándar 12).
+    const bankIds = new Set(DETERMINANTES_BANK.map((d) => d.id));
+    const recentIds = getRecent("resena").filter((id) => bankIds.has(id));
+    const windowN = Math.floor(DETERMINANTES_BANK.length / 2);
+    const blocked = new Set(recentIds.slice(0, windowN));
+    let pool = DETERMINANTES_BANK.filter((d) => !blocked.has(d.id));
+    if (pool.length < 1) pool = DETERMINANTES_BANK;
     const p = pool[Math.floor(Math.random() * pool.length)];
     pushRecent("resena", p.id);
     return p;
@@ -1326,9 +1335,13 @@ function ResenaGame({ app, setApp, go, onRestart }) {
   const r2Determinantes = r2Pick.parrafo.map((tk, i) => tk.d ? { ...tk, idx: i } : null).filter(Boolean);
 
   const [r3Pick] = useStateG(() => {
-    const recent = new Set(getRecent("resena"));
-    let pool = VERBO_TABLA_BANK.filter((v) => !recent.has(v.id));
-    if (pool.length === 0) pool = VERBO_TABLA_BANK;
+    // Ventana FIFO ≈ floor(N/2) sobre ESTE banco (estándar 12).
+    const bankIds = new Set(VERBO_TABLA_BANK.map((v) => v.id));
+    const recentIds = getRecent("resena").filter((id) => bankIds.has(id));
+    const windowN = Math.floor(VERBO_TABLA_BANK.length / 2);
+    const blocked = new Set(recentIds.slice(0, windowN));
+    let pool = VERBO_TABLA_BANK.filter((v) => !blocked.has(v.id));
+    if (pool.length < 1) pool = VERBO_TABLA_BANK;
     const p = pool[Math.floor(Math.random() * pool.length)];
     pushRecent("resena", p.id);
     return p;
@@ -2294,18 +2307,27 @@ function EscritorGame({ app, setApp, go, onRestart }) {
 
   // Picks
   const [r1Pick] = useStateG(() => {
-    const recent = new Set(getRecent("escritor"));
-    let pool = PRONOMBRES_BANK.filter((p) => !recent.has(p.id));
-    if (pool.length === 0) pool = PRONOMBRES_BANK;
+    // Ventana FIFO ≈ floor(N/2) sobre ESTE banco (estándar 12): bloquea solo
+    // los más recientes de PRONOMBRES_BANK, no toda la lista compartida "escritor".
+    const bankIds = new Set(PRONOMBRES_BANK.map((p) => p.id));
+    const recentIds = getRecent("escritor").filter((id) => bankIds.has(id));
+    const windowN = Math.floor(PRONOMBRES_BANK.length / 2);
+    const blocked = new Set(recentIds.slice(0, windowN));
+    let pool = PRONOMBRES_BANK.filter((p) => !blocked.has(p.id));
+    if (pool.length < 1) pool = PRONOMBRES_BANK;
     const p = pool[Math.floor(Math.random() * pool.length)];
     pushRecent("escritor", p.id);
     return p;
   });
 
   const [r2Pick] = useStateG(() => {
-    const recent = new Set(getRecent("escritor"));
-    let pool = VERBOIDES_BANK.filter((v) => !recent.has(v.id));
-    if (pool.length === 0) pool = VERBOIDES_BANK;
+    // Ventana FIFO ≈ floor(N/2) sobre ESTE banco (estándar 12).
+    const bankIds = new Set(VERBOIDES_BANK.map((v) => v.id));
+    const recentIds = getRecent("escritor").filter((id) => bankIds.has(id));
+    const windowN = Math.floor(VERBOIDES_BANK.length / 2);
+    const blocked = new Set(recentIds.slice(0, windowN));
+    let pool = VERBOIDES_BANK.filter((v) => !blocked.has(v.id));
+    if (pool.length < 1) pool = VERBOIDES_BANK;
     const p = pool[Math.floor(Math.random() * pool.length)];
     pushRecent("escritor", p.id);
     return p;
@@ -2314,9 +2336,12 @@ function EscritorGame({ app, setApp, go, onRestart }) {
   const [r3Pick] = useStateG(() => {
     // Key exclusiva de R3 G/J (antes compartía "escritor" con R1/R2, lo que
     // contaminaba el FIFO y reducía la variedad real).
-    const recent = new Set(getRecent("usog"));
-    let pool = USO_G_BANK.filter((v) => !recent.has(v.id));
-    if (pool.length === 0) pool = USO_G_BANK;
+    // Ventana FIFO ≈ floor(N/2) sobre ESTE banco (estándar 12). "usog" ya es
+    // una key exclusiva, pero usamos ventana para no vaciar nunca el pool.
+    const windowN = Math.floor(USO_G_BANK.length / 2);
+    const blocked = new Set(getRecent("usog").slice(0, windowN));
+    let pool = USO_G_BANK.filter((v) => !blocked.has(v.id));
+    if (pool.length < 1) pool = USO_G_BANK;
     const p = pool[Math.floor(Math.random() * pool.length)];
     pushRecent("usog", p.id);
     return p;

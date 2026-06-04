@@ -867,9 +867,12 @@ function TiposDeTextoGame({ app, setApp, go, onRestart }) {
 
   // R1 — pick aleatorio del banco de textos
   const [r1Pick] = useStateG(() => {
-    const recent = new Set(getRecent("tipos"));
-    let pool = TIPOS_BANK.filter((t) => !recent.has(t.id));
-    if (pool.length === 0) pool = TIPOS_BANK;
+    // FIFO ventana floor(N/2) sobre ESTE banco (estándar 12)
+    const ids = new Set(TIPOS_BANK.map((t) => t.id));
+    const recentIds = getRecent("tipos").filter((k) => ids.has(k));
+    const blocked = new Set(recentIds.slice(0, Math.floor(TIPOS_BANK.length / 2)));
+    let pool = TIPOS_BANK.filter((t) => !blocked.has(t.id));
+    if (pool.length < 1) pool = TIPOS_BANK;
     const p = pool[Math.floor(Math.random() * pool.length)];
     pushRecent("tipos", p.id);
     return p;
@@ -877,9 +880,12 @@ function TiposDeTextoGame({ app, setApp, go, onRestart }) {
 
   // R2 — pick aleatorio del banco de organizadores
   const [r2Pick] = useStateG(() => {
-    const recent = new Set(getRecent("tipos"));
-    let pool = ORG_BANK.filter((t) => !recent.has(t.id));
-    if (pool.length === 0) pool = ORG_BANK;
+    // FIFO ventana floor(N/2) sobre ESTE banco (estándar 12)
+    const ids = new Set(ORG_BANK.map((t) => t.id));
+    const recentIds = getRecent("tipos").filter((k) => ids.has(k));
+    const blocked = new Set(recentIds.slice(0, Math.floor(ORG_BANK.length / 2)));
+    let pool = ORG_BANK.filter((t) => !blocked.has(t.id));
+    if (pool.length < 1) pool = ORG_BANK;
     const p = pool[Math.floor(Math.random() * pool.length)];
     pushRecent("tipos", p.id);
     return p;
@@ -1400,9 +1406,12 @@ function PoeticaGame({ app, setApp, go, onRestart }) {
 
   // R1 — pick aleatorio
   const [r1Pick] = useStateG(() => {
-    const recent = new Set(getRecent("poetica"));
-    let pool = FUNCIONES_BANK.filter((t) => !recent.has(t.id));
-    if (pool.length === 0) pool = FUNCIONES_BANK;
+    // FIFO ventana floor(N/2) sobre ESTE banco (estándar 12)
+    const ids = new Set(FUNCIONES_BANK.map((t) => t.id));
+    const recentIds = getRecent("poetica").filter((k) => ids.has(k));
+    const blocked = new Set(recentIds.slice(0, Math.floor(FUNCIONES_BANK.length / 2)));
+    let pool = FUNCIONES_BANK.filter((t) => !blocked.has(t.id));
+    if (pool.length < 1) pool = FUNCIONES_BANK;
     const p = pool[Math.floor(Math.random() * pool.length)];
     pushRecent("poetica", p.id);
     return p;
@@ -1410,8 +1419,11 @@ function PoeticaGame({ app, setApp, go, onRestart }) {
 
   // R2 — 3 refranes al azar (con su significado)
   const [r2Pairs] = useStateG(() => {
-    const recent = new Set(getRecent("poetica"));
-    let pool = REFRANES_BANK.filter((t) => !recent.has(t.id));
+    // FIFO ventana floor(N/2) sobre ESTE banco (estándar 12)
+    const ids = new Set(REFRANES_BANK.map((t) => t.id));
+    const recentIds = getRecent("poetica").filter((k) => ids.has(k));
+    const blocked = new Set(recentIds.slice(0, Math.floor(REFRANES_BANK.length / 2)));
+    let pool = REFRANES_BANK.filter((t) => !blocked.has(t.id));
     if (pool.length < 3) pool = REFRANES_BANK;
     const picks = shuffle(pool).slice(0, 3);
     picks.forEach((p) => pushRecent("poetica", p.id));
@@ -1420,9 +1432,12 @@ function PoeticaGame({ app, setApp, go, onRestart }) {
 
   // R3 — pick aleatorio del banco de poemas
   const [r3Pick] = useStateG(() => {
-    const recent = new Set(getRecent("poetica"));
-    let pool = POEMAS_BANK.filter((t) => !recent.has(t.id));
-    if (pool.length === 0) pool = POEMAS_BANK;
+    // FIFO ventana floor(N/2) sobre ESTE banco (estándar 12)
+    const ids = new Set(POEMAS_BANK.map((t) => t.id));
+    const recentIds = getRecent("poetica").filter((k) => ids.has(k));
+    const blocked = new Set(recentIds.slice(0, Math.floor(POEMAS_BANK.length / 2)));
+    let pool = POEMAS_BANK.filter((t) => !blocked.has(t.id));
+    if (pool.length < 1) pool = POEMAS_BANK;
     const p = pool[Math.floor(Math.random() * pool.length)];
     pushRecent("poetica", p.id);
     return p;
@@ -1829,18 +1844,24 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
   });
 
   const [r2Pick] = useStateG(() => {
-    const recent = new Set(getRecent("escritura"));
-    let pool = CONECTORES_BANK.filter((t) => !recent.has(t.id));
-    if (pool.length === 0) pool = CONECTORES_BANK;
+    // FIFO ventana floor(N/2) sobre ESTE banco (estándar 12)
+    const ids = new Set(CONECTORES_BANK.map((t) => t.id));
+    const recentIds = getRecent("escritura").filter((k) => ids.has(k));
+    const blocked = new Set(recentIds.slice(0, Math.floor(CONECTORES_BANK.length / 2)));
+    let pool = CONECTORES_BANK.filter((t) => !blocked.has(t.id));
+    if (pool.length < 1) pool = CONECTORES_BANK;
     const p = pool[Math.floor(Math.random() * pool.length)];
     pushRecent("escritura", p.id);
     return p;
   });
 
   const [r3Pick] = useStateG(() => {
-    const recent = new Set(getRecent("escritura"));
-    let pool = ERRORES_BANK.filter((t) => !recent.has(t.id));
-    if (pool.length === 0) pool = ERRORES_BANK;
+    // FIFO ventana floor(N/2) sobre ESTE banco (estándar 12)
+    const ids = new Set(ERRORES_BANK.map((t) => t.id));
+    const recentIds = getRecent("escritura").filter((k) => ids.has(k));
+    const blocked = new Set(recentIds.slice(0, Math.floor(ERRORES_BANK.length / 2)));
+    let pool = ERRORES_BANK.filter((t) => !blocked.has(t.id));
+    if (pool.length < 1) pool = ERRORES_BANK;
     const p = pool[Math.floor(Math.random() * pool.length)];
     pushRecent("escritura", p.id);
     return p;
@@ -2358,27 +2379,36 @@ function EnriquecimientoGame({ app, setApp, go, onRestart }) {
   const [ronda, setRonda] = useStateG(0);
 
   const [r1Pick] = useStateG(() => {
-    const recent = new Set(getRecent("enriquece"));
-    let pool = POLISEMIAS_BANK.filter((t) => !recent.has(t.id));
-    if (pool.length === 0) pool = POLISEMIAS_BANK;
+    // FIFO ventana floor(N/2) sobre ESTE banco (estándar 12)
+    const ids = new Set(POLISEMIAS_BANK.map((t) => t.id));
+    const recentIds = getRecent("enriquece").filter((k) => ids.has(k));
+    const blocked = new Set(recentIds.slice(0, Math.floor(POLISEMIAS_BANK.length / 2)));
+    let pool = POLISEMIAS_BANK.filter((t) => !blocked.has(t.id));
+    if (pool.length < 1) pool = POLISEMIAS_BANK;
     const p = pool[Math.floor(Math.random() * pool.length)];
     pushRecent("enriquece", p.id);
     return p;
   });
 
   const [r2Pick] = useStateG(() => {
-    const recent = new Set(getRecent("enriquece"));
-    let pool = HOMOFONAS_BANK.filter((t) => !recent.has(t.id));
-    if (pool.length === 0) pool = HOMOFONAS_BANK;
+    // FIFO ventana floor(N/2) sobre ESTE banco (estándar 12)
+    const ids = new Set(HOMOFONAS_BANK.map((t) => t.id));
+    const recentIds = getRecent("enriquece").filter((k) => ids.has(k));
+    const blocked = new Set(recentIds.slice(0, Math.floor(HOMOFONAS_BANK.length / 2)));
+    let pool = HOMOFONAS_BANK.filter((t) => !blocked.has(t.id));
+    if (pool.length < 1) pool = HOMOFONAS_BANK;
     const p = pool[Math.floor(Math.random() * pool.length)];
     pushRecent("enriquece", p.id);
     return p;
   });
 
   const [r3Pick] = useStateG(() => {
-    const recent = new Set(getRecent("enriquece"));
-    let pool = CONDICIONAL_BANK.filter((t) => !recent.has(t.id));
-    if (pool.length === 0) pool = CONDICIONAL_BANK;
+    // FIFO ventana floor(N/2) sobre ESTE banco (estándar 12)
+    const ids = new Set(CONDICIONAL_BANK.map((t) => t.id));
+    const recentIds = getRecent("enriquece").filter((k) => ids.has(k));
+    const blocked = new Set(recentIds.slice(0, Math.floor(CONDICIONAL_BANK.length / 2)));
+    let pool = CONDICIONAL_BANK.filter((t) => !blocked.has(t.id));
+    if (pool.length < 1) pool = CONDICIONAL_BANK;
     const p = pool[Math.floor(Math.random() * pool.length)];
     pushRecent("enriquece", p.id);
     return p;

@@ -240,11 +240,17 @@ const MEMORY_BANK = [
 // makeProblem por ronda
 // ─────────────────────────────────────────────────────────────
 function pickFresh(bank, prefix, idOf) {
-  const recent = new Set(getRecent());
-  let pool = bank.filter((b) => !recent.has(prefix + ":" + idOf(b)));
+  // FIFO por categoría (estándar 12): bloquea solo los floor(N/2) más
+  // recientes de ESTE prefijo, no todo el historial. Así el pool nunca
+  // se vacía mientras queden frescas y la nueva ≠ las ~floor(N/2) últimas.
+  const pre = prefix + ":";
+  const recentIds = getRecent().filter((k) => k.startsWith(pre)).map((k) => k.slice(pre.length));
+  const windowN = Math.floor(bank.length / 2);
+  const blocked = new Set(recentIds.slice(0, windowN));
+  let pool = bank.filter((b) => !blocked.has(idOf(b)));
   if (pool.length === 0) pool = bank;
   const p = pool[Math.floor(Math.random() * pool.length)];
-  pushRecent(prefix + ":" + idOf(p));
+  pushRecent(pre + idOf(p));
   return p;
 }
 
@@ -281,8 +287,11 @@ function makeProblemR2() {
 function makeProblemR3() {
   // 4 parejas frescas (FIFO por palabra) → 8 cartas (imagen + palabra).
   // 4 parejas es lo apropiado para 7 años; 6 saturaba el tablero.
-  const recent = new Set(getRecent());
-  let pool = MEMORY_BANK.filter((w) => !recent.has("mem:" + w.word));
+  // FIFO por categoría (estándar 12): bloquea solo las floor(N/2) palabras
+  // más recientes (N = banco de memoria), no todo el historial.
+  const recentW = getRecent().filter((k) => k.startsWith("mem:")).map((k) => k.slice("mem:".length));
+  const blocked = new Set(recentW.slice(0, Math.floor(MEMORY_BANK.length / 2)));
+  let pool = MEMORY_BANK.filter((w) => !blocked.has(w.word));
   if (pool.length < 4) pool = MEMORY_BANK;
   const picks = shuffle(pool).slice(0, 4);
   for (const p of picks) pushRecent("mem:" + p.word);

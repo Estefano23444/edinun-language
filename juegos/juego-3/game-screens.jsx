@@ -508,8 +508,13 @@ function FeedbackOverlay({ feedback, feedbackMsg, charName }) {
 // NIVEL 1 — La letra C y Q (3 rondas con palabras de R0/R1/R2)
 // ─────────────────────────────────────────────────────────────
 function pickWord(bank, recentKey, usedKeys) {
-  const recent = new Set(getRecent(recentKey));
-  const exclude = new Set([...usedKeys, ...recent]);
+  // FIFO anti-repetición: bloquear solo los floor(N/2) más recientes de esta categoría
+  // (N = tamaño del banco), nunca todos los recientes — así el pool no se vacía
+  // mientras queden opciones frescas y el reload no repite la última escena.
+  const windowN = Math.floor(bank.length / 2);
+  const recentIds = getRecent(recentKey); // ya está acotado por categoría (more-recent first)
+  const blocked = new Set(recentIds.slice(0, windowN));
+  const exclude = new Set([...usedKeys, ...blocked]);
   let pool = bank.filter((w) => !exclude.has(w.word));
   if (pool.length === 0) pool = bank.filter((w) => !usedKeys.has(w.word));
   if (pool.length === 0) pool = bank;
@@ -1306,9 +1311,13 @@ function SpeedQuizCard({ pool, chips, onFinish, verifyRef, setVerifyReady }) {
 function DragMatchCard({ pool, chips, onFinish, verifyRef, setVerifyReady, clearRef, setClearReady }) {
   // Elegir 3 textos con 3 tonos DISTINTOS (uno por chip si se puede)
   const items = useMemoG(() => {
-    const recent = new Set(getRecent("elementos_r2"));
+    // FIFO anti-repetición: bloquear solo los floor(N/2) más recientes (N = banco),
+    // no todos los recientes; así cada chip conserva opciones frescas y el reload no repite.
+    const windowN = Math.floor(pool.length / 2);
+    const recentIds = getRecent("elementos_r2"); // ya acotado por categoría (more-recent first)
+    const blocked = new Set(recentIds.slice(0, windowN));
     const byChip = {};
-    chips.forEach((c) => { byChip[c] = pool.filter((p) => p.correct === c && !recent.has(p.id)); });
+    chips.forEach((c) => { byChip[c] = pool.filter((p) => p.correct === c && !blocked.has(p.id)); });
     // Si algún chip se quedó sin pool, usar todos del chip
     chips.forEach((c) => { if (byChip[c].length === 0) byChip[c] = pool.filter((p) => p.correct === c); });
     // Elegir 3 chips al azar y para cada uno 1 texto
@@ -1474,9 +1483,13 @@ function DragMatchCard({ pool, chips, onFinish, verifyRef, setVerifyReady, clear
 // ─────────────────────────────────────────────────────────────
 function ElijeElFinalCard({ pool, onAnswer, verifyRef, setVerifyReady }) {
   const story = useMemoG(() => {
-    const recent = new Set(getRecent("elementos_r3"));
-    let candidates = pool.filter((s) => !recent.has(s.id));
-    if (candidates.length === 0) candidates = pool;
+    // FIFO anti-repetición: bloquear solo los floor(N/2) más recientes (N = banco),
+    // no todos los recientes; así el pool no se vacía y el reload no repite la última.
+    const windowN = Math.floor(pool.length / 2);
+    const recentIds = getRecent("elementos_r3"); // ya acotado por categoría (more-recent first)
+    const blocked = new Set(recentIds.slice(0, windowN));
+    let candidates = pool.filter((s) => !blocked.has(s.id));
+    if (candidates.length < 1) candidates = pool;
     const pick = candidates[Math.floor(Math.random() * candidates.length)];
     pushRecent("elementos_r3", pick.id);
     return pick;

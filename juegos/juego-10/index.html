@@ -771,9 +771,14 @@ function pushRecent(cat, key) {
   try { localStorage.setItem(RECENT_KEYS[cat], JSON.stringify(trimmed)); } catch {}
 }
 function pickFromBank(cat, bank) {
-  const recent = new Set(getRecent(cat));
-  let pool = bank.filter((b) => !recent.has(b.id));
-  if (pool.length === 0) pool = bank;
+  // Bloquea solo la ventana de los más recientes ≈ Math.floor(N/2) de ESTA
+  // categoría (N = tamaño del banco), no todos los recientes. Así el pool
+  // nunca se vacía mientras queden opciones frescas y el nuevo pick siempre
+  // difiere de las últimas ~floor(N/2) jugadas (shell-standards.md §12).
+  const windowN = Math.floor(bank.length / 2);
+  const blocked = new Set(getRecent(cat).slice(0, windowN));
+  let pool = bank.filter((b) => !blocked.has(b.id));
+  if (pool.length < 1) pool = bank;
   const p = pool[Math.floor(Math.random() * pool.length)];
   pushRecent(cat, p.id);
   return p;

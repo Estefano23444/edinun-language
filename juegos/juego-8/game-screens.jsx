@@ -1165,9 +1165,15 @@ function EscritorGame({ app, setApp, go, onRestart }) {
 
   // Picks
   const [r1Picks] = useStateG(() => {
-    // 3 oraciones distintas. Usamos FIFO anti-repetición de las usadas recientemente.
-    const recent = new Set(getRecent("escritor"));
-    let pool = SP_BANK.filter((p) => !recent.has("sp:" + p.id));
+    // 3 oraciones distintas. FIFO anti-repetición por categoría: bloqueamos solo
+    // las últimas floor(N/2) usadas de este prefijo (estándar 12), así el pool
+    // nunca se vacía mientras queden opciones frescas.
+    const windowN = Math.floor(SP_BANK.length / 2);
+    const recentIds = getRecent("escritor")
+      .filter((k) => k.startsWith("sp:"))
+      .map((k) => k.slice("sp:".length));
+    const blocked = new Set(recentIds.slice(0, windowN));
+    let pool = SP_BANK.filter((p) => !blocked.has(p.id));
     if (pool.length < 3) pool = SP_BANK.slice();
     // Mezcla
     const picks = [];
@@ -1190,19 +1196,18 @@ function EscritorGame({ app, setApp, go, onRestart }) {
     return picks;
   });
 
-  // FIFO con anti-repetición fuerte para N1 (mismo patrón que N2):
-  // cuando el pool filtrado queda vacío, excluimos el más reciente del prefijo
-  // para garantizar que nunca repetimos dos veces seguidas la misma lectura.
+  // FIFO con anti-repetición por categoría (estándar 12): bloqueamos solo las
+  // últimas floor(N/2) usadas de este prefijo, donde N = tamaño del banco. Así el
+  // pool nunca se vacía mientras queden opciones frescas y el nuevo pick difiere
+  // de las últimas ~floor(N/2) jugadas.
   function pickEscritorFIFO(bank, prefix) {
-    const recentArr = getRecent("escritor");
-    const recent = new Set(recentArr);
-    let pool = bank.filter((p) => !recent.has(prefix + p.id));
-    if (pool.length === 0) {
-      const lastSameCat = recentArr.find((k) => k.startsWith(prefix));
-      const lastId = lastSameCat ? lastSameCat.slice(prefix.length) : null;
-      pool = bank.filter((p) => p.id !== lastId);
-      if (pool.length === 0) pool = bank;
-    }
+    const windowN = Math.floor(bank.length / 2);
+    const recentIds = getRecent("escritor")
+      .filter((k) => k.startsWith(prefix))
+      .map((k) => k.slice(prefix.length));
+    const blocked = new Set(recentIds.slice(0, windowN));
+    let pool = bank.filter((p) => !blocked.has(p.id));
+    if (pool.length < 1) pool = bank;
     const p = pool[Math.floor(Math.random() * pool.length)];
     pushRecent("escritor", prefix + p.id);
     return p;
@@ -2438,21 +2443,18 @@ function NarradorGame({ app, setApp, go, onRestart }) {
   const [r3Orden, setR3Orden] = useStateG({});
   const [r3Locked, setR3Locked] = useStateG(false);
 
-  // Picks — FIFO con anti-repetición fuerte.
-  // Cuando el pool filtrado queda vacío (banco entero ya está en recent),
-  // excluimos al menos el ID MÁS RECIENTE para garantizar que nunca repetimos
-  // dos veces seguidas la misma lectura.
+  // Picks — FIFO con anti-repetición por categoría (estándar 12): bloqueamos solo
+  // las últimas floor(N/2) usadas de este prefijo, donde N = tamaño del banco. Así
+  // el pool nunca se vacía mientras queden opciones frescas y el nuevo pick difiere
+  // de las últimas ~floor(N/2) jugadas.
   function pickWithFIFO(bank, prefix) {
-    const recentArr = getRecent("narrador");
-    const recent = new Set(recentArr);
-    let pool = bank.filter((p) => !recent.has(prefix + p.id));
-    if (pool.length === 0) {
-      // Buscar el más reciente del mismo prefijo y excluirlo
-      const lastSameCat = recentArr.find((k) => k.startsWith(prefix));
-      const lastId = lastSameCat ? lastSameCat.slice(prefix.length) : null;
-      pool = bank.filter((p) => p.id !== lastId);
-      if (pool.length === 0) pool = bank;
-    }
+    const windowN = Math.floor(bank.length / 2);
+    const recentIds = getRecent("narrador")
+      .filter((k) => k.startsWith(prefix))
+      .map((k) => k.slice(prefix.length));
+    const blocked = new Set(recentIds.slice(0, windowN));
+    let pool = bank.filter((p) => !blocked.has(p.id));
+    if (pool.length < 1) pool = bank;
     const p = pool[Math.floor(Math.random() * pool.length)];
     pushRecent("narrador", prefix + p.id);
     return p;
