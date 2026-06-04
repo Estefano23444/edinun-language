@@ -15,6 +15,12 @@ qa-*.png
 # QA visual — capturas y resumen se regeneran en cada corrida.
 **/.planning/qa-screenshots/
 **/.planning/qa-results.json
+**/.planning/qa-overlap-results.json
+
+# Capturas y scripts temporales ad-hoc en la raíz (se regeneran al hacer QA).
+.tmp-screenshots/
+.tmp-*.js
+v?-*.png
 
 # Sistema operativo
 .DS_Store
