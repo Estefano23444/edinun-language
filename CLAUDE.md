@@ -1,6 +1,6 @@
 # Instrucciones del proyecto edinun-language
 
-Repo de juegos de lengua EDINUN. 9 juegos actualmente, todos comparten el mismo shell visual y estructural.
+Repo de juegos de lengua EDINUN. 12 juegos actualmente, todos comparten el mismo shell visual y estructural.
 
 ## Estándares de shell INAMOVIBLES (2026-06-01)
 
