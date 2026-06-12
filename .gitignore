@@ -14,6 +14,7 @@ qa-*.png
 
 # QA visual — capturas y resumen se regeneran en cada corrida.
 **/.planning/qa-screenshots/
+**/.planning/qa-shots/
 **/.planning/qa-results.json
 **/.planning/qa-overlap-results.json
 
