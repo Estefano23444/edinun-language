@@ -239,11 +239,7 @@ function HomeScreen({ app, setApp, go }) {
             color: "#fce9a8",
             textAlign: "center",
           }}>
-            Explora la literatura fantástica y aprende a resumir
-            <br />
-            <span style={{ color: "#ffd76e", fontSize: 16, letterSpacing: "0.04em" }}>
-              lo extraño · lo maravilloso · lo fantástico
-            </span>
+            Explora la literatura fantástica y aprende a resumir.
           </div>
 
           {/* Nombre + ENTRAR */}

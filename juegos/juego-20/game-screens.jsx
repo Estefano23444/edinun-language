@@ -537,7 +537,7 @@ function OptionButton({ label, locked, isCorrect, isPicked, onClick, color, minW
 // Drag + re-arrastre + bandeja para devolver. items: [{id,n,label,cue}].
 // slots/setSlots viven en el padre (para validar). slotLabels opcional
 // rotula cada casilla (ej. Cabecera / Fecha / Entrada / Comentarios).
-function OrderRound({ items, byId, slots, setSlots, locked, accent = "#a78bfa", ink = "#1a0a3a", slotW = 250, prefix = "o", slotLabels = null }) {
+function OrderRound({ items, byId, slots, setSlots, locked, accent = "#a78bfa", ink = "#1a0a3a", slotW = 250, prefix = "o", slotLabels = null, slotPlaceholders = null }) {
   const TRAY = "__tray-" + prefix;
   const SLOT_PRE = "slot-" + prefix + "-";
   const [shuffled] = useStateG(() => shuffle(items.map((c) => c.id)));
@@ -632,8 +632,8 @@ function OrderRound({ items, byId, slots, setSlots, locked, accent = "#a78bfa", 
                   display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4,
                 }}>
                 {id ? card(id, ok) : (
-                  <span style={{ fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 12, color: "rgba(252,233,168,0.4)", pointerEvents: "none" }}>
-                    Suelta aquí el {i + 1}
+                  <span style={{ fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 12, color: "rgba(252,233,168,0.45)", pointerEvents: "none" }}>
+                    {slotPlaceholders && slotPlaceholders[i] ? slotPlaceholders[i] : `Suelta aquí el ${i + 1}`}
                   </span>
                 )}
                 {correcta && (
@@ -692,6 +692,12 @@ const BLOG_PARTES = [
   ] },
 ];
 const BLOG_SLOT_LABELS = ["Cabecera", "Fecha", "Entrada", "Comentarios"];
+const BLOG_SLOT_PLACEHOLDERS = [
+  "Suelta aquí la cabecera",
+  "Suelta aquí la fecha",
+  "Suelta aquí la entrada",
+  "Suelta aquí los comentarios",
+];
 
 // R2 — Detective de blogs (leer una entrada y descubrir el tema).
 const TEMA_COCINA = "🍳 Cocina";
@@ -712,21 +718,129 @@ const BLOG_TEMAS = [
   { id: "bt10", frag: "Estirar antes de correr evita molestias y te ayuda a rendir mucho mejor.", answer: TEMA_DEPORTES, options: [TEMA_DEPORTES, TEMA_COCINA, TEMA_MASCOTAS] },
 ];
 
-// R3 — Taller de títulos (elegir el título más llamativo y adecuado).
-const BLOG_TITULOS = [
-  { id: "ti1", tema: "Tema: cuidar el medioambiente 🌍", answer: "¡Salvemos el planeta: trucos verdes para todos!", options: ["¡Salvemos el planeta: trucos verdes para todos!", "Cosas del medioambiente", "Texto sobre la naturaleza"] },
-  { id: "ti2", tema: "Tema: recetas fáciles 🍳", answer: "Cocina sin miedo: platos ricos en 15 minutos", options: ["Cocina sin miedo: platos ricos en 15 minutos", "Comida y cosas", "Recetas varias"] },
-  { id: "ti3", tema: "Tema: aventuras en la montaña ⛰️", answer: "Cumbres y senderos: el diario de un explorador", options: ["Cumbres y senderos: el diario de un explorador", "Montañas", "Cosas que hice afuera"] },
-  { id: "ti4", tema: "Tema: cuidado de mascotas 🐶", answer: "Patitas felices: guía para consentir a tu mascota", options: ["Patitas felices: guía para consentir a tu mascota", "Animales", "Mi blog de perros y eso"] },
-  { id: "ti5", tema: "Tema: tecnología para todos 💻", answer: "Clic y listo: la tecnología en palabras simples", options: ["Clic y listo: la tecnología en palabras simples", "Cosas de computadoras", "Tecnología etcétera"] },
-  { id: "ti6", tema: "Tema: libros y lectura 📚", answer: "Entre páginas: historias que no querrás soltar", options: ["Entre páginas: historias que no querrás soltar", "Libros", "Cosas para leer"] },
-  { id: "ti7", tema: "Tema: deportes 🏀", answer: "A toda cancha: pura pasión por el deporte", options: ["A toda cancha: pura pasión por el deporte", "Deportes en general", "Mi blog deportivo nomás"] },
-  { id: "ti8", tema: "Tema: música 🎵", answer: "Sube el volumen: ritmos que te harán bailar", options: ["Sube el volumen: ritmos que te harán bailar", "Música y canciones", "Cosas musicales"] },
+// R3 — Construye el título (laboratorio): unir un GANCHO llamativo con el
+// TEMA que combina con el blog. El gancho correcto engancha; el tema
+// correcto coincide con el asunto del blog. Título = gancho + " " + tema.
+const BLOG_LAB = [
+  { id: "lab1", sujeto: "cuidar el planeta 🌍",
+    ganchos: [{ id: "g", t: "¡Trucos fáciles para", ok: true }, { id: "x1", t: "Cosas sobre", ok: false }, { id: "x2", t: "Apuntes de", ok: false }],
+    temas: [{ id: "t", t: "salvar el planeta!", ok: true }, { id: "y1", t: "hacer galletas!", ok: false }, { id: "y2", t: "entrenar perros!", ok: false }] },
+  { id: "lab2", sujeto: "recetas de cocina 🍳",
+    ganchos: [{ id: "g", t: "¡Aprende a", ok: true }, { id: "x1", t: "Información de", ok: false }, { id: "x2", t: "Datos sobre", ok: false }],
+    temas: [{ id: "t", t: "cocinar como chef!", ok: true }, { id: "y1", t: "viajar barato!", ok: false }, { id: "y2", t: "cuidar plantas!", ok: false }] },
+  { id: "lab3", sujeto: "aventuras de viaje ⛰️",
+    ganchos: [{ id: "g", t: "¡Vive la aventura de", ok: true }, { id: "x1", t: "Texto sobre", ok: false }, { id: "x2", t: "Resumen de", ok: false }],
+    temas: [{ id: "t", t: "explorar montañas!", ok: true }, { id: "y1", t: "tejer bufandas!", ok: false }, { id: "y2", t: "armar robots!", ok: false }] },
+  { id: "lab4", sujeto: "cuidado de mascotas 🐶",
+    ganchos: [{ id: "g", t: "¡Todo para consentir a", ok: true }, { id: "x1", t: "Cosas de", ok: false }, { id: "x2", t: "Notas sobre", ok: false }],
+    temas: [{ id: "t", t: "tu mascota feliz!", ok: true }, { id: "y1", t: "tu auto nuevo!", ok: false }, { id: "y2", t: "tus tareas!", ok: false }] },
+  { id: "lab5", sujeto: "tecnología 💻",
+    ganchos: [{ id: "g", t: "¡Descubre cómo usar", ok: true }, { id: "x1", t: "Documento de", ok: false }, { id: "x2", t: "Lista de", ok: false }],
+    temas: [{ id: "t", t: "la tecnología sin miedo!", ok: true }, { id: "y1", t: "las plantas del jardín!", ok: false }, { id: "y2", t: "los postres caseros!", ok: false }] },
+  { id: "lab6", sujeto: "deportes ⚽",
+    ganchos: [{ id: "g", t: "¡Ponte en forma con", ok: true }, { id: "x1", t: "Reporte de", ok: false }, { id: "x2", t: "Archivo de", ok: false }],
+    temas: [{ id: "t", t: "los mejores deportes!", ok: true }, { id: "y1", t: "las recetas dulces!", ok: false }, { id: "y2", t: "los cuentos de hadas!", ok: false }] },
 ];
+
+// TitleLab — laboratorio de títulos con ARRASTRE: dos ranuras (comienzo +
+// tema) donde se sueltan las piezas; también funciona con toque. Al
+// verificar marca cada ranura verde/roja (§11) y muestra la correcta.
+function TitleLab({ set, ganchoOpts, temaOpts, gancho, tema, setGancho, setTema, locked }) {
+  const ghost = (txt) => `<div style="background:linear-gradient(180deg,#fce9a8,#e9c45a);color:#3a2608;padding:9px 14px;border-radius:12px;font-family:Fredoka,Nunito,sans-serif;font-weight:800;font-size:14px;border:2px solid #4fd8ff;box-shadow:0 8px 20px rgba(0,0,0,0.5);max-width:230px;text-align:center;">${txt}</div>`;
+
+  // Soltar en una ranura coloca/reemplaza; soltar en la bandeja quita la
+  // pieza (solo si estaba colocada). Funciona también con toque.
+  function place(zoneId, item) {
+    if (locked) return;
+    if (zoneId === "z-gancho" && item.kind === "g") setGancho(item.opt);
+    else if (zoneId === "z-tema" && item.kind === "t") setTema(item.opt);
+    else if (zoneId === "z-tray") {
+      if (item.kind === "g" && gancho === item.opt) setGancho(null);
+      else if (item.kind === "t" && tema === item.opt) setTema(null);
+    }
+  }
+  function tap(item) {
+    if (locked) return;
+    if (item.kind === "g") setGancho((c) => (c === item.opt ? null : item.opt));
+    else setTema((c) => (c === item.opt ? null : item.opt));
+  }
+
+  // Pieza arrastrable (sirve igual en la bandeja o dentro de una ranura).
+  const chipNode = (kind, opt, inSlot) => {
+    const col = kind === "g" ? "#e0a23a" : "#e4881a";
+    let bg = "rgba(255,255,255,0.95)", border = col, ink = "#3a2608", mark = "";
+    if (locked && inSlot && opt.ok) { bg = "linear-gradient(180deg,#2ecc8f,#22a06c)"; border = "#2ecc8f"; ink = "#fff"; mark = "✓ "; }
+    else if (locked && inSlot && !opt.ok) { bg = "linear-gradient(180deg,#ff6b6b,#dc5050)"; border = "#ff6b6b"; ink = "#fff"; mark = "✗ "; }
+    return (
+      <div key={kind + opt.id + (inSlot ? "-s" : "")}
+        className={locked ? "" : "ed-draggable"}
+        onPointerDown={locked ? undefined : makeDragHandler({
+          item: { kind, opt }, disabled: locked, ghostHtml: ghost(opt.t),
+          onTap: tap, onDrop: place,
+        })}
+        style={{
+          padding: "9px 13px", borderRadius: 12, maxWidth: 220, textAlign: "center",
+          background: bg, color: ink, border: `2px solid ${border}`, boxShadow: "0 3px 8px rgba(0,0,0,0.25)",
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 14.5, lineHeight: 1.15,
+          userSelect: "none", WebkitUserSelect: "none", cursor: locked ? "default" : "grab",
+        }}>
+        {mark}{opt.t}
+      </div>
+    );
+  };
+
+  const slot = (kind) => {
+    const sel = kind === "g" ? gancho : tema;
+    const baseBorder = kind === "g" ? "#e0a23a" : "#e4881a";
+    const correct = locked && (!sel || !sel.ok) ? (kind === "g" ? set.ganchos : set.temas).find((o) => o.ok) : null;
+    return (
+      <div data-dropzone={kind === "g" ? "z-gancho" : "z-tema"}
+        style={{
+          minWidth: 185, maxWidth: 240, minHeight: 58, padding: "6px 10px", borderRadius: 12,
+          border: `2.5px dashed ${baseBorder}`, background: "rgba(10,6,35,0.35)",
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3,
+        }}>
+        {sel ? chipNode(kind, sel, true) : (
+          <span style={{ fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13.5, color: "rgba(252,233,168,0.5)", textAlign: "center", pointerEvents: "none", userSelect: "none" }}>
+            {kind === "g" ? "arrastra el comienzo" : "arrastra el tema"}
+          </span>
+        )}
+        {correct && (
+          <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 11, color: "#7dffc4", lineHeight: 1.1, textAlign: "center", pointerEvents: "none" }}>✓ {correct.t}</div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <>
+      {/* Título en construcción: 2 ranuras (se sueltan aquí las piezas) */}
+      <div style={{ display: "flex", gap: 10, justifyContent: "center", alignItems: "stretch", flexWrap: "wrap" }}>
+        {slot("g")}
+        {slot("t")}
+      </div>
+      {/* Bandeja de piezas — soltar aquí una pieza colocada la devuelve */}
+      <div data-dropzone="z-tray" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, width: "100%" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+          <div className="ed-label" style={{ color: "rgba(255,255,255,0.7)" }}>Elige el comienzo</div>
+          <div style={{ display: "flex", gap: 9, flexWrap: "wrap", justifyContent: "center", maxWidth: 540, minHeight: 50, alignItems: "center" }}>
+            {ganchoOpts.map((opt) => (gancho === opt ? null : chipNode("g", opt, false)))}
+          </div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+          <div className="ed-label" style={{ color: "rgba(255,255,255,0.7)" }}>Elige el tema</div>
+          <div style={{ display: "flex", gap: 9, flexWrap: "wrap", justifyContent: "center", maxWidth: 540, minHeight: 50, alignItems: "center" }}>
+            {temaOpts.map((opt) => (tema === opt ? null : chipNode("t", opt, false)))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
 
 function BlogGame({ app, setApp, go, onRestart }) {
   const char = CHARACTERS.find((c) => c.id === app.character) || CHARACTERS[0];
-  const catLabel = app.currentCatLabel || "El blog · 11 años";
+  const catLabel = app.currentCatLabel || "El blog";
 
   const [ronda, setRonda] = useStateG(0);
   // R1 — ordenar partes del blog
@@ -740,10 +854,12 @@ function BlogGame({ app, setApp, go, onRestart }) {
   const [r2Opts] = useStateG(() => shuffle(r2Pick.options));
   const [r2Choice, setR2Choice] = useStateG(null);
   const [r2Locked, setR2Locked] = useStateG(false);
-  // R3 — taller de títulos
-  const [r3Pick] = useStateG(() => pickFresh(BLOG_TITULOS, "b3"));
-  const [r3Opts] = useStateG(() => shuffle(r3Pick.options));
-  const [r3Choice, setR3Choice] = useStateG(null);
+  // R3 — construye el título (gancho + tema)
+  const [r3Set] = useStateG(() => pickFresh(BLOG_LAB, "b3"));
+  const [r3GanchoOpts] = useStateG(() => shuffle(r3Set.ganchos));
+  const [r3TemaOpts] = useStateG(() => shuffle(r3Set.temas));
+  const [r3Gancho, setR3Gancho] = useStateG(null);
+  const [r3Tema, setR3Tema] = useStateG(null);
   const [r3Locked, setR3Locked] = useStateG(false);
 
   const [elapsed, setElapsed] = useStateG(0);
@@ -775,7 +891,7 @@ function BlogGame({ app, setApp, go, onRestart }) {
     feedback ? false :
     ronda === 0 ? (r1Slots.every(Boolean) && !r1Locked) :
     ronda === 1 ? (r2Choice !== null && !r2Locked) :
-    ronda === 2 ? (r3Choice !== null && !r3Locked) : false;
+    ronda === 2 ? (r3Gancho !== null && r3Tema !== null && !r3Locked) : false;
 
   function handleVerify() {
     if (!canVerify) return;
@@ -791,25 +907,28 @@ function BlogGame({ app, setApp, go, onRestart }) {
       setTimeout(() => answer(correct, r2Choice, r2Pick.answer, "🕵️", "Detective de blogs"), correct ? 450 : 1500);
     } else if (ronda === 2) {
       setR3Locked(true);
-      const correct = r3Choice === r3Pick.answer;
-      setTimeout(() => answer(correct, r3Choice, r3Pick.answer, "✨", "Taller de títulos"), correct ? 450 : 1500);
+      const correct = !!(r3Gancho && r3Gancho.ok && r3Tema && r3Tema.ok);
+      const u = `${r3Gancho ? r3Gancho.t : "?"} ${r3Tema ? r3Tema.t : "?"}`;
+      const okG = r3Set.ganchos.find((g) => g.ok), okT = r3Set.temas.find((t) => t.ok);
+      const c = `${okG.t} ${okT.t}`;
+      setTimeout(() => answer(correct, u, c, "✨", "Construye el título"), correct ? 450 : 1500);
     }
   }
 
   function handleErase() {
     if (ronda === 0 && !r1Locked) setR1Slots(r1Items.map(() => null));
     else if (ronda === 1 && !r2Locked) setR2Choice(null);
-    else if (ronda === 2 && !r3Locked) setR3Choice(null);
+    else if (ronda === 2 && !r3Locked) { setR3Gancho(null); setR3Tema(null); }
   }
 
   const enunciado =
     ronda === 0 ? "Arrastra cada parte a su lugar en el blog." :
     ronda === 1 ? "Lee la entrada y descubre el tema del blog." :
-    "Elige el título más llamativo para el blog.";
+    "Arma un título llamativo para el blog.";
   const bocadillo =
-    ronda === 0 ? "Lee cada zona y suelta ahí\nla parte que le toca." :
+    ronda === 0 ? "Arma el blog de arriba\nhacia abajo, en orden." :
     ronda === 1 ? "Busca las pistas en lo\nque cuenta el autor." :
-    "Un buen título engancha\ny dice de qué trata.";
+    "Une un comienzo llamativo\ncon el tema del blog.";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
@@ -824,8 +943,8 @@ function BlogGame({ app, setApp, go, onRestart }) {
         }}>
           <EnunciadoInline text={enunciado} />
           <OrderRound items={r1Items} byId={r1ById} slots={r1Slots} setSlots={setR1Slots}
-            locked={r1Locked} accent="#2773d8" ink="#eaf4ff" slotW={300} prefix="b1"
-            slotLabels={BLOG_SLOT_LABELS} />
+            locked={r1Locked} accent="#e0a23a" ink="#3a2608" slotW={300} prefix="b1"
+            slotLabels={BLOG_SLOT_LABELS} slotPlaceholders={BLOG_SLOT_PLACEHOLDERS} />
         </div>
       )}
 
@@ -851,22 +970,21 @@ function BlogGame({ app, setApp, go, onRestart }) {
         </div>
       )}
 
-      {/* R3 — Taller de títulos (elegir el más llamativo) */}
+      {/* R3 — Construye el título (arrastra comienzo + tema) */}
       {ronda === 2 && (
         <div data-qa="zona-central" style={{
           position: "absolute", top: 74, bottom: 14, left: "50%", transform: "translateX(-50%)",
-          width: 560, display: "flex", flexDirection: "column", justifyContent: "space-evenly", alignItems: "center",
+          width: 580, display: "flex", flexDirection: "column", justifyContent: "space-evenly", alignItems: "center",
         }}>
           <EnunciadoInline text={enunciado} />
-          <Cartel maxWidth={400} fontSize={16} pad="11px 20px">{r3Pick.tema}</Cartel>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center", width: "100%" }}>
-            {r3Opts.map((opt, i) => (
-              <OptionButton key={opt} label={opt} locked={r3Locked}
-                isCorrect={opt === r3Pick.answer} isPicked={r3Choice === opt}
-                onClick={() => setR3Choice((c) => (c === opt ? null : opt))}
-                minWidth={420} color="#4fa0ff" />
-            ))}
+
+          {/* Asunto del blog */}
+          <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 14, color: "#fce9a8", textShadow: "0 2px 6px rgba(0,0,0,0.6)" }}>
+            Este blog trata sobre: <span style={{ color: "#fff" }}>{r3Set.sujeto}</span>
           </div>
+
+          <TitleLab set={r3Set} ganchoOpts={r3GanchoOpts} temaOpts={r3TemaOpts}
+            gancho={r3Gancho} tema={r3Tema} setGancho={setR3Gancho} setTema={setR3Tema} locked={r3Locked} />
         </div>
       )}
 
@@ -928,39 +1046,46 @@ const ENT_TIPOS = [
 // entrevistados originales (FIFO).
 const ENT_MOMENTOS = [
   { id: "deportista", parts: [
-    { id: "d1", n: 1, label: "Hola, gracias por recibirnos. Soy del diario escolar." },
-    { id: "d2", n: 2, label: "Para empezar, ¿desde cuándo practicas atletismo?" },
-    { id: "d3", n: 3, label: "¿Cómo organizas tus entrenamientos y tus estudios?" },
-    { id: "d4", n: 4, label: "Mencionaste una lesión… ¿cómo la superaste?" },
-    { id: "d5", n: 5, label: "Te agradezco tu tiempo. ¡Mucho éxito en la final!" },
+    { id: "d1", n: 1, label: "Hola, gracias por recibirnos." },
+    { id: "d2", n: 2, label: "Para empezar, ¿qué deporte haces?" },
+    { id: "d3", n: 3, label: "¿Cómo es un día de entrenamiento?" },
+    { id: "d4", n: 4, label: "Cuéntame más sobre tu mejor logro." },
+    { id: "d5", n: 5, label: "¡Gracias y mucho éxito!" },
   ] },
   { id: "cientifica", parts: [
-    { id: "c1", n: 1, label: "Buenos días, doctora. Es un gusto conversar con usted." },
-    { id: "c2", n: 2, label: "¿Qué la llevó a estudiar los volcanes?" },
-    { id: "c3", n: 3, label: "¿Cómo es un día normal en su trabajo de campo?" },
-    { id: "c4", n: 4, label: "Dijo que vivió un susto… ¿qué pasó esa vez?" },
-    { id: "c5", n: 5, label: "Gracias por su tiempo y por enseñarnos tanto." },
+    { id: "c1", n: 1, label: "Buenos días, doctora." },
+    { id: "c2", n: 2, label: "Para empezar, ¿qué estudia usted?" },
+    { id: "c3", n: 3, label: "¿Cómo es su trabajo de campo?" },
+    { id: "c4", n: 4, label: "Cuénteme más sobre un día difícil." },
+    { id: "c5", n: 5, label: "Gracias por enseñarnos tanto." },
   ] },
   { id: "youtuber", parts: [
-    { id: "y1", n: 1, label: "¡Hola! Qué emoción tenerte en el podcast." },
-    { id: "y2", n: 2, label: "¿Cómo se te ocurrió crear tu canal?" },
-    { id: "y3", n: 3, label: "¿Qué haces para que tus videos sean divertidos?" },
-    { id: "y4", n: 4, label: "Comentaste que casi te rindes… ¿qué te hizo seguir?" },
-    { id: "y5", n: 5, label: "Mil gracias por venir. ¡Sigue creando!" },
+    { id: "y1", n: 1, label: "¡Hola! Qué gusto tenerte aquí." },
+    { id: "y2", n: 2, label: "Para empezar, ¿cómo creaste tu canal?" },
+    { id: "y3", n: 3, label: "¿Cómo preparas cada video?" },
+    { id: "y4", n: 4, label: "Cuéntame más sobre tu mayor reto." },
+    { id: "y5", n: 5, label: "¡Gracias y sigue creando!" },
   ] },
   { id: "musico", parts: [
-    { id: "m1", n: 1, label: "Bienvenido. Gracias por aceptar esta entrevista." },
-    { id: "m2", n: 2, label: "¿A qué edad tomaste tu primer instrumento?" },
-    { id: "m3", n: 3, label: "¿Cómo compones las canciones de tu banda?" },
-    { id: "m4", n: 4, label: "Hablaste de un concierto inolvidable… ¿qué pasó?" },
-    { id: "m5", n: 5, label: "Gracias por tu tiempo. ¡Esperamos tu próximo disco!" },
+    { id: "m1", n: 1, label: "Bienvenido, gracias por venir." },
+    { id: "m2", n: 2, label: "Para empezar, ¿cómo iniciaste?" },
+    { id: "m3", n: 3, label: "¿Cómo compones tus canciones?" },
+    { id: "m4", n: 4, label: "Cuéntame más de tu mejor concierto." },
+    { id: "m5", n: 5, label: "¡Gracias y éxito con tu disco!" },
   ] },
 ];
 const ENT_SLOT_LABELS = ["Saludo", "Apertura", "Centrales", "Seguimiento", "Cierre"];
+const ENT_SLOT_PLACEHOLDERS = [
+  "Suelta aquí el saludo",
+  "Suelta aquí la apertura",
+  "Suelta aquí las preguntas centrales",
+  "Suelta aquí el seguimiento",
+  "Suelta aquí el cierre",
+];
 
 function EntrevistaGame({ app, setApp, go, onRestart }) {
   const char = CHARACTERS.find((c) => c.id === app.character) || CHARACTERS[0];
-  const catLabel = app.currentCatLabel || "La entrevista · 14 años";
+  const catLabel = app.currentCatLabel || "La entrevista";
 
   const [ronda, setRonda] = useStateG(0);
   // R1 — abierta o cerrada
@@ -1040,8 +1165,8 @@ function EntrevistaGame({ app, setApp, go, onRestart }) {
     ronda === 1 ? "Lee el fragmento y descubre el tipo de entrevista." :
     "Ordena los momentos de la entrevista.";
   const bocadillo =
-    ronda === 0 ? "Abierta = invita a contar.\nCerrada = se responde sí o no." :
-    ronda === 1 ? "Perfil = una vida · Noticias = un\nhecho · Opinión = lo que piensa." :
+    ronda === 0 ? "Lee cada pregunta\ny toca su tipo." :
+    ronda === 1 ? "Lee la respuesta y toca\nel tipo correcto." :
     "Empieza presentándote\ny termina agradeciendo.";
 
   return (
@@ -1101,8 +1226,8 @@ function EntrevistaGame({ app, setApp, go, onRestart }) {
         }}>
           <EnunciadoInline text={enunciado} />
           <OrderRound items={r3Items} byId={r3ById} slots={r3Slots} setSlots={setR3Slots}
-            locked={r3Locked} accent="#e0561a" ink="#3a1608" slotW={320} prefix="e3"
-            slotLabels={ENT_SLOT_LABELS} />
+            locked={r3Locked} accent="#e4881a" ink="#3a2608" slotW={320} prefix="e3"
+            slotLabels={ENT_SLOT_LABELS} slotPlaceholders={ENT_SLOT_PLACEHOLDERS} />
         </div>
       )}
 

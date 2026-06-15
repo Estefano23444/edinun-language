@@ -150,20 +150,20 @@ const LEVELS_CFG = [
     id: "blog",
     age: "11 años",
     label: "El blog",
-    grad: "linear-gradient(180deg, #7ab8ff, #2773d8)",
-    ink: "#08264d",
+    grad: "linear-gradient(180deg, #ffe97a, #d7b12a)",
+    ink: "#3a2608",
     description: "Tu ventana virtual para publicar y compartir ideas en la web.",
-    catLabel: "El blog · 11 años",
+    catLabel: "El blog",
     char: "explorador",
   },
   {
     id: "entrevista",
     age: "14 años",
     label: "La entrevista",
-    grad: "linear-gradient(180deg, #ff9e6b, #e0561a)",
-    ink: "#3a1608",
+    grad: "linear-gradient(180deg, #ffc06e, #e4881a)",
+    ink: "#3a2608",
     description: "El arte de hacer buenas preguntas para conocer a alguien.",
-    catLabel: "La entrevista · 14 años",
+    catLabel: "La entrevista",
     char: "escritor",
   },
 ];
@@ -212,9 +212,9 @@ function HomeScreen({ app, setApp, go }) {
       {/* Contenido principal — 2 columnas */}
       <div style={{
         position: "absolute", inset: 0,
-        display: "grid", gridTemplateColumns: "1fr 1.25fr",
+        display: "grid", gridTemplateColumns: "1fr 1.15fr",
         alignItems: "center",
-        padding: "32px 48px", gap: 36,
+        padding: "32px 48px", gap: 32,
       }}>
         {/* Izquierda — logo protagonista */}
         <div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
@@ -222,12 +222,12 @@ function HomeScreen({ app, setApp, go }) {
         </div>
 
         {/* Derecha — saludo + selector de tema + nombre + ENTRAR. */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 540 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 520 }}>
           <div>
             <div className="ed-label" style={{ color: "#4fd8ff", marginBottom: 6 }}>
               Cuéntalo al mundo
             </div>
-            <h1 className="ed-h1" style={{ fontSize: 34, lineHeight: 1.05 }}>
+            <h1 className="ed-h1" style={{ fontSize: 36, lineHeight: 1.05 }}>
               ¡Bienvenido/a,{" "}
               <span style={{
                 background: "linear-gradient(180deg,#fce9a8,#d9a441)",
@@ -246,7 +246,7 @@ function HomeScreen({ app, setApp, go }) {
             <div className="ed-label" style={{ marginBottom: 8 }}>
               Selecciona un tema para jugar
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               {LEVELS_CFG.map((lv) => {
                 const active = level === lv.id;
                 return (
@@ -254,20 +254,20 @@ function HomeScreen({ app, setApp, go }) {
                     key={lv.id}
                     onClick={() => setLevel(lv.id)}
                     style={{
-                      padding: "12px 8px",
-                      borderRadius: 14,
+                      padding: "20px 12px",
+                      borderRadius: 16,
                       background: lv.grad,
                       color: lv.ink,
-                      fontFamily: "var(--ed-font-display)",
-                      fontWeight: 700, fontSize: 14,
-                      letterSpacing: "0.02em", lineHeight: 1.1,
+                      fontFamily: "var(--ed-font-display)", fontWeight: 800,
+                      fontSize: 22, letterSpacing: "0.02em",
+                      lineHeight: 1.1,
+                      textShadow: "0 1px 0 rgba(255,255,255,0.35)",
                       border: "none",
                       boxShadow: active
-                        ? "inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -3px 0 rgba(0,0,0,0.2), 0 0 0 3px rgba(255,255,255,0.85), 0 0 24px rgba(255,255,255,0.32)"
+                        ? "inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -3px 0 rgba(0,0,0,0.2), 0 0 0 3px rgba(255,255,255,0.85), 0 0 26px rgba(255,255,255,0.35)"
                         : "inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.18), 0 6px 14px -4px rgba(0,0,0,0.45)",
                       transform: active ? "translateY(-2px)" : "none",
                       transition: "all 0.18s ease",
-                      textShadow: "0 1px 0 rgba(255,255,255,0.25)",
                       cursor: "pointer",
                     }}
                   >
@@ -277,13 +277,13 @@ function HomeScreen({ app, setApp, go }) {
               })}
             </div>
             <div style={{
-              marginTop: 8,
-              padding: "8px 14px",
+              marginTop: 10,
+              padding: "10px 14px",
               borderRadius: 12,
               background: "rgba(10,6,35,0.55)",
               border: `1px solid ${currentCfg ? "rgba(148,120,255,0.3)" : "rgba(148,120,255,0.18)"}`,
               fontFamily: "var(--ed-font-display)", fontWeight: 600,
-              fontSize: 13, lineHeight: 1.3,
+              fontSize: 14, lineHeight: 1.3,
               color: currentCfg ? "#fce9a8" : "rgba(252,233,168,0.5)",
               textAlign: "center",
               fontStyle: currentCfg ? "normal" : "italic",
@@ -309,7 +309,7 @@ function HomeScreen({ app, setApp, go }) {
               </div>
               <button className="ed-btn ed-btn-primary" onClick={start} disabled={!canStart}
                 title={!name.trim() ? "Escribe tu nombre" : !level ? "Selecciona un tema" : ""}
-                style={{ height: 48, padding: "0 22px", fontSize: 14, opacity: canStart ? 1 : 0.5, cursor: canStart ? "pointer" : "not-allowed" }}>
+                style={{ height: 50, padding: "0 24px", fontSize: 15, opacity: canStart ? 1 : 0.5, cursor: canStart ? "pointer" : "not-allowed" }}>
                 ENTRAR →
               </button>
             </div>
