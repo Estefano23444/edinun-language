@@ -1563,6 +1563,18 @@ function PoemasGame({ app, setApp, go, onRestart }) {
     return () => clearInterval(id);
   }, []);
 
+  // Comportamiento B (AUTO): las 3 rondas son de "1 toque = respuesta", así que
+  // se auto-evalúan tras una breve ventana (~700 ms) para recapacitar. Cada
+  // ronda lleva su timer para poder cancelarlo si el niño cambia de idea.
+  const r1AutoRef = useRefG(null);
+  const r2AutoRef = useRefG(null);
+  const r3AutoRef = useRefG(null);
+  useEffectG(() => () => {
+    clearTimeout(r1AutoRef.current);
+    clearTimeout(r2AutoRef.current);
+    clearTimeout(r3AutoRef.current);
+  }, []);
+
   const answer = makeAnswer({
     attempted, solved, stars, starsSession, log, elapsed, catLabel,
     exerciseStart, setApp, go,
@@ -1577,28 +1589,30 @@ function PoemasGame({ app, setApp, go, onRestart }) {
     setTimeout(() => { setR1Spinning(false); setR1Spun(true); exerciseStart.current = Date.now(); }, 1750);
   }
 
-  const canVerify =
-    feedback ? false :
-    ronda === 0 ? (r1Spun && r1Choice !== null && !r1Locked) :
-    ronda === 1 ? (r2Choice !== null && !r2Locked) :
-    ronda === 2 ? (r3Choice !== null && !r3Locked) : false;
-
-  function handleVerify() {
-    if (!canVerify) return;
-    if (ronda === 0) {
-      setR1Locked(true);
-      const correct = r1Choice === r1Pick.tipo;
-      setTimeout(() => answer(correct, r1Choice, r1Pick.tipo, "🎡", "Tipo de poema"), correct ? 450 : 1500);
-    } else if (ronda === 1) {
-      setR2Locked(true);
-      const correct = r2Choice === r2Pick.answer;
-      setTimeout(() => answer(correct, r2Choice, r2Pick.answer, "✒️", "Completa la rima"), correct ? 450 : 1500);
-    } else if (ronda === 2) {
-      setR3Locked(true);
-      const correct = r3Choice === r3Pick.intruder;
-      setTimeout(() => answer(correct, r3Pick.lines[r3Choice], r3Pick.lines[r3Pick.intruder], "🔍", "Verso intruso"), correct ? 450 : 1500);
-    }
+  // Califica la R1 (tipo de poema) con la opción tocada.
+  function gradeR1(choice) {
+    if (r1Locked) return;
+    setR1Locked(true);
+    const correct = choice === r1Pick.tipo;
+    setTimeout(() => answer(correct, choice, r1Pick.tipo, "🎡", "Tipo de poema"), correct ? 450 : 1500);
   }
+  // Califica la R2 (completa la rima) con la opción tocada.
+  function gradeR2(choice) {
+    if (r2Locked) return;
+    setR2Locked(true);
+    const correct = choice === r2Pick.answer;
+    setTimeout(() => answer(correct, choice, r2Pick.answer, "✒️", "Completa la rima"), correct ? 450 : 1500);
+  }
+  // Califica la R3 (verso intruso) con el índice tocado.
+  function gradeR3(choice) {
+    if (r3Locked) return;
+    setR3Locked(true);
+    const correct = choice === r3Pick.intruder;
+    setTimeout(() => answer(correct, r3Pick.lines[choice], r3Pick.lines[r3Pick.intruder], "🔍", "Verso intruso"), correct ? 450 : 1500);
+  }
+
+  // Las 3 rondas son AUTO → su VERIFICAR se oculta y canVerify queda en false.
+  const canVerify = false;
 
   function handleErase() {
     if (ronda === 0 && !r1Locked) setR1Choice(null);
@@ -1639,7 +1653,12 @@ function PoemasGame({ app, setApp, go, onRestart }) {
                 {TIPOS.map((t) => (
                   <OptionButton key={t} label={t} locked={r1Locked}
                     isCorrect={t === r1Pick.tipo} isPicked={r1Choice === t}
-                    onClick={() => setR1Choice((c) => (c === t ? null : t))}
+                    onClick={() => {
+                      if (r1Locked) return;
+                      setR1Choice(t);
+                      clearTimeout(r1AutoRef.current);
+                      r1AutoRef.current = setTimeout(() => gradeR1(t), 700);
+                    }}
                     color="#a78bfa" />
                 ))}
               </div>
@@ -1678,7 +1697,12 @@ function PoemasGame({ app, setApp, go, onRestart }) {
             {r2Pick.options.map((opt, i) => (
               <OptionButton key={opt} label={opt} locked={r2Locked}
                 isCorrect={opt === r2Pick.answer} isPicked={r2Choice === opt}
-                onClick={() => setR2Choice((c) => (c === opt ? null : opt))}
+                onClick={() => {
+                  if (r2Locked) return;
+                  setR2Choice(opt);
+                  clearTimeout(r2AutoRef.current);
+                  r2AutoRef.current = setTimeout(() => gradeR2(opt), 700);
+                }}
                 color={["#ef5a5a", "#4fa0ff", "#2ecc8f"][i % 3]} />
             ))}
           </div>
@@ -1708,7 +1732,12 @@ function PoemasGame({ app, setApp, go, onRestart }) {
                 else if (showWrong) { bg = "linear-gradient(180deg, rgba(255,107,107,0.95), rgba(220,80,80,0.95))"; ink = "#fff"; border = "2px solid #ff6b6b"; }
                 else if (sel) { bg = "linear-gradient(180deg,#fce9a8,#e9c45a)"; border = "2px solid #4fd8ff"; }
                 return (
-                  <button key={i} onClick={() => { if (!r3Locked) setR3Choice((c) => (c === i ? null : i)); }}
+                  <button key={i} onClick={() => {
+                      if (r3Locked) return;
+                      setR3Choice(i);
+                      clearTimeout(r3AutoRef.current);
+                      r3AutoRef.current = setTimeout(() => gradeR3(i), 700);
+                    }}
                     style={{
                       position: "relative", textAlign: "left", padding: "8px 14px", borderRadius: 10,
                       background: bg, color: ink, border, cursor: r3Locked ? "default" : "pointer",
@@ -1736,8 +1765,8 @@ function PoemasGame({ app, setApp, go, onRestart }) {
       )}
 
       <ActionRail
-        canVerify={canVerify} onVerify={handleVerify}
-        showErase={(ronda === 0 || ronda === 1)} onErase={handleErase}
+        canVerify={canVerify} hideVerify={true}
+        showErase={false} onErase={handleErase}
         onRestart={() => setConfirmingRestart(true)} onExit={() => setConfirmingExit(true)}
       />
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />

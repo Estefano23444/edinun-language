@@ -711,21 +711,23 @@ function ExitModal({ confirmingExit, setConfirmingExit, attempted, total, onExit
 
 // Rail derecho con botones de acción. Cada sub-juego declara qué botones
 // aplican a la ronda actual mediante los props canVerify y showErase.
-function ActionRail({ canVerify, onVerify, showErase, onErase, onRestart, onExit }) {
+function ActionRail({ canVerify, onVerify, hideVerify, showErase, onErase, onRestart, onExit }) {
   return (
     <div data-qa="acciones" style={{
       position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
       display: "flex", flexDirection: "column", gap: 10, width: 148,
     }}>
-      <button className="ed-btn ed-btn-verify"
-        onClick={() => { if (canVerify && onVerify) onVerify(); }}
-        disabled={!canVerify}
-        style={{
-          fontSize: 13, padding: "0 8px", height: 48, fontWeight: 800, letterSpacing: "0.04em",
-          opacity: canVerify ? 1 : 0.45, cursor: canVerify ? "pointer" : "not-allowed",
-        }}>
-        ¡VERIFICAR!
-      </button>
+      {!hideVerify && (
+        <button className="ed-btn ed-btn-verify"
+          onClick={() => { if (canVerify && onVerify) onVerify(); }}
+          disabled={!canVerify}
+          style={{
+            fontSize: 13, padding: "0 8px", height: 48, fontWeight: 800, letterSpacing: "0.04em",
+            opacity: canVerify ? 1 : 0.45, cursor: canVerify ? "pointer" : "not-allowed",
+          }}>
+          ¡VERIFICAR!
+        </button>
+      )}
       {showErase && (
         <button className="ed-btn ed-btn-erase" onClick={onErase}
           style={{ fontSize: 13, padding: "0 8px", height: 48, fontWeight: 800, letterSpacing: "0.04em" }}>
@@ -913,6 +915,11 @@ function TiposDeTextoGame({ app, setApp, go, onRestart }) {
     return () => clearInterval(id);
   }, []);
 
+  // R1 (trivia, 1 opción) AUTO-EVALUADA: al tocar se resalta y, tras ~700ms
+  // para recapacitar, se califica sola. Su VERIFICAR se oculta.
+  const r1AutoRef = useRefG(null);
+  useEffectG(() => () => clearTimeout(r1AutoRef.current), []);
+
   // Glifos chalkboard del Tema 1
   useEffectG(() => {
     window.__currentChalkGlyphs = [
@@ -930,20 +937,24 @@ function TiposDeTextoGame({ app, setApp, go, onRestart }) {
     return () => { window.__currentChalkGlyphs = null; };
   }, []);
 
-  // canVerify y showErase por ronda
+  // canVerify y showErase por ronda. R1 auto-evaluada → canVerify false.
   const canVerify =
-    ronda === 0 ? (r1Selected !== null && !r1Locked) :
+    ronda === 0 ? false :
     ronda === 1 ? (Object.keys(r2Placed).length === 4 && !r2Verified) :
     ronda === 2 ? (r3Picked.size > 0 && !r3Locked) :
     false;
   const showErase = ronda !== 0;
 
+  // Califica la R1 con la opción tocada (misma rama que tenía handleVerify).
+  function gradeR1(tipo) {
+    if (r1Locked) return;
+    setR1Locked(true);
+    answer(tipo === r1Pick.tipo, tipo, r1Pick.tipo, "📖");
+  }
+
   function handleVerify() {
     if (!canVerify) return;
-    if (ronda === 0) {
-      setR1Locked(true);
-      answer(r1Selected === r1Pick.tipo, r1Selected, r1Pick.tipo, "📖");
-    } else if (ronda === 1) {
+    if (ronda === 1) {
       setR2Verified(true);
       let allOK = true;
       const SLOTS = ["definicion", "oracion", "sinonimo", "dibujo"];
@@ -1050,7 +1061,12 @@ function TiposDeTextoGame({ app, setApp, go, onRestart }) {
         {ronda === 0 && (
           <TiposTriviaCard pick={r1Pick}
             selected={r1Selected} locked={r1Locked}
-            onSelect={(t) => { if (!r1Locked) setR1Selected(r1Selected === t ? null : t); }}
+            onSelect={(t) => {
+              if (r1Locked) return;
+              setR1Selected(t);
+              clearTimeout(r1AutoRef.current);
+              r1AutoRef.current = setTimeout(() => gradeR1(t), 700);
+            }}
           />
         )}
         {ronda === 1 && (
@@ -1092,6 +1108,7 @@ function TiposDeTextoGame({ app, setApp, go, onRestart }) {
       <ActionRail
         canVerify={canVerify}
         onVerify={handleVerify}
+        hideVerify={ronda === 0}
         showErase={showErase}
         onErase={handleErase}
         onRestart={() => setConfirmingExit(true)}
@@ -1484,6 +1501,10 @@ function PoeticaGame({ app, setApp, go, onRestart }) {
     return () => clearInterval(id);
   }, []);
 
+  // R1 (trivia, 1 opción) AUTO-EVALUADA: al tocar se resalta y, tras ~700ms, califica sola.
+  const r1AutoRef = useRefG(null);
+  useEffectG(() => () => clearTimeout(r1AutoRef.current), []);
+
   useEffectG(() => {
     window.__currentChalkGlyphs = [
       { c: "✨", l: "6%",  t: "12%", r: "-8deg" },
@@ -1534,19 +1555,24 @@ function PoeticaGame({ app, setApp, go, onRestart }) {
     }, wait);
   }
 
+  // R1 auto-evaluada → canVerify false.
   const canVerify =
-    ronda === 0 ? (r1Selected !== null && !r1Locked) :
+    ronda === 0 ? false :
     ronda === 1 ? (Object.keys(r2Connections).length === r2Pairs.length && !r2Verified) :
     ronda === 2 ? (r3Picked.size > 0 && !r3Locked) :
     false;
   const showErase = ronda !== 0;
 
+  // Califica la R1 con la opción tocada (misma rama que tenía handleVerify).
+  function gradeR1(funcion) {
+    if (r1Locked) return;
+    setR1Locked(true);
+    answer(funcion === r1Pick.funcion, funcion, r1Pick.funcion, "✨");
+  }
+
   function handleVerify() {
     if (!canVerify) return;
-    if (ronda === 0) {
-      setR1Locked(true);
-      answer(r1Selected === r1Pick.funcion, r1Selected, r1Pick.funcion, "✨");
-    } else if (ronda === 1) {
+    if (ronda === 1) {
       setR2Verified(true);
       let ok = true;
       for (let i = 0; i < r2Pairs.length; i++) {
@@ -1599,7 +1625,12 @@ function PoeticaGame({ app, setApp, go, onRestart }) {
         {ronda === 0 && (
           <PoeticaTriviaCard pick={r1Pick}
             selected={r1Selected} locked={r1Locked}
-            onSelect={(t) => { if (!r1Locked) setR1Selected(r1Selected === t ? null : t); }}
+            onSelect={(t) => {
+              if (r1Locked) return;
+              setR1Selected(t);
+              clearTimeout(r1AutoRef.current);
+              r1AutoRef.current = setTimeout(() => gradeR1(t), 700);
+            }}
           />
         )}
         {ronda === 1 && (
@@ -1633,6 +1664,7 @@ function PoeticaGame({ app, setApp, go, onRestart }) {
       <ActionRail
         canVerify={canVerify}
         onVerify={handleVerify}
+        hideVerify={ronda === 0}
         showErase={showErase}
         onErase={handleErase}
         onRestart={() => setConfirmingExit(true)}
@@ -1896,6 +1928,10 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
     return () => clearInterval(id);
   }, []);
 
+  // R2 (conector, 1 opción) AUTO-EVALUADA: al tocar se resalta y, tras ~700ms, califica sola.
+  const r2AutoRef = useRefG(null);
+  useEffectG(() => () => clearTimeout(r2AutoRef.current), []);
+
   useEffectG(() => {
     window.__currentChalkGlyphs = [
       { c: "📑", l: "6%",  t: "12%", r: "-8deg" },
@@ -1957,12 +1993,20 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
     return arr;
   }, [r3Pick.tokens]);
 
+  // R2 (conector, 1 opción) auto-evaluada → canVerify false en esa ronda.
   const canVerify =
     ronda === 0 ? (r1Placed.every((p) => p !== null) && !r1Verified) :
-    ronda === 1 ? (r2Selected !== null && !r2Locked) :
+    ronda === 1 ? false :
     ronda === 2 ? (r3Picked.size > 0 && !r3Locked) :
     false;
   const showErase = ronda !== 1;
+
+  // Califica la R2 con la opción tocada (misma rama que tenía handleVerify).
+  function gradeR2(opt) {
+    if (r2Locked) return;
+    setR2Locked(true);
+    answer(opt === r2Pick.correcta, opt, r2Pick.correcta, "🔗");
+  }
 
   function handleVerify() {
     if (!canVerify) return;
@@ -1973,9 +2017,6 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
         if (r1Placed[i] !== INFORME_PARTES[i]) { ok = false; break; }
       }
       setTimeout(() => answer(ok, r1Placed.join(" → "), INFORME_PARTES.join(" → "), "📑"), 400);
-    } else if (ronda === 1) {
-      setR2Locked(true);
-      answer(r2Selected === r2Pick.correcta, r2Selected, r2Pick.correcta, "🔗");
     } else if (ronda === 2) {
       setR3Locked(true);
       const correctSet = new Set();
@@ -2054,7 +2095,12 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
         {ronda === 1 && (
           <ConectoresCard pick={r2Pick} opciones={r2Opciones}
             selected={r2Selected} locked={r2Locked}
-            onSelect={(opt) => { if (!r2Locked) setR2Selected(r2Selected === opt ? null : opt); }}
+            onSelect={(opt) => {
+              if (r2Locked) return;
+              setR2Selected(opt);
+              clearTimeout(r2AutoRef.current);
+              r2AutoRef.current = setTimeout(() => gradeR2(opt), 700);
+            }}
           />
         )}
         {ronda === 2 && (
@@ -2068,6 +2114,7 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
       <ActionRail
         canVerify={canVerify}
         onVerify={handleVerify}
+        hideVerify={ronda === 1}
         showErase={showErase}
         onErase={handleErase}
         onRestart={() => setConfirmingExit(true)}
@@ -2443,6 +2490,12 @@ function EnriquecimientoGame({ app, setApp, go, onRestart }) {
     return () => clearInterval(id);
   }, []);
 
+  // R1 (polisémica, 1 opción) y R2 (homófona, 1 de 2) AUTO-EVALUADAS: al tocar
+  // se resalta y, tras ~700ms, califican solas. Sus VERIFICAR se ocultan.
+  const r1AutoRef = useRefG(null);
+  const r2AutoRef = useRefG(null);
+  useEffectG(() => () => { clearTimeout(r1AutoRef.current); clearTimeout(r2AutoRef.current); }, []);
+
   useEffectG(() => {
     window.__currentChalkGlyphs = [
       { c: "🌍", l: "6%",  t: "12%", r: "-8deg" },
@@ -2491,22 +2544,29 @@ function EnriquecimientoGame({ app, setApp, go, onRestart }) {
     }, wait);
   }
 
+  // R1 y R2 auto-evaluadas → canVerify false en esas rondas.
   const canVerify =
-    ronda === 0 ? (r1Selected !== null && !r1Locked) :
-    ronda === 1 ? (r2Selected !== null && !r2Locked) :
+    ronda === 0 ? false :
+    ronda === 1 ? false :
     ronda === 2 ? (r3Placed.every((p) => p !== null) && !r3Verified) :
     false;
   const showErase = ronda === 2;
 
+  // Califican R1/R2 con la opción tocada (mismas ramas que tenía handleVerify).
+  function gradeR1(opt) {
+    if (r1Locked) return;
+    setR1Locked(true);
+    answer(opt === r1Pick.palabra, opt, r1Pick.palabra, "🔤");
+  }
+  function gradeR2(letter) {
+    if (r2Locked) return;
+    setR2Locked(true);
+    answer(letter === r2Pick.correcta, letter, r2Pick.correcta, "🔠");
+  }
+
   function handleVerify() {
     if (!canVerify) return;
-    if (ronda === 0) {
-      setR1Locked(true);
-      answer(r1Selected === r1Pick.palabra, r1Selected, r1Pick.palabra, "🔤");
-    } else if (ronda === 1) {
-      setR2Locked(true);
-      answer(r2Selected === r2Pick.correcta, r2Selected, r2Pick.correcta, "🔠");
-    } else if (ronda === 2) {
+    if (ronda === 2) {
       setR3Verified(true);
       let ok = true;
       for (let i = 0; i < r3Pick.correctas.length; i++) {
@@ -2547,13 +2607,23 @@ function EnriquecimientoGame({ app, setApp, go, onRestart }) {
         {ronda === 0 && (
           <PolisemiasCard pick={r1Pick} opciones={r1Opciones}
             selected={r1Selected} locked={r1Locked}
-            onSelect={(opt) => { if (!r1Locked) setR1Selected(r1Selected === opt ? null : opt); }}
+            onSelect={(opt) => {
+              if (r1Locked) return;
+              setR1Selected(opt);
+              clearTimeout(r1AutoRef.current);
+              r1AutoRef.current = setTimeout(() => gradeR1(opt), 700);
+            }}
           />
         )}
         {ronda === 1 && (
           <HomofonasCard pick={r2Pick}
             selected={r2Selected} locked={r2Locked}
-            onSelect={(letter) => { if (!r2Locked) setR2Selected(r2Selected === letter ? null : letter); }}
+            onSelect={(letter) => {
+              if (r2Locked) return;
+              setR2Selected(letter);
+              clearTimeout(r2AutoRef.current);
+              r2AutoRef.current = setTimeout(() => gradeR2(letter), 700);
+            }}
           />
         )}
         {ronda === 2 && (
@@ -2589,6 +2659,7 @@ function EnriquecimientoGame({ app, setApp, go, onRestart }) {
       <ActionRail
         canVerify={canVerify}
         onVerify={handleVerify}
+        hideVerify={ronda === 0 || ronda === 1}
         showErase={showErase}
         onErase={handleErase}
         onRestart={() => setConfirmingExit(true)}

@@ -6,7 +6,9 @@
   "scripts": {
     "qa": "node juegos/completa-palabras/.planning/qa-checks.js",
     "build:landing": "node .scripts/build-landing.js",
-    "build:game": "node juegos/completa-palabras/.planning/bundle.js"
+    "build:game": "node juegos/completa-palabras/.planning/bundle.js",
+    "verify": "node .scripts/verify-game.js",
+    "postinstall-browser": "node node_modules/playwright/cli.js install chromium"
   },
   "devDependencies": {
     "playwright": "^1.59.1"

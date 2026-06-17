@@ -436,21 +436,23 @@ function ExitModal({ open, onCancel, attempted, total, onExit }) {
   );
 }
 
-function ActionRail({ canVerify, onVerify, showErase, onErase, onRestart, onExit }) {
+function ActionRail({ canVerify, onVerify, hideVerify, showErase, onErase, onRestart, onExit }) {
   return (
     <div data-qa="acciones" style={{
       position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
       display: "flex", flexDirection: "column", gap: 10, width: 148,
     }}>
-      <button className="ed-btn ed-btn-verify"
-        onClick={() => { if (canVerify && onVerify) onVerify(); }}
-        disabled={!canVerify}
-        style={{
-          fontSize: 13, padding: "0 8px", height: 48, fontWeight: 800, letterSpacing: "0.04em",
-          opacity: canVerify ? 1 : 0.45, cursor: canVerify ? "pointer" : "not-allowed",
-        }}>
-        ¡VERIFICAR!
-      </button>
+      {!hideVerify && (
+        <button className="ed-btn ed-btn-verify"
+          onClick={() => { if (canVerify && onVerify) onVerify(); }}
+          disabled={!canVerify}
+          style={{
+            fontSize: 13, padding: "0 8px", height: 48, fontWeight: 800, letterSpacing: "0.04em",
+            opacity: canVerify ? 1 : 0.45, cursor: canVerify ? "pointer" : "not-allowed",
+          }}>
+          ¡VERIFICAR!
+        </button>
+      )}
       {showErase && (
         <button className="ed-btn ed-btn-erase" onClick={onErase}
           style={{ fontSize: 13, padding: "0 8px", height: 48, fontWeight: 800, letterSpacing: "0.04em" }}>
@@ -635,6 +637,12 @@ function FabulaGame({ app, setApp, go, onRestart }) {
     return () => { delete window.__qa_skip; };
   }, []);
 
+  // R2 (elegir moraleja, 1 opción) se AUTO-EVALÚA (comportamiento B): al tocar
+  // una moraleja se resalta y, tras una breve ventana para recapacitar (~700 ms),
+  // se califica sola. Por eso su VERIFICAR se oculta y su canVerify queda en false.
+  const r2AutoRef = useRefG(null);
+  useEffectG(() => () => clearTimeout(r2AutoRef.current), []);
+
   // ── R1 helpers ──
   const r1Assigned = new Set(Object.values(r1Bins).filter(Boolean));
   const r1TrayParts = r1Tray.filter((p) => !r1Assigned.has(p.id));
@@ -695,15 +703,25 @@ function FabulaGame({ app, setApp, go, onRestart }) {
   }
 
   // ── canVerify / borrar según ronda ──
+  // R2 se auto-evalúa (comportamiento B) → su VERIFICAR se oculta y canVerify=false.
   const canVerify =
     ronda === 0 ? (r1AllPlaced && !r1Locked) :
-    ronda === 1 ? (r2Spun && r2Sel !== null && !r2Locked) :
+    ronda === 1 ? false :
     (r3Seq.length === r3Slots && !r3Locked);
+
+  // Califica la R2 con la moraleja tocada (mismo flujo que tenía VERIFICAR).
+  function gradeR2(choice) {
+    if (r2Locked) return;
+    setR2Locked(true);
+    const correct = choice === r2Pick.correcta;
+    setTimeout(() => answer(correct, `Moraleja: ${r2Pick.titulo}`, "💡",
+      r2Pick.opciones[choice], r2Pick.opciones[r2Pick.correcta]), 350);
+  }
 
   function handleErase() {
     if (ronda === 0) { if (!r1Locked) { setR1Bins({ inicio: null, nudo: null, desenlace: null }); setR1Sel(null); } }
-    else if (ronda === 1) { if (!r2Locked) setR2Sel(null); }
-    else { if (!r3Locked) setR3Seq([]); }
+    // R2 se auto-evalúa: no tiene BORRAR.
+    else if (ronda === 2) { if (!r3Locked) setR3Seq([]); }
   }
 
   function handleVerify() {
@@ -720,11 +738,6 @@ function FabulaGame({ app, setApp, go, onRestart }) {
       }).join(", ");
       const correctText = "inicio=inicio, nudo=nudo, desenlace=desenlace";
       setTimeout(() => answer(correct, `Ordena: ${r1Pick.titulo}`, "📖", userText, correctText), 350);
-    } else if (ronda === 1) {
-      setR2Locked(true);
-      const correct = r2Sel === r2Pick.correcta;
-      setTimeout(() => answer(correct, `Moraleja: ${r2Pick.titulo}`, "💡",
-        r2Pick.opciones[r2Sel], r2Pick.opciones[r2Pick.correcta]), 350);
     } else {
       setR3Locked(true);
       const correct = r3Assembled === r3Pick.word;
@@ -786,7 +799,8 @@ function FabulaGame({ app, setApp, go, onRestart }) {
     ronda === 0 ? "Toca una parte y luego\nsu lugar." :
     ronda === 1 ? (r2Spun ? "Toca la moraleja correcta." : "Toca GIRAR para sacar\ntu fábula.") :
     "Toca las sílabas en orden\npara formar el nombre.";
-  const showErase = true;
+  // R2 se auto-evalúa → sin BORRAR (igual que su VERIFICAR oculto).
+  const showErase = ronda !== 1;
   // El enunciado baja para repartir mejor el espacio (no dejar un hueco
   // grande arriba). En R1 el contenido es alto (6 filas) y debe caber
   // entero en el lienzo, así que su enunciado va menos abajo que en R2/R3,
@@ -812,7 +826,14 @@ function FabulaGame({ app, setApp, go, onRestart }) {
         {ronda === 1 && (
           <RuletaMoralejaCard pick={r2Pick} bank={MORALEJAS} spun={r2Spun} onLanded={() => setR2Spun(true)}
             selected={r2Sel} locked={r2Locked}
-            onChoose={(i) => { if (!r2Locked) setR2Sel(i); }} />
+            onChoose={(i) => {
+              // Auto-evaluación (comportamiento B): solo tras girar la ruleta.
+              // Al tocar, selecciona y, si no cambia de idea en ~700 ms, califica sola.
+              if (r2Locked || !r2Spun) return;
+              setR2Sel(i);
+              clearTimeout(r2AutoRef.current);
+              r2AutoRef.current = setTimeout(() => gradeR2(i), 700);
+            }} />
         )}
         {ronda === 2 && (
           <AcertijoCard pick={r3Pick} tray={r3Tray} seq={r3Seq} used={r3Used} slots={r3Slots}
@@ -821,7 +842,7 @@ function FabulaGame({ app, setApp, go, onRestart }) {
         )}
       </div>
 
-      <ActionRail canVerify={canVerify} onVerify={handleVerify}
+      <ActionRail canVerify={canVerify} onVerify={handleVerify} hideVerify={ronda === 1}
         showErase={showErase} onErase={handleErase}
         onRestart={() => setConfirmingRestart(true)} onExit={() => setConfirmingExit(true)} />
 

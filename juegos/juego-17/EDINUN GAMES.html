@@ -1566,10 +1566,22 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
     onNextRound: () => setRonda((r) => r + 1),
   });
 
+  // R3 (acertijo, 1 opción) se AUTO-EVALÚA: al tocar una herramienta se resalta
+  // y, tras una breve ventana para recapacitar (~700 ms), se califica sola. Por
+  // eso su VERIFICAR se oculta y su canVerify queda en false.
+  const r3AutoRef = useRefG(null);
+  useEffectG(() => () => clearTimeout(r3AutoRef.current), []);
+
   const canVerify =
     feedback ? false :
-    ronda === 0 ? (r1Slots.every(Boolean) && !r1Locked) :
-    ronda === 2 ? (r3Choice !== null && !r3Locked) : false;
+    ronda === 0 ? (r1Slots.every(Boolean) && !r1Locked) : false;
+
+  function gradeR3(choice) {
+    if (r3Locked) return;
+    setR3Locked(true);
+    const correct = choice === r3Pick.answer;
+    setTimeout(() => answer(correct, choice, r3Pick.answer, "🔎", "El asistente misterioso"), correct ? 450 : 1500);
+  }
 
   function handleVerify() {
     if (!canVerify) return;
@@ -1579,10 +1591,6 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
       const u = r1Slots.map((id, i) => `${i + 1}. ${r1ById[id] ? r1ById[id].label : "?"}`).join(" · ");
       const c = r1Items.slice().sort((a, b) => a.n - b.n).map((it) => `${it.n}. ${it.label}`).join(" · ");
       setTimeout(() => answer(correct, u, c, "⏳", "La máquina del tiempo"), correct ? 450 : 1500);
-    } else if (ronda === 2) {
-      setR3Locked(true);
-      const correct = r3Choice === r3Pick.answer;
-      setTimeout(() => answer(correct, r3Choice, r3Pick.answer, "🔎", "El asistente misterioso"), correct ? 450 : 1500);
     }
   }
 
@@ -1596,7 +1604,6 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
 
   function handleErase() {
     if (ronda === 0 && !r1Locked) setR1Slots(r1Items.map(() => null));
-    else if (ronda === 2 && !r3Locked) setR3Choice(null);
   }
 
   const enunciado =
@@ -1681,7 +1688,12 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
             {r3Opts.map((opt, i) => (
               <OptionButton key={opt} label={opt} locked={r3Locked}
                 isCorrect={opt === r3Pick.answer} isPicked={r3Choice === opt}
-                onClick={() => setR3Choice((c) => (c === opt ? null : opt))}
+                onClick={() => {
+                  if (r3Locked) return;
+                  setR3Choice(opt);
+                  clearTimeout(r3AutoRef.current);
+                  r3AutoRef.current = setTimeout(() => gradeR3(opt), 700);
+                }}
                 color={["#4fa0ff", "#e0a23a", "#2ecc8f"][i % 3]} />
             ))}
           </div>
@@ -1690,8 +1702,8 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
 
       <ActionRail
         canVerify={canVerify} onVerify={handleVerify}
-        hideVerify={ronda === 1}
-        showErase={ronda === 0 || ronda === 2} onErase={handleErase}
+        hideVerify={ronda === 1 || ronda === 2}
+        showErase={ronda === 0} onErase={handleErase}
         onRestart={() => setConfirmingRestart(true)} onExit={() => setConfirmingExit(true)}
       />
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />
@@ -1844,11 +1856,30 @@ function NoticiaGame({ app, setApp, go, onRestart }) {
     onNextRound: () => setRonda((r) => r + 1),
   });
 
+  // R2 (caza la opinión) y R3 (confiable o trampa) son de 1 toque → se
+  // AUTO-EVALÚAN: al tocar la frase / el veredicto se resalta y, tras una
+  // breve ventana (~700 ms), se califica sola. Su VERIFICAR se oculta.
+  const r2AutoRef = useRefG(null);
+  const r3AutoRef = useRefG(null);
+  useEffectG(() => () => { clearTimeout(r2AutoRef.current); clearTimeout(r3AutoRef.current); }, []);
+
   const canVerify =
     feedback ? false :
-    ronda === 0 ? (r1Slots.every(Boolean) && !r1Locked) :
-    ronda === 1 ? (r2Choice !== null && !r2Locked) :
-    ronda === 2 ? (r3Choice !== null && !r3Locked) : false;
+    ronda === 0 ? (r1Slots.every(Boolean) && !r1Locked) : false;
+
+  function gradeR2(choice) {
+    if (r2Locked) return;
+    setR2Locked(true);
+    const correct = choice === r2Pick.opinionIdx;
+    setTimeout(() => answer(correct, r2Pick.lines[choice], r2Pick.lines[r2Pick.opinionIdx], "🔍", "Caza la opinión"), correct ? 450 : 1500);
+  }
+
+  function gradeR3(choice) {
+    if (r3Locked) return;
+    setR3Locked(true);
+    const correct = (choice === "CONFIABLE") === r3Pick.confiable;
+    setTimeout(() => answer(correct, choice, r3Pick.confiable ? "CONFIABLE" : "TRAMPA", "🛡️", "¿Confiable o trampa?"), correct ? 450 : 1500);
+  }
 
   function handleVerify() {
     if (!canVerify) return;
@@ -1858,21 +1889,11 @@ function NoticiaGame({ app, setApp, go, onRestart }) {
       const u = r1Slots.map((id, i) => `${i + 1}. ${r1ById[id] ? r1ById[id].label : "?"}`).join(" · ");
       const c = r1Items.slice().sort((a, b) => a.n - b.n).map((it) => `${it.n}. ${it.label}`).join(" · ");
       setTimeout(() => answer(correct, u, c, "📰", "Arma la noticia"), correct ? 450 : 1500);
-    } else if (ronda === 1) {
-      setR2Locked(true);
-      const correct = r2Choice === r2Pick.opinionIdx;
-      setTimeout(() => answer(correct, r2Pick.lines[r2Choice], r2Pick.lines[r2Pick.opinionIdx], "🔍", "Caza la opinión"), correct ? 450 : 1500);
-    } else if (ronda === 2) {
-      setR3Locked(true);
-      const correct = (r3Choice === "CONFIABLE") === r3Pick.confiable;
-      setTimeout(() => answer(correct, r3Choice, r3Pick.confiable ? "CONFIABLE" : "TRAMPA", "🛡️", "¿Confiable o trampa?"), correct ? 450 : 1500);
     }
   }
 
   function handleErase() {
     if (ronda === 0 && !r1Locked) setR1Slots(r1Items.map(() => null));
-    else if (ronda === 1 && !r2Locked) setR2Choice(null);
-    else if (ronda === 2 && !r3Locked) setR3Choice(null);
   }
 
   const enunciado =
@@ -1942,7 +1963,12 @@ function NoticiaGame({ app, setApp, go, onRestart }) {
               else if (sel) { bg = "rgba(255,221,120,0.92)"; ink = "#3a3a4a"; }
               return (
                 <React.Fragment key={i}>
-                  <span onClick={() => { if (!r2Locked) setR2Choice((c) => (c === i ? null : i)); }}
+                  <span onClick={() => {
+                      if (r2Locked) return;
+                      setR2Choice(i);
+                      clearTimeout(r2AutoRef.current);
+                      r2AutoRef.current = setTimeout(() => gradeR2(i), 700);
+                    }}
                     style={{
                       cursor: r2Locked ? "default" : "pointer",
                       background: bg, color: ink, borderRadius: 4, padding: "1px 3px",
@@ -1969,16 +1995,27 @@ function NoticiaGame({ app, setApp, go, onRestart }) {
           </div>
           <div style={{ display: "flex", gap: 16, justifyContent: "center" }}>
             <OptionButton label="CONFIABLE" locked={r3Locked} isCorrect={r3Pick.confiable} isPicked={r3Choice === "CONFIABLE"}
-              onClick={() => setR3Choice((c) => (c === "CONFIABLE" ? null : "CONFIABLE"))} color="#2ecc8f" />
+              onClick={() => {
+                if (r3Locked) return;
+                setR3Choice("CONFIABLE");
+                clearTimeout(r3AutoRef.current);
+                r3AutoRef.current = setTimeout(() => gradeR3("CONFIABLE"), 700);
+              }} color="#2ecc8f" />
             <OptionButton label="TRAMPA" locked={r3Locked} isCorrect={!r3Pick.confiable} isPicked={r3Choice === "TRAMPA"}
-              onClick={() => setR3Choice((c) => (c === "TRAMPA" ? null : "TRAMPA"))} color="#ef5a5a" />
+              onClick={() => {
+                if (r3Locked) return;
+                setR3Choice("TRAMPA");
+                clearTimeout(r3AutoRef.current);
+                r3AutoRef.current = setTimeout(() => gradeR3("TRAMPA"), 700);
+              }} color="#ef5a5a" />
           </div>
         </div>
       )}
 
       <ActionRail
         canVerify={canVerify} onVerify={handleVerify}
-        showErase={ronda === 0 || ronda === 2} onErase={handleErase}
+        hideVerify={ronda === 1 || ronda === 2}
+        showErase={ronda === 0} onErase={handleErase}
         onRestart={() => setConfirmingRestart(true)} onExit={() => setConfirmingExit(true)}
       />
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />

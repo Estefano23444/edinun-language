@@ -1005,13 +1005,13 @@ function ExitModal({ confirmingExit, setConfirmingExit, attempted, total, onExit
   );
 }
 
-function ActionRail({ canVerify, onVerify, showVerify = true, showErase, onErase, onRestart, onExit }) {
+function ActionRail({ canVerify, onVerify, showVerify = true, hideVerify, showErase, onErase, onRestart, onExit }) {
   return (
     <div data-qa="acciones" style={{
       position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
       display: "flex", flexDirection: "column", gap: 10, width: 148,
     }}>
-      {showVerify && (
+      {showVerify && !hideVerify && (
         <button className="ed-btn ed-btn-verify"
           onClick={() => { if (canVerify && onVerify) onVerify(); }}
           disabled={!canVerify}
@@ -1196,10 +1196,27 @@ function FiestaGame({ app, setApp, go, onRestart }) {
   // ── Completitud por ronda. R1 (shooter) se auto-resuelve al cazar la meta,
   // por eso NO tiene VERIFICAR manual (estándar de mecánicas tipo shooter).
   const r2AllChosen = r2Choices.length > 0 && r2Choices.every((c) => c !== null);
+  // R3 (clasificar formal/coloquial, 1 toque) se AUTO-EVALÚA: tras girar la
+  // ruleta, al tocar "formal" o "coloquial" se resalta y, tras una breve
+  // ventana para recapacitar (~700 ms), se califica sola (estándar de
+  // mecánicas de 1 toque, igual que el shooter de R1). Por eso su VERIFICAR
+  // se oculta y su canVerify queda en false.
   const canVerify =
     ronda === 1 ? (r2AllChosen && !r2Locked) :
-    ronda === 2 ? (r3Choice !== null && !r3Locked) :
     false;
+
+  const r3AutoRef = useRefG(null);
+  useEffectG(() => () => clearTimeout(r3AutoRef.current), []);
+
+  // Califica la R3 con la opción tocada (mismo flujo que tenía VERIFICAR).
+  function gradeR3(choice) {
+    if (r3Locked) return;
+    setR3Locked(true);
+    const correct = choice === r3Landed.type;
+    const userText = TYPE_LABEL[choice];
+    const correctText = `${TYPE_LABEL[r3Landed.type]} — "${r3Landed.text.slice(0, 26)}"`;
+    setTimeout(() => answer(correct, userText, correctText, "🎡"), 380);
+  }
 
   // R1 — el shooter avisa cuando el niño cazó las palabras correctas.
   function handleShooterDone(caught, misses) {
@@ -1221,12 +1238,6 @@ function FiestaGame({ app, setApp, go, onRestart }) {
       const userText = r2Choices.join(", ");
       const correctText = gaps.map((g) => g.answer).join(", ");
       setTimeout(() => answer(correct, userText, correctText, "📖"), 380);
-    } else if (ronda === 2) {
-      setR3Locked(true);
-      const correct = r3Choice === r3Landed.type;
-      const userText = TYPE_LABEL[r3Choice];
-      const correctText = `${TYPE_LABEL[r3Landed.type]} — "${r3Landed.text.slice(0, 26)}"`;
-      setTimeout(() => answer(correct, userText, correctText, "🎡"), 380);
     }
   }
 
@@ -1323,7 +1334,13 @@ function FiestaGame({ app, setApp, go, onRestart }) {
           choice={r3Choice}
           locked={r3Locked}
           onLanded={(p) => setR3Landed(p)}
-          onChoose={(t) => { if (!r3Locked && r3Landed) setR3Choice((c) => (c === t ? null : t)); }}
+          onChoose={(t) => {
+            if (r3Locked || !r3Landed) return;
+            setR3Choice(t);
+            // Resalta y, si no cambia de idea en ~700 ms, califica sola.
+            clearTimeout(r3AutoRef.current);
+            r3AutoRef.current = setTimeout(() => gradeR3(t), 700);
+          }}
         />
       )}
 
@@ -1331,6 +1348,7 @@ function FiestaGame({ app, setApp, go, onRestart }) {
         canVerify={canVerify}
         onVerify={handleVerify}
         showVerify={ronda !== 0}
+        hideVerify={ronda === 2}
         showErase={false}
         onErase={handleErase}
         onRestart={() => setConfirmingRestart(true)}

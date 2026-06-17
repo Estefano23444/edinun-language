@@ -508,21 +508,23 @@ function ExitModal({ confirmingExit, setConfirmingExit, attempted, total, onExit
   );
 }
 
-function ActionRail({ canVerify, onVerify, showErase, onErase, onRestart, onExit }) {
+function ActionRail({ canVerify, onVerify, hideVerify, showErase, onErase, onRestart, onExit }) {
   return (
     <div data-qa="acciones" style={{
       position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
       display: "flex", flexDirection: "column", gap: 10, width: 148,
     }}>
-      <button className="ed-btn ed-btn-verify"
-        onClick={() => { if (canVerify && onVerify) onVerify(); }}
-        disabled={!canVerify}
-        style={{
-          fontSize: 13, padding: "0 8px", height: 48, fontWeight: 800, letterSpacing: "0.04em",
-          opacity: canVerify ? 1 : 0.45, cursor: canVerify ? "pointer" : "not-allowed",
-        }}>
-        ¡VERIFICAR!
-      </button>
+      {!hideVerify && (
+        <button className="ed-btn ed-btn-verify"
+          onClick={() => { if (canVerify && onVerify) onVerify(); }}
+          disabled={!canVerify}
+          style={{
+            fontSize: 13, padding: "0 8px", height: 48, fontWeight: 800, letterSpacing: "0.04em",
+            opacity: canVerify ? 1 : 0.45, cursor: canVerify ? "pointer" : "not-allowed",
+          }}>
+          ¡VERIFICAR!
+        </button>
+      )}
       {showErase && (
         <button className="ed-btn ed-btn-erase" onClick={onErase}
           style={{ fontSize: 13, padding: "0 8px", height: 48, fontWeight: 800, letterSpacing: "0.04em" }}>
@@ -730,28 +732,43 @@ function TextoPoeticoGame({ app, setApp, go, onRestart }) {
     return () => { window.__currentChalkGlyphs = null; };
   }, []);
 
+  // R1 (cofre, elegir-1) y R3 (memoria) se AUTO-EVALÚAN → su VERIFICAR se oculta
+  // y su canVerify queda en false. R2 (pintar palabras sin tilde) sigue manual.
   const canVerify =
-    ronda === 0 ? (r1Selected !== null && !r1Locked) :
+    ronda === 0 ? false :
     ronda === 1 ? (r2Picked.size > 0 && !r2Locked) :
-    ronda === 2 ? (r3Matched.size === r3Cards.length && !r3Locked) :
+    ronda === 2 ? false :
     false;
-  const showErase = ronda !== 0;
+  const showErase = ronda === 1;
+
+  // Timers de auto-evaluación (R1 elegir-cofre, R3 memoria) — limpieza al desmontar.
+  const r1AutoRef = useRefG(null);
+  const r3AutoRef = useRefG(null);
+  useEffectG(() => () => { clearTimeout(r1AutoRef.current); clearTimeout(r3AutoRef.current); }, []);
+
+  // Califica la R1 con el cofre tocado (mismo flujo que tenía VERIFICAR).
+  function gradeR1(choice) {
+    if (r1Locked) return;
+    setR1Locked(true);
+    answer(choice === r1Pick.tipo, choice, r1Pick.tipo, "🎰");
+  }
+
+  // Califica la R3 al emparejar todas las cartas (mismo flujo que tenía VERIFICAR).
+  function gradeR3() {
+    if (r3Locked) return;
+    setR3Locked(true);
+    answer(true, "todas las parejas", "3 parejas", "🃏");
+  }
 
   function handleVerify() {
     if (!canVerify) return;
-    if (ronda === 0) {
-      setR1Locked(true);
-      answer(r1Selected === r1Pick.tipo, r1Selected, r1Pick.tipo, "🎰");
-    } else if (ronda === 1) {
+    if (ronda === 1) {
       setR2Locked(true);
       const errSet = new Set(r2Pick.tokens.map((t, i) => t.err ? i : null).filter((x) => x !== null));
       const allCorrect = r2Picked.size === errSet.size && [...r2Picked].every((i) => errSet.has(i));
       const userTokens = [...r2Picked].sort((a,b)=>a-b).map((i) => r2Pick.tokens[i].p).join(" ");
       const correctTokens = [...errSet].sort((a,b)=>a-b).map((i) => r2Pick.tokens[i].ok).join(" ");
       setTimeout(() => answer(allCorrect, userTokens, correctTokens, "🔍"), 350);
-    } else if (ronda === 2) {
-      setR3Locked(true);
-      answer(true, "todas las parejas", "3 parejas", "🃏");
     }
   }
 
@@ -759,11 +776,6 @@ function TextoPoeticoGame({ app, setApp, go, onRestart }) {
     if (ronda === 1) {
       if (r2Locked) return;
       setR2Picked(new Set());
-    } else if (ronda === 2) {
-      if (r3Locked) return;
-      setR3Flipped(new Set());
-      setR3Matched(new Set());
-      setR3Pending([]);
     }
   }
 
@@ -845,6 +857,12 @@ function TextoPoeticoGame({ app, setApp, go, onRestart }) {
           m.add(a); m.add(b);
           setR3Matched(m);
           setR3Pending([]);
+          // Auto-finalizar: al emparejar TODAS las cartas se califica sola,
+          // sin botón VERIFICAR (deja ~700 ms para ver el último par).
+          if (m.size === r3Cards.length) {
+            clearTimeout(r3AutoRef.current);
+            r3AutoRef.current = setTimeout(() => gradeR3(), 700);
+          }
         }, 500);
       } else {
         // no match — flip back
@@ -880,7 +898,13 @@ function TextoPoeticoGame({ app, setApp, go, onRestart }) {
         {ronda === 0 && (
           <CofresMagicosCard pick={r1Pick}
             selected={r1Selected} locked={r1Locked}
-            onSelect={(t) => { if (r1Locked) return; setR1Selected(r1Selected === t ? null : t); }}
+            onSelect={(t) => {
+              if (r1Locked) return;
+              setR1Selected(t);
+              // Resalta y, si no cambia de idea en ~700 ms, califica sola.
+              clearTimeout(r1AutoRef.current);
+              r1AutoRef.current = setTimeout(() => gradeR1(t), 700);
+            }}
           />
         )}
         {ronda === 1 && (
@@ -900,6 +924,7 @@ function TextoPoeticoGame({ app, setApp, go, onRestart }) {
       <ActionRail
         canVerify={canVerify}
         onVerify={handleVerify}
+        hideVerify={ronda === 0 || ronda === 2}
         showErase={showErase}
         onErase={handleErase}
         onRestart={() => setConfirmingRestart(true)}
@@ -1138,6 +1163,8 @@ function MemoriaGeneroCard({ cards, flipped, matched, locked, onFlip }) {
             const isMatched = matched.has(i);
             return (
               <div key={i}
+                data-qa="carta-memoria" data-idx={i}
+                data-flipped={isFlipped ? "1" : "0"} data-matched={isMatched ? "1" : "0"}
                 onClick={() => onFlip(i)}
                 style={{
                   width: 136, height: 92,
@@ -1289,12 +1316,29 @@ function TextoInstructivoGame({ app, setApp, go, onRestart }) {
   const r1AllPlaced = Object.keys(r1Placed).length === r1Set.miembros.length;
   const r2IsOrdered = r2Order.length > 0 && r2Order.every((p, i) => p.n === i + 1);
 
+  // R3 (plural, elegir-1) se AUTO-EVALÚA → su VERIFICAR se oculta y canVerify=false.
+  // R1 (kichwa) y R2 (ordenar receta) siguen con VERIFICAR manual.
   const canVerify =
     ronda === 0 ? (r1AllPlaced && !r1Locked) :
     ronda === 1 ? (r2Order.length > 0 && !r2Locked) :
-    ronda === 2 ? (r3Selected !== null && !r3Locked) :
+    ronda === 2 ? false :
     false;
   const showErase = ronda === 0 || ronda === 1;
+
+  // Timer de auto-evaluación (R3 elegir-sufijo) — limpieza al desmontar.
+  const r3AutoRef = useRefG(null);
+  useEffectG(() => () => clearTimeout(r3AutoRef.current), []);
+
+  // Califica la R3 con el sufijo tocado (mismo flujo que tenía VERIFICAR).
+  function gradeR3(sufijo) {
+    if (r3Locked) return;
+    setR3Locked(true);
+    const isOK = sufijo === r3Pick.sufijo;
+    const userFormed = isOK ? r3Pick.plural : `${r3Pick.singular}${sufijo.replace("-", "")}`;
+    const userText = `${r3Pick.singular} + ${sufijo} = ${userFormed}`;
+    const correctText = `${r3Pick.singular} + ${r3Pick.sufijo} = ${r3Pick.plural}`;
+    setTimeout(() => answer(isOK, userText, correctText, "🧪"), 350);
+  }
 
   function handleVerify() {
     if (!canVerify) return;
@@ -1314,13 +1358,6 @@ function TextoInstructivoGame({ app, setApp, go, onRestart }) {
       const userText = r2Order.map((p) => p.n).join("→");
       const correctText = r2Receta.pasos.map((p) => p.n).join("→");
       setTimeout(() => answer(r2IsOrdered, userText, correctText, "🍓"), 350);
-    } else if (ronda === 2) {
-      setR3Locked(true);
-      const isOK = r3Selected === r3Pick.sufijo;
-      const userFormed = isOK ? r3Pick.plural : `${r3Pick.singular}${r3Selected.replace("-", "")}`;
-      const userText = `${r3Pick.singular} + ${r3Selected} = ${userFormed}`;
-      const correctText = `${r3Pick.singular} + ${r3Pick.sufijo} = ${r3Pick.plural}`;
-      setTimeout(() => answer(isOK, userText, correctText, "🧪"), 350);
     }
   }
 
@@ -1468,7 +1505,13 @@ function TextoInstructivoGame({ app, setApp, go, onRestart }) {
         )}
         {ronda === 2 && (
           <LaboratorioPluralCard pick={r3Pick} selected={r3Selected} locked={r3Locked}
-            onSelect={(s) => { if (r3Locked) return; setR3Selected(r3Selected === s ? null : s); }}
+            onSelect={(s) => {
+              if (r3Locked) return;
+              setR3Selected(s);
+              // Resalta y, si no cambia de idea en ~700 ms, califica sola.
+              clearTimeout(r3AutoRef.current);
+              r3AutoRef.current = setTimeout(() => gradeR3(s), 700);
+            }}
           />
         )}
       </div>
@@ -1476,6 +1519,7 @@ function TextoInstructivoGame({ app, setApp, go, onRestart }) {
       <ActionRail
         canVerify={canVerify}
         onVerify={handleVerify}
+        hideVerify={ronda === 2}
         showErase={showErase}
         onErase={handleErase}
         onRestart={() => setConfirmingRestart(true)}

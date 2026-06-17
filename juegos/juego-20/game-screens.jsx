@@ -880,6 +880,12 @@ function BlogGame({ app, setApp, go, onRestart }) {
     return () => clearInterval(id);
   }, []);
 
+  // R2 (identificar el tema del blog) se AUTO-EVALÚA: al tocar una opción se
+  // resalta y, tras una breve ventana para recapacitar (~700 ms), se califica
+  // sola. Por eso su VERIFICAR se oculta y su canVerify queda en false.
+  const r2AutoRef = useRefG(null);
+  useEffectG(() => () => clearTimeout(r2AutoRef.current), []);
+
   const answer = makeAnswer({
     attempted, solved, stars, starsSession, log, elapsed, catLabel,
     exerciseStart, setApp, go,
@@ -890,8 +896,16 @@ function BlogGame({ app, setApp, go, onRestart }) {
   const canVerify =
     feedback ? false :
     ronda === 0 ? (r1Slots.every(Boolean) && !r1Locked) :
-    ronda === 1 ? (r2Choice !== null && !r2Locked) :
+    ronda === 1 ? false :
     ronda === 2 ? (r3Gancho !== null && r3Tema !== null && !r3Locked) : false;
+
+  // Califica la R2 con la opción tocada (misma rama que tenía VERIFICAR).
+  function gradeR2(choice) {
+    if (r2Locked) return;
+    setR2Locked(true);
+    const correct = choice === r2Pick.answer;
+    setTimeout(() => answer(correct, choice, r2Pick.answer, "🕵️", "Detective de blogs"), correct ? 450 : 1500);
+  }
 
   function handleVerify() {
     if (!canVerify) return;
@@ -901,10 +915,6 @@ function BlogGame({ app, setApp, go, onRestart }) {
       const u = r1Slots.map((id, i) => `${BLOG_SLOT_LABELS[i]}: ${r1ById[id] ? r1ById[id].label : "?"}`).join(" · ");
       const c = r1Items.slice().sort((a, b) => a.n - b.n).map((it, i) => `${BLOG_SLOT_LABELS[i]}: ${it.label}`).join(" · ");
       setTimeout(() => answer(correct, u, c, "🧩", "Arma tu blog"), correct ? 450 : 1500);
-    } else if (ronda === 1) {
-      setR2Locked(true);
-      const correct = r2Choice === r2Pick.answer;
-      setTimeout(() => answer(correct, r2Choice, r2Pick.answer, "🕵️", "Detective de blogs"), correct ? 450 : 1500);
     } else if (ronda === 2) {
       setR3Locked(true);
       const correct = !!(r3Gancho && r3Gancho.ok && r3Tema && r3Tema.ok);
@@ -917,7 +927,6 @@ function BlogGame({ app, setApp, go, onRestart }) {
 
   function handleErase() {
     if (ronda === 0 && !r1Locked) setR1Slots(r1Items.map(() => null));
-    else if (ronda === 1 && !r2Locked) setR2Choice(null);
     else if (ronda === 2 && !r3Locked) { setR3Gancho(null); setR3Tema(null); }
   }
 
@@ -963,7 +972,13 @@ function BlogGame({ app, setApp, go, onRestart }) {
             {r2Opts.map((opt, i) => (
               <OptionButton key={opt} label={opt} locked={r2Locked}
                 isCorrect={opt === r2Pick.answer} isPicked={r2Choice === opt}
-                onClick={() => setR2Choice((c) => (c === opt ? null : opt))}
+                onClick={() => {
+                  if (r2Locked) return;
+                  setR2Choice(opt);
+                  // Resalta y, si no cambia de idea en ~700 ms, califica sola.
+                  clearTimeout(r2AutoRef.current);
+                  r2AutoRef.current = setTimeout(() => gradeR2(opt), 700);
+                }}
                 minWidth={150} color={["#4fa0ff", "#e0a23a", "#2ecc8f"][i % 3]} />
             ))}
           </div>
@@ -990,7 +1005,8 @@ function BlogGame({ app, setApp, go, onRestart }) {
 
       <ActionRail
         canVerify={canVerify} onVerify={handleVerify}
-        showErase={true} onErase={handleErase}
+        hideVerify={ronda === 1}
+        showErase={ronda !== 1} onErase={handleErase}
         onRestart={() => setConfirmingRestart(true)} onExit={() => setConfirmingExit(true)}
       />
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />
@@ -1122,6 +1138,14 @@ function EntrevistaGame({ app, setApp, go, onRestart }) {
     return () => clearInterval(id);
   }, []);
 
+  // R1 (clasificar abierta/cerrada) y R2 (identificar el tipo de entrevista)
+  // se AUTO-EVALÚAN: al tocar una opción se resalta y, tras una breve ventana
+  // (~700 ms), se califica sola. Por eso su VERIFICAR se oculta y canVerify
+  // queda en false en esas rondas.
+  const r1AutoRef = useRefG(null);
+  const r2AutoRef = useRefG(null);
+  useEffectG(() => () => { clearTimeout(r1AutoRef.current); clearTimeout(r2AutoRef.current); }, []);
+
   const answer = makeAnswer({
     attempted, solved, stars, starsSession, log, elapsed, catLabel,
     exerciseStart, setApp, go,
@@ -1131,21 +1155,27 @@ function EntrevistaGame({ app, setApp, go, onRestart }) {
 
   const canVerify =
     feedback ? false :
-    ronda === 0 ? (r1Choice !== null && !r1Locked) :
-    ronda === 1 ? (r2Choice !== null && !r2Locked) :
+    ronda === 0 ? false :
+    ronda === 1 ? false :
     ronda === 2 ? (r3Slots.every(Boolean) && !r3Locked) : false;
+
+  // Califican con la opción tocada (mismas ramas que tenía VERIFICAR).
+  function gradeR1(choice) {
+    if (r1Locked) return;
+    setR1Locked(true);
+    const correct = choice === r1Pick.answer;
+    setTimeout(() => answer(correct, choice, r1Pick.answer, "🎤", "¿Abierta o cerrada?"), correct ? 450 : 1500);
+  }
+  function gradeR2(choice) {
+    if (r2Locked) return;
+    setR2Locked(true);
+    const correct = choice === r2Pick.answer;
+    setTimeout(() => answer(correct, choice, r2Pick.answer, "🕵️", "Detective de entrevistas"), correct ? 450 : 1500);
+  }
 
   function handleVerify() {
     if (!canVerify) return;
-    if (ronda === 0) {
-      setR1Locked(true);
-      const correct = r1Choice === r1Pick.answer;
-      setTimeout(() => answer(correct, r1Choice, r1Pick.answer, "🎤", "¿Abierta o cerrada?"), correct ? 450 : 1500);
-    } else if (ronda === 1) {
-      setR2Locked(true);
-      const correct = r2Choice === r2Pick.answer;
-      setTimeout(() => answer(correct, r2Choice, r2Pick.answer, "🕵️", "Detective de entrevistas"), correct ? 450 : 1500);
-    } else if (ronda === 2) {
+    if (ronda === 2) {
       setR3Locked(true);
       const correct = r3Slots.every((id, i) => r3ById[id] && r3ById[id].n === i + 1);
       const u = r3Slots.map((id, i) => `${i + 1}. ${r3ById[id] ? r3ById[id].label : "?"}`).join(" · ");
@@ -1155,9 +1185,7 @@ function EntrevistaGame({ app, setApp, go, onRestart }) {
   }
 
   function handleErase() {
-    if (ronda === 0 && !r1Locked) setR1Choice(null);
-    else if (ronda === 1 && !r2Locked) setR2Choice(null);
-    else if (ronda === 2 && !r3Locked) setR3Slots(r3Items.map(() => null));
+    if (ronda === 2 && !r3Locked) setR3Slots(r3Items.map(() => null));
   }
 
   const enunciado =
@@ -1188,10 +1216,20 @@ function EntrevistaGame({ app, setApp, go, onRestart }) {
           <div style={{ display: "flex", gap: 14, justifyContent: "center", alignItems: "center" }}>
             <OptionButton label="ABIERTA" locked={r1Locked}
               isCorrect={r1Pick.answer === "ABIERTA"} isPicked={r1Choice === "ABIERTA"}
-              onClick={() => setR1Choice((c) => (c === "ABIERTA" ? null : "ABIERTA"))} color="#2ecc8f" minWidth={150} />
+              onClick={() => {
+                if (r1Locked) return;
+                setR1Choice("ABIERTA");
+                clearTimeout(r1AutoRef.current);
+                r1AutoRef.current = setTimeout(() => gradeR1("ABIERTA"), 700);
+              }} color="#2ecc8f" minWidth={150} />
             <OptionButton label="CERRADA" locked={r1Locked}
               isCorrect={r1Pick.answer === "CERRADA"} isPicked={r1Choice === "CERRADA"}
-              onClick={() => setR1Choice((c) => (c === "CERRADA" ? null : "CERRADA"))} color="#ef5a5a" minWidth={150} />
+              onClick={() => {
+                if (r1Locked) return;
+                setR1Choice("CERRADA");
+                clearTimeout(r1AutoRef.current);
+                r1AutoRef.current = setTimeout(() => gradeR1("CERRADA"), 700);
+              }} color="#ef5a5a" minWidth={150} />
           </div>
         </div>
       )}
@@ -1211,7 +1249,12 @@ function EntrevistaGame({ app, setApp, go, onRestart }) {
             {r2Opts.map((opt, i) => (
               <OptionButton key={opt} label={opt} locked={r2Locked}
                 isCorrect={opt === r2Pick.answer} isPicked={r2Choice === opt}
-                onClick={() => setR2Choice((c) => (c === opt ? null : opt))}
+                onClick={() => {
+                  if (r2Locked) return;
+                  setR2Choice(opt);
+                  clearTimeout(r2AutoRef.current);
+                  r2AutoRef.current = setTimeout(() => gradeR2(opt), 700);
+                }}
                 minWidth={150} color={["#4fa0ff", "#e0a23a", "#a78bfa"][i % 3]} />
             ))}
           </div>
@@ -1233,7 +1276,8 @@ function EntrevistaGame({ app, setApp, go, onRestart }) {
 
       <ActionRail
         canVerify={canVerify} onVerify={handleVerify}
-        showErase={true} onErase={handleErase}
+        hideVerify={ronda === 0 || ronda === 1}
+        showErase={ronda === 2} onErase={handleErase}
         onRestart={() => setConfirmingRestart(true)} onExit={() => setConfirmingExit(true)}
       />
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />

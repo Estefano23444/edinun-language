@@ -486,6 +486,12 @@ function BaulGame({ app, setApp, go, onRestart }) {
   const [r3Sel, setR3Sel] = useStateG(null);
   const [r3Locked, setR3Locked] = useStateG(false);
 
+  // Auto-evaluación (comportamiento B) de R1 y R2: al tocar una opción se
+  // resalta y, tras ~700 ms para recapacitar, se califica sola y avanza.
+  const r1AutoRef = useRefG(null);
+  const r2AutoRef = useRefG(null);
+  useEffectG(() => () => { clearTimeout(r1AutoRef.current); clearTimeout(r2AutoRef.current); }, []);
+
   // Shell state
   const [elapsed, setElapsed] = useStateG(0);
   const [stars, setStars] = useStateG(0);
@@ -505,30 +511,40 @@ function BaulGame({ app, setApp, go, onRestart }) {
     return () => clearInterval(id);
   }, []);
 
-  // ── Completitud por ronda. Todas con VERIFICAR manual (estándar §10).
+  // ── Completitud por ronda. R1 (ruleta, tocar 1 verbo) y R2 (taller, tocar 1
+  // afijo) se AUTO-EVALÚAN (comportamiento B): no muestran VERIFICAR y su
+  // canVerify queda en false. Solo R3 (arrastrar/clasificar) usa VERIFICAR manual.
   const r3AllPlaced = r3Pick.tokens.every((t) => r3Place[t.id] !== null);
   const canVerify =
-    ronda === 0 ? (r1Landed !== null && r1Choice !== null && !r1Locked) :
-    ronda === 1 ? (r2Placed !== null && !r2Locked) :
+    ronda === 0 ? false :
+    ronda === 1 ? false :
     ronda === 2 ? (r3AllPlaced && !r3Locked) :
     false;
 
+  // R1 (ruleta): califica con el verbo tocado (mismo flujo que tenía VERIFICAR).
+  function gradeR1(choice) {
+    if (r1Locked) return;
+    setR1Locked(true);
+    const correct = choice === r1Landed.correct;
+    const userText = choice;
+    const correctText = r1Landed.correct;
+    setTimeout(() => answer(correct, userText, correctText, "🎡"), 380);
+  }
+
+  // R2 (taller): califica con el afijo tocado (mismo flujo que tenía VERIFICAR).
+  function gradeR2(choice) {
+    if (r2Locked) return;
+    setR2Locked(true);
+    const correct = choice === r2Pick.answer;
+    const built = r2Pick.pos === "pre" ? (choice + r2Pick.base) : (r2Pick.base + choice);
+    const userText = built;
+    const correctText = r2Pick.res;
+    setTimeout(() => answer(correct, userText, correctText, "🔨"), 380);
+  }
+
   function handleVerify() {
     if (!canVerify) return;
-    if (ronda === 0) {
-      setR1Locked(true);
-      const correct = r1Choice === r1Landed.correct;
-      const userText = r1Choice;
-      const correctText = r1Landed.correct;
-      setTimeout(() => answer(correct, userText, correctText, "🎡"), 380);
-    } else if (ronda === 1) {
-      setR2Locked(true);
-      const correct = r2Placed === r2Pick.answer;
-      const built = r2Pick.pos === "pre" ? (r2Placed + r2Pick.base) : (r2Pick.base + r2Placed);
-      const userText = built;
-      const correctText = r2Pick.res;
-      setTimeout(() => answer(correct, userText, correctText, "🔨"), 380);
-    } else if (ronda === 2) {
+    if (ronda === 2) {
       setR3Locked(true);
       const okCount = r3Pick.tokens.filter((t) => r3Place[t.id] === t.person).length;
       const total = r3Pick.tokens.length;
@@ -540,9 +556,8 @@ function BaulGame({ app, setApp, go, onRestart }) {
   }
 
   function handleErase() {
-    if (ronda === 1 && !r2Locked) {
-      setR2Placed(null);
-    } else if (ronda === 2 && !r3Locked) {
+    // Solo R3 usa BORRAR; R1 y R2 se auto-evalúan al tocar.
+    if (ronda === 2 && !r3Locked) {
       setR3Place(() => { const o = {}; r3Pick.tokens.forEach((t) => { o[t.id] = null; }); return o; });
       setR3Sel(null);
     }
@@ -614,7 +629,13 @@ function BaulGame({ app, setApp, go, onRestart }) {
           choice={r1Choice}
           locked={r1Locked}
           onLanded={(d) => setR1Landed(d)}
-          onChoose={(opt) => { if (!r1Locked && r1Landed) setR1Choice((c) => (c === opt ? null : opt)); }}
+          onChoose={(opt) => {
+            if (r1Locked || !r1Landed) return;
+            // Comportamiento B: resalta y, tras ~700 ms para recapacitar, califica sola.
+            setR1Choice(opt);
+            clearTimeout(r1AutoRef.current);
+            r1AutoRef.current = setTimeout(() => gradeR1(opt), 700);
+          }}
         />
       )}
 
@@ -623,7 +644,13 @@ function BaulGame({ app, setApp, go, onRestart }) {
           pick={r2Pick}
           placed={r2Placed}
           locked={r2Locked}
-          onPlace={(afijo) => { if (!r2Locked) setR2Placed((p) => (p === afijo ? null : afijo)); }}
+          onPlace={(afijo) => {
+            if (r2Locked) return;
+            // Comportamiento B: resalta y, tras ~700 ms para recapacitar, califica sola.
+            setR2Placed(afijo);
+            clearTimeout(r2AutoRef.current);
+            r2AutoRef.current = setTimeout(() => gradeR2(afijo), 700);
+          }}
         />
       )}
 
@@ -660,8 +687,8 @@ function BaulGame({ app, setApp, go, onRestart }) {
       <ActionRail
         canVerify={canVerify}
         onVerify={handleVerify}
-        showVerify={true}
-        showErase={ronda === 1 || ronda === 2}
+        showVerify={ronda === 2}
+        showErase={ronda === 2}
         onErase={handleErase}
         onRestart={() => setConfirmingRestart(true)}
         onExit={() => setConfirmingExit(true)}

@@ -1114,18 +1114,28 @@ function EntremesGame({ app, setApp, go, onRestart }) {
     onNextRound: () => setRonda((r) => r + 1),
   });
 
+  // R1 (ruleta + elegir, 1 opción) se AUTO-EVALÚA: al tocar un personaje se
+  // resalta y, tras una breve ventana para recapacitar (~700 ms), se califica
+  // sola. Por eso su VERIFICAR se oculta y su canVerify queda en false.
+  const r1AutoRef = useRefG(null);
+  useEffectG(() => () => clearTimeout(r1AutoRef.current), []);
+
+  // Califica la R1 con la opción tocada (misma rama que tenía handleVerify).
+  function gradeR1(choice) {
+    if (r1Locked) return;
+    setR1Locked(true);
+    const correct = choice === r1Pick.answer;
+    setTimeout(() => answer(correct, choice, r1Pick.answer, "🎭", "La ruleta de los personajes"), correct ? 450 : 1500);
+  }
+
   const canVerify =
     feedback ? false :
-    ronda === 0 ? (r1Landed && r1Choice !== null && !r1Locked) :
+    ronda === 0 ? false :
     ronda === 1 ? (r2Slots.every(Boolean) && !r2Locked) : false;
 
   function handleVerify() {
     if (!canVerify) return;
-    if (ronda === 0) {
-      setR1Locked(true);
-      const correct = r1Choice === r1Pick.answer;
-      setTimeout(() => answer(correct, r1Choice, r1Pick.answer, "🎭", "La ruleta de los personajes"), correct ? 450 : 1500);
-    } else if (ronda === 1) {
+    if (ronda === 1) {
       setR2Locked(true);
       const correct = r2Slots.every((id, i) => r2ById[id] && r2ById[id].n === i + 1);
       const u = r2Slots.map((id, i) => `${i + 1}. ${r2ById[id] ? r2ById[id].label : "?"}`).join(" · ");
@@ -1169,7 +1179,14 @@ function EntremesGame({ app, setApp, go, onRestart }) {
         }}>
           <EnunciadoInline text={enunciado} />
           <RuletaPersonajes pick={r1Opts} landed={r1Landed} choice={r1Choice} locked={r1Locked}
-            onLanded={() => setR1Landed(true)} onChoose={(opt) => setR1Choice((c) => (c === opt ? null : opt))} />
+            onLanded={() => setR1Landed(true)}
+            onChoose={(opt) => {
+              if (r1Locked) return;
+              setR1Choice(opt);
+              // Resalta y, si no cambia de idea en ~700 ms, califica sola.
+              clearTimeout(r1AutoRef.current);
+              r1AutoRef.current = setTimeout(() => gradeR1(opt), 700);
+            }} />
         </div>
       )}
 
@@ -1201,8 +1218,8 @@ function EntremesGame({ app, setApp, go, onRestart }) {
 
       <ActionRail
         canVerify={canVerify} onVerify={handleVerify}
-        hideVerify={ronda === 2}
-        showErase={ronda === 0 || ronda === 1} onErase={handleErase}
+        hideVerify={ronda === 0 || ronda === 2}
+        showErase={ronda === 1} onErase={handleErase}
         onRestart={() => setConfirmingRestart(true)} onExit={() => setConfirmingExit(true)}
       />
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />
@@ -1430,11 +1447,33 @@ function CienciaFiccionGame({ app, setApp, go, onRestart }) {
 
   const r1AllPlaced = r1Fichas.every((f) => r1Placed[f.id]);
 
+  // R2 (identificar, 1 opción) y R3 (veredicto confiable, 1 opción) se
+  // AUTO-EVALÚAN: al tocar la opción/veredicto se resalta y, tras una breve
+  // ventana (~700 ms), se califica sola. Su VERIFICAR se oculta y canVerify
+  // queda en false. R1 (clasificar en 2 cajas) conserva su VERIFICAR manual.
+  const r2AutoRef = useRefG(null);
+  const r3AutoRef = useRefG(null);
+  useEffectG(() => () => { clearTimeout(r2AutoRef.current); clearTimeout(r3AutoRef.current); }, []);
+
+  // Califica la R2 con la opción tocada (misma rama que tenía handleVerify).
+  function gradeR2(choice) {
+    if (r2Locked) return;
+    setR2Locked(true);
+    const correct = choice === r2Pick.answer;
+    setTimeout(() => answer(correct, choice, r2Pick.answer, "🔬", "El analista narrativo"), correct ? 450 : 1500);
+  }
+
+  // Califica la R3 con el veredicto tocado (misma rama que tenía handleVerify).
+  function gradeR3(choice) {
+    if (r3Locked) return;
+    setR3Locked(true);
+    const correct = (choice === "CONFIABLE") === r3Pick.confiable;
+    setTimeout(() => answer(correct, choice, r3Pick.confiable ? "CONFIABLE" : "NO CONFIABLE", "🔍", "Detective de fuentes"), correct ? 450 : 1500);
+  }
+
   const canVerify =
     feedback ? false :
-    ronda === 0 ? (r1AllPlaced && !r1Locked) :
-    ronda === 1 ? (r2Choice !== null && !r2Locked) :
-    ronda === 2 ? (r3Choice !== null && !r3Locked) : false;
+    ronda === 0 ? (r1AllPlaced && !r1Locked) : false;
 
   function handleVerify() {
     if (!canVerify) return;
@@ -1443,14 +1482,6 @@ function CienciaFiccionGame({ app, setApp, go, onRestart }) {
       const correct = r1Fichas.every((f) => r1Placed[f.id] === f.tipo);
       const u = `${r1Fichas.filter((f) => r1Placed[f.id] === f.tipo).length}/${r1Fichas.length} bien clasificados`;
       setTimeout(() => answer(correct, u, "Cada mundo en su caja", "🗂️", "¿Utopía o distopía?"), correct ? 450 : 1500);
-    } else if (ronda === 1) {
-      setR2Locked(true);
-      const correct = r2Choice === r2Pick.answer;
-      setTimeout(() => answer(correct, r2Choice, r2Pick.answer, "🔬", "El analista narrativo"), correct ? 450 : 1500);
-    } else if (ronda === 2) {
-      setR3Locked(true);
-      const correct = (r3Choice === "CONFIABLE") === r3Pick.confiable;
-      setTimeout(() => answer(correct, r3Choice, r3Pick.confiable ? "CONFIABLE" : "NO CONFIABLE", "🔍", "Detective de fuentes"), correct ? 450 : 1500);
     }
   }
 
@@ -1508,7 +1539,12 @@ function CienciaFiccionGame({ app, setApp, go, onRestart }) {
               <div key={opt} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, maxWidth: 168 }}>
                 <OptionButton label={opt} locked={r2Locked}
                   isCorrect={opt === r2Pick.answer} isPicked={r2Choice === opt}
-                  onClick={() => setR2Choice((c) => (c === opt ? null : opt))}
+                  onClick={() => {
+                    if (r2Locked) return;
+                    setR2Choice(opt);
+                    clearTimeout(r2AutoRef.current);
+                    r2AutoRef.current = setTimeout(() => gradeR2(opt), 700);
+                  }}
                   color={["#4fa0ff", "#e0a23a", "#2ecc8f"][i % 3]} />
                 {CF_DEFS[opt] && (
                   <div style={{
@@ -1531,13 +1567,20 @@ function CienciaFiccionGame({ app, setApp, go, onRestart }) {
         }}>
           <EnunciadoInline text={enunciado} />
           <FuenteDetective fuente={r3Pick} marks={r3Marks} toggleMark={toggleMark}
-            choice={r3Choice} onChoose={(v) => setR3Choice((c) => (c === v ? null : v))} locked={r3Locked} />
+            choice={r3Choice}
+            onChoose={(v) => {
+              if (r3Locked) return;
+              setR3Choice(v);
+              clearTimeout(r3AutoRef.current);
+              r3AutoRef.current = setTimeout(() => gradeR3(v), 700);
+            }} locked={r3Locked} />
         </div>
       )}
 
       <ActionRail
         canVerify={canVerify} onVerify={handleVerify}
-        showErase={true} onErase={handleErase}
+        hideVerify={ronda === 1 || ronda === 2}
+        showErase={ronda === 0} onErase={handleErase}
         onRestart={() => setConfirmingRestart(true)} onExit={() => setConfirmingExit(true)}
       />
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />

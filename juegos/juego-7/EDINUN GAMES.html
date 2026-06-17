@@ -1789,21 +1789,23 @@ function ExitModal({ confirmingExit, setConfirmingExit, attempted, total, onExit
   );
 }
 
-function ActionRail({ canVerify, onVerify, showErase, onErase, onRestart, onExit }) {
+function ActionRail({ canVerify, onVerify, hideVerify, showErase, onErase, onRestart, onExit }) {
   return (
     <div data-qa="acciones" style={{
       position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
       display: "flex", flexDirection: "column", gap: 10, width: 148,
     }}>
-      <button className="ed-btn ed-btn-verify"
-        onClick={() => { if (canVerify && onVerify) onVerify(); }}
-        disabled={!canVerify}
-        style={{
-          fontSize: 13, padding: "0 8px", height: 48, fontWeight: 800, letterSpacing: "0.04em",
-          opacity: canVerify ? 1 : 0.45, cursor: canVerify ? "pointer" : "not-allowed",
-        }}>
-        ¡VERIFICAR!
-      </button>
+      {!hideVerify && (
+        <button className="ed-btn ed-btn-verify"
+          onClick={() => { if (canVerify && onVerify) onVerify(); }}
+          disabled={!canVerify}
+          style={{
+            fontSize: 13, padding: "0 8px", height: 48, fontWeight: 800, letterSpacing: "0.04em",
+            opacity: canVerify ? 1 : 0.45, cursor: canVerify ? "pointer" : "not-allowed",
+          }}>
+          ¡VERIFICAR!
+        </button>
+      )}
       {showErase && (
         <button className="ed-btn ed-btn-erase" onClick={onErase}
           style={{ fontSize: 13, padding: "0 8px", height: 48, fontWeight: 800, letterSpacing: "0.04em" }}>
@@ -3033,25 +3035,36 @@ function EscritorGame({ app, setApp, go, onRestart }) {
   const r2AllPlaced = Object.keys(r2Placed).length === 3;
   const r3AllPainted = r3Huecos.every((h) => r3Colors[h.idx]);
 
+  // R1 (pronombre, toca-opción) se AUTO-EVALÚA: cuando los 3 huecos quedan
+  // elegidos, una breve ventana (~700 ms) permite recapacitar y luego se
+  // califica sola. Por eso su VERIFICAR se oculta y su canVerify queda en false.
   const canVerify =
-    ronda === 0 ? (r1AllSelected && !r1Locked) :
+    ronda === 0 ? false :
     ronda === 1 ? (r2AllPlaced && !r2Locked) :
     ronda === 2 ? (r3AllPainted && !r3Locked) :
     false;
-  const showErase = true;
+  // En R1 ya no hay BORRAR (no hace falta sin VERIFICAR); resto de rondas sí.
+  const showErase = ronda !== 0;
+
+  const r1AutoRef = useRefG(null);
+  useEffectG(() => () => clearTimeout(r1AutoRef.current), []);
+
+  // Califica la R1 con las selecciones actuales (mismo flujo que tenía VERIFICAR).
+  function gradeR1(sels) {
+    if (r1Locked) return;
+    setR1Locked(true);
+    let correct = true;
+    for (const h of r1Pick.huecos) {
+      if (sels[h.id] !== h.pronombre) { correct = false; }
+    }
+    const userText = r1Pick.huecos.map((h) => `${h.sustantivo}=${sels[h.id] || "?"}`).join(", ");
+    const correctText = r1Pick.huecos.map((h) => `${h.sustantivo}=${h.pronombre}`).join(", ");
+    setTimeout(() => answer(correct, userText, correctText, "🕵"), 350);
+  }
 
   function handleVerify() {
     if (!canVerify) return;
-    if (ronda === 0) {
-      setR1Locked(true);
-      let correct = true;
-      for (const h of r1Pick.huecos) {
-        if (r1Selections[h.id] !== h.pronombre) { correct = false; }
-      }
-      const userText = r1Pick.huecos.map((h) => `${h.sustantivo}=${r1Selections[h.id] || "?"}`).join(", ");
-      const correctText = r1Pick.huecos.map((h) => `${h.sustantivo}=${h.pronombre}`).join(", ");
-      setTimeout(() => answer(correct, userText, correctText, "🕵"), 350);
-    } else if (ronda === 1) {
+    if (ronda === 1) {
       setR2Locked(true);
       const correct =
         r2Placed.infinitivo === r2Pick.correctas.infinitivo &&
@@ -3074,10 +3087,8 @@ function EscritorGame({ app, setApp, go, onRestart }) {
   }
 
   function handleErase() {
-    if (ronda === 0) {
-      if (r1Locked) return;
-      setR1Selections({});
-    } else if (ronda === 1) {
+    // R1 (pronombre) se auto-evalúa y no muestra BORRAR.
+    if (ronda === 1) {
       if (r2Locked) return;
       setR2Placed({});
       setR2Picked(null);
@@ -3162,7 +3173,15 @@ function EscritorGame({ app, setApp, go, onRestart }) {
             selections={r1Selections} locked={r1Locked}
             onChoose={(huecoId, pronombre) => {
               if (r1Locked) return;
-              setR1Selections({ ...r1Selections, [huecoId]: pronombre });
+              const next = { ...r1Selections, [huecoId]: pronombre };
+              setR1Selections(next);
+              // Cuando los 3 huecos están elegidos, califica sola tras una breve
+              // ventana para recapacitar. Cualquier nuevo toque reprograma el
+              // temporizador, así el niño puede cambiar de idea (sin toggle).
+              clearTimeout(r1AutoRef.current);
+              if (r1Pick.huecos.every((h) => next[h.id])) {
+                r1AutoRef.current = setTimeout(() => gradeR1(next), 700);
+              }
             }}
           />
         )}
@@ -3206,6 +3225,7 @@ function EscritorGame({ app, setApp, go, onRestart }) {
       <ActionRail
         canVerify={canVerify}
         onVerify={handleVerify}
+        hideVerify={ronda === 0}
         showErase={showErase}
         onErase={handleErase}
         onRestart={() => setConfirmingRestart(true)}

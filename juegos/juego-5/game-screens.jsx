@@ -945,7 +945,9 @@ function CSZGame({ app, setApp, go, onRestart }) {
         position: "absolute", right: 18, top: "50%", transform: "translateY(-50%)",
         display: "flex", flexDirection: "column", gap: 12, width: 150,
       }}>
-        {ronda !== 2 && (
+        {/* R1 (trivia, TOCA 1 OPCIÓN) es AUTO-EVALUADA → sin VERIFICAR/BORRAR.
+            R2 (shooter) ya era auto. Solo R0 (componer palabra) los muestra. */}
+        {ronda === 0 && (
           <button className="ed-btn ed-btn-verify"
             onClick={() => { if (verifyReady && verifyRef.current) verifyRef.current(); }}
             disabled={!verifyReady}
@@ -955,7 +957,7 @@ function CSZGame({ app, setApp, go, onRestart }) {
               cursor: verifyReady ? "pointer" : "not-allowed",
             }}>¡VERIFICAR!</button>
         )}
-        {ronda !== 2 && (
+        {ronda === 0 && (
           <button className="ed-btn ed-btn-erase"
             onClick={() => { if (clearReady && clearRef.current) clearRef.current(); }}
             disabled={!clearReady}
@@ -1118,18 +1120,22 @@ function CSZ_TriviaCard({ onAnswer, verifyRef, setVerifyReady, clearRef, setClea
   }, []);
   const [picked, setPicked] = useStateG(null);
 
-  useEffectG(() => {
-    if (verifyRef) verifyRef.current = () => { if (picked !== null) onAnswer(picked, problem); };
-  }, [picked]);
-  useEffectG(() => {
-    if (setVerifyReady) setVerifyReady(picked !== null);
-  }, [picked]);
-  useEffectG(() => {
-    if (clearRef) clearRef.current = () => setPicked(null);
-  });
-  useEffectG(() => {
-    if (setClearReady) setClearReady(picked !== null);
-  }, [picked]);
+  // Comportamiento B (AUTO-EVALUADA): esta ronda de "TOCA 1 OPCIÓN" se califica
+  // sola al tocar una carta. No hay VERIFICAR/BORRAR — por eso no se registran
+  // verifyRef/clearRef y verify/clearReady quedan en false.
+  const lockedRef = useRefG(false);
+  const autoRef = useRefG(null);
+  useEffectG(() => () => clearTimeout(autoRef.current), []);
+
+  useEffectG(() => { if (setVerifyReady) setVerifyReady(false); }, []);
+  useEffectG(() => { if (setClearReady) setClearReady(false); }, []);
+
+  // Califica la R2 con la carta tocada (mismo flujo que tenía VERIFICAR).
+  function gradeR2(idx) {
+    if (lockedRef.current) return;
+    lockedRef.current = true;
+    onAnswer(idx, problem);
+  }
 
   return (
     <div style={{
@@ -1156,7 +1162,13 @@ function CSZ_TriviaCard({ onAnswer, verifyRef, setVerifyReady, clearRef, setClea
         {problem.opciones.map((opt, i) => {
           const isPicked = picked === i;
           return (
-            <button key={i} onClick={() => setPicked(i)}
+            <button key={i} onClick={() => {
+                if (lockedRef.current) return;
+                setPicked(i);
+                // Resalta y, si no cambia de idea en ~700 ms, califica sola.
+                clearTimeout(autoRef.current);
+                autoRef.current = setTimeout(() => gradeR2(i), 700);
+              }}
               style={{
                 minWidth: 150, minHeight: 75, padding: "18px 16px", borderRadius: 16,
                 background: isPicked
@@ -1548,27 +1560,32 @@ function LenguaGame({ app, setApp, go, onRestart }) {
         )}
       </div>
 
-      {/* Columna de acciones — Nivel 2: VERIFICAR/BORRAR aplican a las 3 rondas */}
+      {/* Columna de acciones — Nivel 2: R0 (arrastrar) y R2 (ruleta) usan
+          VERIFICAR/BORRAR. R1 (cómic, TOCA 1 OPCIÓN) es AUTO-EVALUADA → se ocultan. */}
       <div data-qa="acciones" style={{
         position: "absolute", right: 18, top: "50%", transform: "translateY(-50%)",
         display: "flex", flexDirection: "column", gap: 12, width: 150,
       }}>
-        <button className="ed-btn ed-btn-verify"
-          onClick={() => { if (verifyReady && verifyRef.current) verifyRef.current(); }}
-          disabled={!verifyReady}
-          style={{
-            fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em",
-            opacity: verifyReady ? 1 : 0.45,
-            cursor: verifyReady ? "pointer" : "not-allowed",
-          }}>¡VERIFICAR!</button>
-        <button className="ed-btn ed-btn-erase"
-          onClick={() => { if (clearReady && clearRef.current) clearRef.current(); }}
-          disabled={!clearReady}
-          style={{
-            fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em",
-            opacity: clearReady ? 1 : 0.45,
-            cursor: clearReady ? "pointer" : "not-allowed",
-          }}>BORRAR</button>
+        {ronda !== 1 && (
+          <button className="ed-btn ed-btn-verify"
+            onClick={() => { if (verifyReady && verifyRef.current) verifyRef.current(); }}
+            disabled={!verifyReady}
+            style={{
+              fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em",
+              opacity: verifyReady ? 1 : 0.45,
+              cursor: verifyReady ? "pointer" : "not-allowed",
+            }}>¡VERIFICAR!</button>
+        )}
+        {ronda !== 1 && (
+          <button className="ed-btn ed-btn-erase"
+            onClick={() => { if (clearReady && clearRef.current) clearRef.current(); }}
+            disabled={!clearReady}
+            style={{
+              fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em",
+              opacity: clearReady ? 1 : 0.45,
+              cursor: clearReady ? "pointer" : "not-allowed",
+            }}>BORRAR</button>
+        )}
         <button className="ed-btn ed-btn-restart" onClick={() => setConfirmingExit(true)}
           style={{ fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}>REINICIAR</button>
         <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingHomeExit(true)}
@@ -1907,22 +1924,19 @@ function LP_ComicCard({ onFinish, verifyRef, setVerifyReady, clearRef, setClearR
   const [revealed, setRevealed] = useStateG(false);
   const finishedRef = useRefG(false);
 
-  useEffectG(() => {
-    if (verifyRef) verifyRef.current = () => verifyNow();
-  });
-  useEffectG(() => {
-    if (setVerifyReady) setVerifyReady(picked !== null && !revealed && !finishedRef.current);
-  }, [picked, revealed]);
-  useEffectG(() => {
-    if (clearRef) clearRef.current = () => { if (!revealed) setPicked(null); };
-  });
-  useEffectG(() => {
-    if (setClearReady) setClearReady(picked !== null && !revealed);
-  }, [picked, revealed]);
+  // Comportamiento B (AUTO-EVALUADA): ronda análoga de "TOCA 1 OPCIÓN" (elegir 1
+  // respuesta empática). Se califica sola ~700 ms tras tocar — sin VERIFICAR/BORRAR.
+  const autoRef = useRefG(null);
+  useEffectG(() => () => clearTimeout(autoRef.current), []);
 
-  function verifyNow() {
-    if (revealed || picked === null || finishedRef.current) return;
-    const isOk = current.options[picked].isCorrect;
+  useEffectG(() => { if (setVerifyReady) setVerifyReady(false); }, []);
+  useEffectG(() => { if (setClearReady) setClearReady(false); }, []);
+
+  function verifyNow(idx) {
+    const choice = idx != null ? idx : picked;
+    if (revealed || choice === null || finishedRef.current) return;
+    const isOk = current.options[choice].isCorrect;
+    setPicked(choice);
     setRevealed(true);
     finishedRef.current = true;
     setTimeout(() => {
@@ -2009,7 +2023,13 @@ function LP_ComicCard({ onFinish, verifyRef, setVerifyReady, clearRef, setClearR
           if (showResult && isWrong)    { bg = "rgba(255,107,107,0.95)"; color = "#fff"; border = "#ef5a5a"; }
           return (
             <button key={i}
-              onClick={() => !revealed && !finishedRef.current && setPicked(i)}
+              onClick={() => {
+                if (revealed || finishedRef.current) return;
+                setPicked(i);
+                // Resalta y, si no cambia de idea en ~700 ms, califica sola.
+                clearTimeout(autoRef.current);
+                autoRef.current = setTimeout(() => verifyNow(i), 700);
+              }}
               disabled={revealed || finishedRef.current}
               style={{
                 padding: "10px 12px 10px 30px", borderRadius: 12,

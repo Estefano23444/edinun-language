@@ -406,21 +406,23 @@ function ExitModal({ confirmingExit, setConfirmingExit, attempted, total, onExit
   );
 }
 
-function ActionRail({ canVerify, onVerify, showErase, onErase, onRestart, onExit }) {
+function ActionRail({ canVerify, onVerify, hideVerify, showErase, onErase, onRestart, onExit }) {
   return (
     <div data-qa="acciones" style={{
       position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
       display: "flex", flexDirection: "column", gap: 10, width: 148,
     }}>
-      <button className="ed-btn ed-btn-verify"
-        onClick={() => { if (canVerify && onVerify) onVerify(); }}
-        disabled={!canVerify}
-        style={{
-          fontSize: 14, padding: "0 8px", height: 52, fontWeight: 800, letterSpacing: "0.04em",
-          opacity: canVerify ? 1 : 0.45, cursor: canVerify ? "pointer" : "not-allowed",
-        }}>
-        ¡VERIFICAR!
-      </button>
+      {!hideVerify && (
+        <button className="ed-btn ed-btn-verify"
+          onClick={() => { if (canVerify && onVerify) onVerify(); }}
+          disabled={!canVerify}
+          style={{
+            fontSize: 14, padding: "0 8px", height: 52, fontWeight: 800, letterSpacing: "0.04em",
+            opacity: canVerify ? 1 : 0.45, cursor: canVerify ? "pointer" : "not-allowed",
+          }}>
+          ¡VERIFICAR!
+        </button>
+      )}
       {showErase && (
         <button className="ed-btn ed-btn-erase" onClick={onErase}
           style={{ fontSize: 14, padding: "0 8px", height: 52, fontWeight: 800, letterSpacing: "0.04em" }}>
@@ -598,23 +600,32 @@ function MundosGame({ app, setApp, go, onRestart }) {
   const r2AllPlaced = r2Slots.every(Boolean);
   const r3AllPlaced = r3Slots.every(Boolean);
 
+  // R1 (clasificar, 1 opción) se AUTO-EVALÚA: al tocar un mundo se resalta y, tras
+  // una breve ventana para recapacitar (~700 ms), se califica sola. Por eso su
+  // VERIFICAR se oculta y su canVerify queda en false.
   const canVerify =
-    ronda === 0 ? (r1Choice !== null && !r1Locked) :
+    ronda === 0 ? false :
     ronda === 1 ? (r2AllPlaced && !r2Locked) :
     ronda === 2 ? (r3AllPlaced && !r3Locked) :
     false;
 
+  const r1AutoRef = useRefG(null);
+  useEffectG(() => () => clearTimeout(r1AutoRef.current), []);
+
+  // Califica la R1 con la opción tocada (mismo flujo que tenía VERIFICAR).
+  function gradeR1(choiceId) {
+    if (r1Locked) return;
+    setR1Locked(true);
+    const correct = choiceId === r1Pick.cat;
+    const chosenLabel = (R1_CATS.find((c) => c.id === choiceId) || {}).label || "—";
+    const correctLabel = (R1_CATS.find((c) => c.id === r1Pick.cat) || {}).label || "—";
+    // Al fallar, unos segundos para ver cuál era la correcta (verde ✓).
+    setTimeout(() => answer(correct, chosenLabel, correctLabel, "🌙", "clasificar el mundo", r1Pick.clave), correct ? 420 : 2500);
+  }
+
   function handleVerify() {
     if (!canVerify) return;
-    if (ronda === 0) {
-      setR1Locked(true);
-      const correct = r1Choice === r1Pick.cat;
-      const chosenLabel = (R1_CATS.find((c) => c.id === r1Choice) || {}).label || "—";
-      const correctLabel = (R1_CATS.find((c) => c.id === r1Pick.cat) || {}).label || "—";
-      // R1 (clasificar): al fallar, unos segundos para ver cuál era la correcta
-      // (verde ✓). Menos que R2/R3 porque hay poco que leer.
-      setTimeout(() => answer(correct, chosenLabel, correctLabel, "🌙", "clasificar el mundo", r1Pick.clave), correct ? 420 : 2500);
-    } else if (ronda === 1) {
+    if (ronda === 1) {
       setR2Locked(true);
       let correct = true;
       for (let i = 0; i < r2Slots.length; i++) {
@@ -712,7 +723,13 @@ function MundosGame({ app, setApp, go, onRestart }) {
           pick={r1Pick}
           chosen={r1Choice}
           locked={r1Locked}
-          onChoose={(id) => { if (!r1Locked) setR1Choice((c) => (c === id ? null : id)); }}
+          onChoose={(id) => {
+            if (r1Locked) return;
+            setR1Choice(id);
+            // Resalta y, si no cambia de idea en ~700 ms, califica sola.
+            clearTimeout(r1AutoRef.current);
+            r1AutoRef.current = setTimeout(() => gradeR1(id), 700);
+          }}
         />
       )}
 
@@ -737,7 +754,8 @@ function MundosGame({ app, setApp, go, onRestart }) {
       <ActionRail
         canVerify={canVerify}
         onVerify={handleVerify}
-        showErase={ronda !== 1}
+        hideVerify={ronda === 0}
+        showErase={ronda === 2}
         onErase={handleErase}
         onRestart={() => setConfirmingRestart(true)}
         onExit={() => setConfirmingExit(true)}

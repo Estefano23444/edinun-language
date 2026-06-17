@@ -715,19 +715,29 @@ function RelatosGame({ app, setApp, go, onRestart }) {
 
   const r2AllPlaced = r2Slots.every(Boolean);
   const r3AllLinked = Object.keys(r3Links).length === 3;
+  // R1 (verdadero/falso, 1 opción) se AUTO-EVALÚA: al tocar una opción se
+  // resalta y, tras ~700 ms para recapacitar, se califica sola. Su VERIFICAR
+  // se oculta y su canVerify queda en false.
   const canVerify =
     feedback ? false :
-    ronda === 0 ? (r1Choice !== null && !r1Locked) :
+    ronda === 0 ? false :
     ronda === 1 ? (r2AllPlaced && !r2Locked) :
     ronda === 2 ? (r3AllLinked && !r3Locked) : false;
 
+  const r1AutoRef = useRefG(null);
+  useEffectG(() => () => clearTimeout(r1AutoRef.current), []);
+
+  // Califica la R1 con la opción tocada (misma rama que tenía handleVerify).
+  function gradeR1(choice) {
+    if (r1Locked) return;
+    setR1Locked(true);
+    const correct = (choice === "VERDADERO") === r1Pick.verdadero;
+    setTimeout(() => answer(correct, choice, r1Pick.verdadero ? "VERDADERO" : "FALSO", "⚖️", "Verdadero o falso"), correct ? 450 : 1500);
+  }
+
   function handleVerify() {
     if (!canVerify) return;
-    if (ronda === 0) {
-      setR1Locked(true);
-      const correct = (r1Choice === "VERDADERO") === r1Pick.verdadero;
-      setTimeout(() => answer(correct, r1Choice, r1Pick.verdadero ? "VERDADERO" : "FALSO", "⚖️", "Verdadero o falso"), correct ? 450 : 1500);
-    } else if (ronda === 1) {
+    if (ronda === 1) {
       setR2Locked(true);
       const correct = r2Slots.every((id, i) => id && r2ById[id].cat === R2_LAB_SLOTCAT[i]);
       const u = r2Slots.map((id, i) => `${R2_LAB_LABEL[R2_LAB_SLOTCAT[i]]} ${id ? r2ById[id].text : "?"}`).join(" · ");
@@ -743,8 +753,7 @@ function RelatosGame({ app, setApp, go, onRestart }) {
   }
 
   function handleErase() {
-    if (ronda === 0 && !r1Locked) setR1Choice(null);
-    else if (ronda === 1 && !r2Locked) setR2Slots([null, null, null]);
+    if (ronda === 1 && !r2Locked) setR2Slots([null, null, null]);
     else if (ronda === 2 && !r3Locked) { setR3Links({}); setR3Sel(null); }
   }
 
@@ -826,9 +835,9 @@ function RelatosGame({ app, setApp, go, onRestart }) {
           <Cartel text={`"${r1Pick.text}"`} fontSize={17} maxWidth={372} />
           <div style={{ display: "flex", gap: 16, justifyContent: "center" }}>
             <OptionButton label="VERDADERO" locked={r1Locked} isCorrect={r1Pick.verdadero} isPicked={r1Choice === "VERDADERO"}
-              onClick={() => setR1Choice((c) => (c === "VERDADERO" ? null : "VERDADERO"))} color="#2ecc8f" minWidth={132} />
+              onClick={() => { if (r1Locked) return; setR1Choice("VERDADERO"); clearTimeout(r1AutoRef.current); r1AutoRef.current = setTimeout(() => gradeR1("VERDADERO"), 700); }} color="#2ecc8f" minWidth={132} />
             <OptionButton label="FALSO" locked={r1Locked} isCorrect={!r1Pick.verdadero} isPicked={r1Choice === "FALSO"}
-              onClick={() => setR1Choice((c) => (c === "FALSO" ? null : "FALSO"))} color="#ef5a5a" minWidth={132} />
+              onClick={() => { if (r1Locked) return; setR1Choice("FALSO"); clearTimeout(r1AutoRef.current); r1AutoRef.current = setTimeout(() => gradeR1("FALSO"), 700); }} color="#ef5a5a" minWidth={132} />
           </div>
         </div>
       )}
@@ -1000,8 +1009,8 @@ function RelatosGame({ app, setApp, go, onRestart }) {
       )}
 
       <ActionRail
-        canVerify={canVerify} onVerify={handleVerify}
-        showErase={true} onErase={handleErase}
+        canVerify={canVerify} onVerify={handleVerify} hideVerify={ronda === 0}
+        showErase={ronda !== 0} onErase={handleErase}
         onRestart={() => setConfirmingRestart(true)} onExit={() => setConfirmingExit(true)}
       />
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />
@@ -1159,29 +1168,40 @@ function HerramientasGame({ app, setApp, go, onRestart }) {
     setTimeout(() => { setR2Spinning(false); setR2Spun(true); exerciseStart.current = Date.now(); }, 1750);
   }
 
+  // R2 (ruleta de conectores) y R3 (subjuntivo) son de 1 opción → se AUTO-EVALÚAN:
+  // al tocar una opción se resalta y, tras ~700 ms para recapacitar, califican
+  // solas. R1 (shooter) sigue con su VERIFICAR + timer propio. Sus VERIFICAR se
+  // ocultan y su canVerify queda en false.
   const canVerify =
     feedback ? false :
     ronda === 0 ? (!shotLocked && picked.size >= 1) :
-    ronda === 1 ? (r2Spun && r2Choice !== null && !r2Locked) :
-    ronda === 2 ? (r3Choice !== null && !r3Locked) : false;
+    false;
+
+  const r2AutoRef = useRefG(null);
+  const r3AutoRef = useRefG(null);
+  useEffectG(() => () => { clearTimeout(r2AutoRef.current); clearTimeout(r3AutoRef.current); }, []);
+
+  // Califica la R2 (conector) con la opción tocada (misma rama que handleVerify).
+  function gradeR2(choice) {
+    if (r2Locked || !r2Spun) return;
+    setR2Locked(true);
+    const correct = choice === r2Pick.answer;
+    setTimeout(() => answer(correct, choice, r2Pick.answer, "🎡", "Conector lógico"), correct ? 450 : 1500);
+  }
+  // Califica la R3 (subjuntivo) con la opción tocada.
+  function gradeR3(choice) {
+    if (r3Locked) return;
+    setR3Locked(true);
+    const correct = choice === r3Pick.answer;
+    setTimeout(() => answer(correct, choice, r3Pick.answer, "✨", "Verbo en subjuntivo"), correct ? 450 : 1500);
+  }
 
   function handleVerify() {
     if (!canVerify) return;
     if (ronda === 0) { verifyShot(); return; }
-    if (ronda === 1) {
-      setR2Locked(true);
-      const correct = r2Choice === r2Pick.answer;
-      setTimeout(() => answer(correct, r2Choice, r2Pick.answer, "🎡", "Conector lógico"), correct ? 450 : 1500);
-    } else if (ronda === 2) {
-      setR3Locked(true);
-      const correct = r3Choice === r3Pick.answer;
-      setTimeout(() => answer(correct, r3Choice, r3Pick.answer, "✨", "Verbo en subjuntivo"), correct ? 450 : 1500);
-    }
   }
   function handleErase() {
     if (ronda === 0 && !shotLocked) { pickedRef.current = new Set(); setPicked(new Set()); }
-    else if (ronda === 1 && !r2Locked) setR2Choice(null);
-    else if (ronda === 2 && !r3Locked) setR3Choice(null);
   }
 
   const enunciado =
@@ -1296,7 +1316,7 @@ function HerramientasGame({ app, setApp, go, onRestart }) {
                 {r2Opts.map((opt, i) => (
                   <OptionButton key={opt} label={opt} locked={r2Locked}
                     isCorrect={opt === r2Pick.answer} isPicked={r2Choice === opt}
-                    onClick={() => setR2Choice((c) => (c === opt ? null : opt))}
+                    onClick={() => { if (r2Locked || !r2Spun) return; setR2Choice(opt); clearTimeout(r2AutoRef.current); r2AutoRef.current = setTimeout(() => gradeR2(opt), 700); }}
                     color={["#ef5a5a", "#4fa0ff", "#2ecc8f"][i % 3]} />
                 ))}
               </div>
@@ -1317,7 +1337,7 @@ function HerramientasGame({ app, setApp, go, onRestart }) {
             {r3Opts.map((opt, i) => (
               <OptionButton key={opt} label={opt} locked={r3Locked}
                 isCorrect={opt === r3Pick.answer} isPicked={r3Choice === opt}
-                onClick={() => setR3Choice((c) => (c === opt ? null : opt))}
+                onClick={() => { if (r3Locked) return; setR3Choice(opt); clearTimeout(r3AutoRef.current); r3AutoRef.current = setTimeout(() => gradeR3(opt), 700); }}
                 color={["#ef5a5a", "#4fa0ff", "#2ecc8f"][i % 3]} />
             ))}
           </div>
@@ -1325,8 +1345,8 @@ function HerramientasGame({ app, setApp, go, onRestart }) {
       )}
 
       <ActionRail
-        canVerify={canVerify} onVerify={handleVerify}
-        showErase={true} onErase={handleErase}
+        canVerify={canVerify} onVerify={handleVerify} hideVerify={ronda !== 0}
+        showErase={ronda === 0} onErase={handleErase}
         onRestart={() => setConfirmingRestart(true)} onExit={() => setConfirmingExit(true)}
       />
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />
@@ -1521,19 +1541,30 @@ function DetectivesGame({ app, setApp, go, onRestart }) {
   });
 
   const r2AllPlaced = r2Pick.fichas.every((f) => r2Placed[f.id]);
+  // R1 (inferencias, 1 opción) se AUTO-EVALÚA: al tocar una opción se resalta y,
+  // tras ~700 ms para recapacitar, se califica sola. Su VERIFICAR se oculta y su
+  // canVerify queda en false. R2 (archivar, arrastrar) y R3 (lupa, marcar varias)
+  // siguen manuales.
   const canVerify =
     feedback ? false :
-    ronda === 0 ? (r1Choice !== null && !r1Locked) :
+    ronda === 0 ? false :
     ronda === 1 ? (r2AllPlaced && !r2Locked) :
     ronda === 2 ? (r3Marked.size >= 1 && !r3Locked) : false;
 
+  const r1AutoRef = useRefG(null);
+  useEffectG(() => () => clearTimeout(r1AutoRef.current), []);
+
+  // Califica la R1 (inferencia) con la opción tocada (misma rama que handleVerify).
+  function gradeR1(choice) {
+    if (r1Locked) return;
+    setR1Locked(true);
+    const correct = choice === r1Pick.answer;
+    setTimeout(() => answer(correct, choice, r1Pick.answer, "🕵️", "Inferencia"), correct ? 450 : 1500);
+  }
+
   function handleVerify() {
     if (!canVerify) return;
-    if (ronda === 0) {
-      setR1Locked(true);
-      const correct = r1Choice === r1Pick.answer;
-      setTimeout(() => answer(correct, r1Choice, r1Pick.answer, "🕵️", "Inferencia"), correct ? 450 : 1500);
-    } else if (ronda === 1) {
+    if (ronda === 1) {
       setR2Locked(true);
       const correct = r2Pick.fichas.every((f) => r2Placed[f.id] === f.tipo);
       const u = r2Pick.fichas.map((f) => `${f.text}→${ELEM_LABEL[r2Placed[f.id]] || "?"}`).join(" · ");
@@ -1549,8 +1580,7 @@ function DetectivesGame({ app, setApp, go, onRestart }) {
     }
   }
   function handleErase() {
-    if (ronda === 0 && !r1Locked) setR1Choice(null);
-    else if (ronda === 1 && !r2Locked) { setR2Placed({}); setR2Selected(null); }
+    if (ronda === 1 && !r2Locked) { setR2Placed({}); setR2Selected(null); }
     else if (ronda === 2 && !r3Locked) setR3Marked(new Set());
   }
 
@@ -1608,7 +1638,7 @@ function DetectivesGame({ app, setApp, go, onRestart }) {
             {r1Opts.map((opt, i) => (
               <OptionButton key={opt} label={opt} locked={r1Locked}
                 isCorrect={opt === r1Pick.answer} isPicked={r1Choice === opt}
-                onClick={() => setR1Choice((c) => (c === opt ? null : opt))}
+                onClick={() => { if (r1Locked) return; setR1Choice(opt); clearTimeout(r1AutoRef.current); r1AutoRef.current = setTimeout(() => gradeR1(opt), 700); }}
                 color={["#ef5a5a", "#4fa0ff", "#2ecc8f"][i % 3]} minWidth={420} />
             ))}
           </div>
@@ -1752,8 +1782,8 @@ function DetectivesGame({ app, setApp, go, onRestart }) {
       )}
 
       <ActionRail
-        canVerify={canVerify} onVerify={handleVerify}
-        showErase={true} onErase={handleErase}
+        canVerify={canVerify} onVerify={handleVerify} hideVerify={ronda === 0}
+        showErase={ronda !== 0} onErase={handleErase}
         onRestart={() => setConfirmingRestart(true)} onExit={() => setConfirmingExit(true)}
       />
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />
