@@ -23,6 +23,10 @@ qa-*.png
 .tmp-*.js
 v?-*.png
 
+# Contador de visitas server-side (estado de producción, no se commitea)
+juegos/*/visits.txt
+juegos/*/counts/
+
 # Sistema operativo
 .DS_Store
 Thumbs.db

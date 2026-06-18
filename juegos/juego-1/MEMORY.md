@@ -1,6 +1,6 @@
 # MEMORY — Completa la palabra
 
-Bitácora del juego `juegos/completa-palabras/`.
+Bitácora del juego `juegos/juego-1/` (antes `completa-palabras`).
 
 ## Origen
 - Primer juego del repo `edinun-language` (rebrand del shell EDINUN GAMES

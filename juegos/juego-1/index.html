@@ -323,38 +323,92 @@ function CosmosBg({ variant = "cosmic", glyphSize }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Contador de visitantes (compartido entre juegos del repo via
-// localStorage). Mismo contrato que el shell matemático.
+// Contador de visitas — endpoint PHP del lado servidor con fallback localStorage.
+// En servidores con PHP (Apache de edinun.com) muestra el conteo global real.
+// En GitHub Pages / servidor estático sin PHP, el .php se sirve como texto
+// plano → el fetch falla parseando JSON → caemos al contador localStorage
+// (per-navegador, igual que la versión anterior). El localStorage también
+// hace de caché del último valor servido por PHP para mostrar algo durante
+// la primera carga / si el servidor está caído.
 // ─────────────────────────────────────────────────────────────
+const VISITOR_ENDPOINT = "counter.php"; // relativo a index.html del juego
+const VISITOR_KEY = "edinun_visitors_v1";
+const VISITOR_SESSION_FLAG = "edinun_visit_counted_v1";
+
+async function fetchVisitorCount(opts) {
+  const inc = opts && opts.increment;
+  const url = inc ? VISITOR_ENDPOINT + "?inc=1" : VISITOR_ENDPOINT;
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error("counter http " + res.status);
+  // Tolera dos contratos de servidor: JSON {"count": N} (counter.php de este
+  // repo) o un numero plano "N" (contador.php legacy de otros juegos del mismo
+  // server). Si el .php se sirve como texto ("<?php...") ambos parseos fallan
+  // -> NaN -> throw -> el cliente cae a localStorage.
+  const text = (await res.text()).trim();
+  let count;
+  try {
+    const data = JSON.parse(text);
+    count = data && typeof data.count === "number" ? data.count : Number(data);
+  } catch (e) {
+    count = Number(text);
+  }
+  if (!Number.isFinite(count)) throw new Error("counter invalid payload");
+  return count;
+}
+
+function readLocalVisitorCount() {
+  const raw = localStorage.getItem(VISITOR_KEY);
+  const v = raw ? parseInt(raw, 10) : 0;
+  return isNaN(v) ? 0 : v;
+}
+
+function writeLocalVisitorCount(n) {
+  localStorage.setItem(VISITOR_KEY, String(n));
+}
+
 function useVisitorCount() {
-  const KEY = "edinun_visitors_v1";
-  const [n, setN] = useState(() => {
-    const raw = localStorage.getItem(KEY);
-    const v = raw ? parseInt(raw, 10) : 0;
-    return isNaN(v) ? 0 : v;
-  });
+  const [n, setN] = useState(() => readLocalVisitorCount());
+
   useEffect(() => {
-    function onUpdate() {
-      const raw = localStorage.getItem(KEY);
-      const v = raw ? parseInt(raw, 10) : 0;
-      if (!isNaN(v)) setN(v);
+    let cancelled = false;
+    // Lee del servidor al montar. Si falla, queda el valor cacheado en local.
+    fetchVisitorCount()
+      .then((count) => {
+        if (cancelled) return;
+        setN(count);
+        writeLocalVisitorCount(count);
+      })
+      .catch(() => { /* fallback localStorage ya cargado en el initializer */ });
+
+    function onUpdate(ev) {
+      const value = ev && ev.detail && ev.detail.count;
+      if (typeof value === "number") setN(value);
+      else setN(readLocalVisitorCount());
     }
     window.addEventListener("edinun:visitors-updated", onUpdate);
-    return () => window.removeEventListener("edinun:visitors-updated", onUpdate);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("edinun:visitors-updated", onUpdate);
+    };
   }, []);
+
   return n;
 }
 
 function markFirstAttempt() {
-  const KEY = "edinun_visitors_v1";
-  const SESSION_FLAG = "edinun_visit_counted_v1";
-  if (sessionStorage.getItem(SESSION_FLAG) === "1") return;
-  const raw = localStorage.getItem(KEY);
-  const current = raw ? parseInt(raw, 10) : 0;
-  const next = (isNaN(current) ? 0 : current) + 1;
-  localStorage.setItem(KEY, String(next));
-  sessionStorage.setItem(SESSION_FLAG, "1");
-  window.dispatchEvent(new Event("edinun:visitors-updated"));
+  if (sessionStorage.getItem(VISITOR_SESSION_FLAG) === "1") return;
+  sessionStorage.setItem(VISITOR_SESSION_FLAG, "1");
+
+  fetchVisitorCount({ increment: true })
+    .then((count) => {
+      writeLocalVisitorCount(count);
+      window.dispatchEvent(new CustomEvent("edinun:visitors-updated", { detail: { count } }));
+    })
+    .catch(() => {
+      const next = readLocalVisitorCount() + 1;
+      writeLocalVisitorCount(next);
+      window.dispatchEvent(new CustomEvent("edinun:visitors-updated", { detail: { count: next } }));
+    });
 }
 
 function incrementGamesCompleted() {

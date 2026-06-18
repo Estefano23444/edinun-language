@@ -322,38 +322,92 @@ function CosmosBg({ variant = "cosmic", glyphSize }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Contador de visitantes (compartido entre juegos del repo via
-// localStorage).
+// Contador de visitas — endpoint PHP del lado servidor con fallback localStorage.
+// En servidores con PHP (Apache de edinun.com) muestra el conteo global real.
+// En GitHub Pages / servidor estático sin PHP, el .php se sirve como texto
+// plano → el fetch falla parseando JSON → caemos al contador localStorage
+// (per-navegador, igual que la versión anterior). El localStorage también
+// hace de caché del último valor servido por PHP para mostrar algo durante
+// la primera carga / si el servidor está caído.
 // ─────────────────────────────────────────────────────────────
+const VISITOR_ENDPOINT = "counter.php"; // relativo a index.html del juego
+const VISITOR_KEY = "edinun_visitors_v1";
+const VISITOR_SESSION_FLAG = "edinun_visit_counted_v1";
+
+async function fetchVisitorCount(opts) {
+  const inc = opts && opts.increment;
+  const url = inc ? VISITOR_ENDPOINT + "?inc=1" : VISITOR_ENDPOINT;
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error("counter http " + res.status);
+  // Tolera dos contratos de servidor: JSON {"count": N} (counter.php de este
+  // repo) o un numero plano "N" (contador.php legacy de otros juegos del mismo
+  // server). Si el .php se sirve como texto ("<?php...") ambos parseos fallan
+  // -> NaN -> throw -> el cliente cae a localStorage.
+  const text = (await res.text()).trim();
+  let count;
+  try {
+    const data = JSON.parse(text);
+    count = data && typeof data.count === "number" ? data.count : Number(data);
+  } catch (e) {
+    count = Number(text);
+  }
+  if (!Number.isFinite(count)) throw new Error("counter invalid payload");
+  return count;
+}
+
+function readLocalVisitorCount() {
+  const raw = localStorage.getItem(VISITOR_KEY);
+  const v = raw ? parseInt(raw, 10) : 0;
+  return isNaN(v) ? 0 : v;
+}
+
+function writeLocalVisitorCount(n) {
+  localStorage.setItem(VISITOR_KEY, String(n));
+}
+
 function useVisitorCount() {
-  const KEY = "edinun_visitors_v1";
-  const [n, setN] = useState(() => {
-    const raw = localStorage.getItem(KEY);
-    const v = raw ? parseInt(raw, 10) : 0;
-    return isNaN(v) ? 0 : v;
-  });
+  const [n, setN] = useState(() => readLocalVisitorCount());
+
   useEffect(() => {
-    function onUpdate() {
-      const raw = localStorage.getItem(KEY);
-      const v = raw ? parseInt(raw, 10) : 0;
-      if (!isNaN(v)) setN(v);
+    let cancelled = false;
+    // Lee del servidor al montar. Si falla, queda el valor cacheado en local.
+    fetchVisitorCount()
+      .then((count) => {
+        if (cancelled) return;
+        setN(count);
+        writeLocalVisitorCount(count);
+      })
+      .catch(() => { /* fallback localStorage ya cargado en el initializer */ });
+
+    function onUpdate(ev) {
+      const value = ev && ev.detail && ev.detail.count;
+      if (typeof value === "number") setN(value);
+      else setN(readLocalVisitorCount());
     }
     window.addEventListener("edinun:visitors-updated", onUpdate);
-    return () => window.removeEventListener("edinun:visitors-updated", onUpdate);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("edinun:visitors-updated", onUpdate);
+    };
   }, []);
+
   return n;
 }
 
 function markFirstAttempt() {
-  const KEY = "edinun_visitors_v1";
-  const SESSION_FLAG = "edinun_visit_counted_v1";
-  if (sessionStorage.getItem(SESSION_FLAG) === "1") return;
-  const raw = localStorage.getItem(KEY);
-  const current = raw ? parseInt(raw, 10) : 0;
-  const next = (isNaN(current) ? 0 : current) + 1;
-  localStorage.setItem(KEY, String(next));
-  sessionStorage.setItem(SESSION_FLAG, "1");
-  window.dispatchEvent(new Event("edinun:visitors-updated"));
+  if (sessionStorage.getItem(VISITOR_SESSION_FLAG) === "1") return;
+  sessionStorage.setItem(VISITOR_SESSION_FLAG, "1");
+
+  fetchVisitorCount({ increment: true })
+    .then((count) => {
+      writeLocalVisitorCount(count);
+      window.dispatchEvent(new CustomEvent("edinun:visitors-updated", { detail: { count } }));
+    })
+    .catch(() => {
+      const next = readLocalVisitorCount() + 1;
+      writeLocalVisitorCount(next);
+      window.dispatchEvent(new CustomEvent("edinun:visitors-updated", { detail: { count: next } }));
+    });
 }
 
 function incrementGamesCompleted() {
@@ -731,24 +785,24 @@ function pickFreshN(bank, prefix, idOf, n) {
 // página "Los estereotipos en la publicidad". INCLUSIVOS: su versión justa
 // (aplicar el concepto del libro, sin inventar datos nuevos).
 const R1_ESTEREOTIPOS = [
-  { id: "e1", text: "La mujer es la encargada de la limpieza y las tareas del hogar." },
-  { id: "e2", text: "Solo los hombres disfrutan los deportes." },
-  { id: "e3", text: "A los niños les gusta el celeste y a las niñas el rosado." },
-  { id: "e4", text: "La mujer siempre debe ser guapa y lucir bien." },
-  { id: "e5", text: "Los hombres manejan autos grandes y las mujeres no." },
-  { id: "e6", text: "Los hombres saben de tecnología y pueden arreglarlo todo." },
-  { id: "e7", text: "El hombre es fuerte y exitoso." },
-  { id: "e8", text: "El jefe es malvado y siempre grita a los trabajadores." },
+  { id: "e1", emoji: "🧹", text: "La mujer es la encargada de la limpieza y las tareas del hogar." },
+  { id: "e2", emoji: "⚽", text: "Solo los hombres disfrutan los deportes." },
+  { id: "e3", emoji: "🧸", text: "A los niños les gusta el celeste y a las niñas el rosado." },
+  { id: "e4", emoji: "💄", text: "La mujer siempre debe ser guapa y lucir bien." },
+  { id: "e5", emoji: "🚗", text: "Los hombres manejan autos grandes y las mujeres no." },
+  { id: "e6", emoji: "📱", text: "Los hombres saben de tecnología y pueden arreglarlo todo." },
+  { id: "e7", emoji: "💪", text: "El hombre es fuerte y exitoso." },
+  { id: "e8", emoji: "👔", text: "El jefe es malvado y siempre grita a los trabajadores." },
 ];
 const R1_INCLUSIVOS = [
-  { id: "i1", text: "En casa, las tareas del hogar se reparten entre todos." },
-  { id: "i2", text: "Tanto mujeres como hombres disfrutan los deportes." },
-  { id: "i3", text: "Cada niña o niño elige los colores y juegos que prefiere." },
-  { id: "i4", text: "Una persona vale por quién es, no por su apariencia." },
-  { id: "i5", text: "Cualquier persona puede conducir cualquier auto." },
-  { id: "i6", text: "Cualquier persona puede aprender de tecnología." },
-  { id: "i7", text: "La fuerza y el éxito no dependen del género." },
-  { id: "i8", text: "Un buen jefe escucha y respeta a su equipo." },
+  { id: "i1", emoji: "🧹", text: "En casa, las tareas del hogar se reparten entre todos." },
+  { id: "i2", emoji: "⚽", text: "Tanto mujeres como hombres disfrutan los deportes." },
+  { id: "i3", emoji: "🧸", text: "Cada niña o niño elige los colores y juegos que prefiere." },
+  { id: "i4", emoji: "💄", text: "Una persona vale por quién es, no por su apariencia." },
+  { id: "i5", emoji: "🚗", text: "Cualquier persona puede conducir cualquier auto." },
+  { id: "i6", emoji: "📱", text: "Cualquier persona puede aprender de tecnología." },
+  { id: "i7", emoji: "💪", text: "La fuerza y el éxito no dependen del género." },
+  { id: "i8", emoji: "👔", text: "Un buen jefe escucha y respeta a su equipo." },
 ];
 
 // R2 — TOCAR. Acciones que MANTIENEN viva una lengua vs acciones que la
@@ -772,45 +826,117 @@ const R2_MALAS = [
   { id: "m6", text: "Usarla cada vez menos hasta olvidarla" },
 ];
 
-// R3 — DESLIZAR marcador. Afirmaciones sobre la lengua y el pensamiento,
-// tomadas de la página de la hipótesis de Sapir-Whorf. zone: 0 = "Es un mito",
-// 1 = "A medias", 2 = "Es verdad", según lo que aclara el propio libro
-// (la lengua influye, pero no determina ni impide comprender).
-const R3_MEDIDOR = [
-  { id: "s1", text: "Si tu idioma no tiene una palabra para algo, no puedes pensar en ello.", zone: 0,
-    explica: "Es un mito: aunque falte la palabra exacta, cualquier idea puede expresarse con una explicación. No hay nada que un idioma no pueda decir." },
-  { id: "s2", text: "Dos personas que hablan idiomas distintos nunca logran entenderse.", zone: 0,
-    explica: "Es un mito: las diferencias entre lenguas no son tan grandes como para impedir la comunicación; los significados se pueden explicar." },
-  { id: "s3", text: "El número 92 se piensa exactamente igual en todos los idiomas.", zone: 0,
-    explica: "Es un mito: el francés y el español arman el 92 de maneras distintas. Cada lengua organiza los números a su modo." },
-  { id: "s4", text: "La lengua que hablas controla por completo todo lo que puedes pensar.", zone: 0,
-    explica: "Es un mito: el lenguaje influye en cómo percibimos, pero no determina por completo nuestro pensamiento." },
-  { id: "s5", text: "El idioma que hablas dirige aquello en lo que te fijas.", zone: 2,
-    explica: "Es verdad: la lengua orienta nuestra atención y nuestro pensamiento hacia ciertos aspectos del mundo." },
-  { id: "s6", text: "Hay palabras, como el japonés «amaoto», sin una sola palabra equivalente en español.", zone: 2,
-    explica: "Es verdad: amaoto nombra el sonido relajante de la lluvia; en español lo decimos con varias palabras." },
-  { id: "s7", text: "Hablar varios idiomas aporta más perspectivas y ayuda a la memoria.", zone: 2,
-    explica: "Es verdad: conocer varias lenguas ofrece distintas perspectivas y beneficia la memoria y el pensamiento." },
-  { id: "s8", text: "Es más fácil recordar algo cuando tu lengua tiene una palabra para eso.", zone: 2,
-    explica: "Es verdad: recordamos mejor lo que podemos nombrar con una palabra específica." },
-  { id: "s9", text: "La lengua influye en cómo percibimos el mundo, pero no nos impide entenderlo.", zone: 1,
-    explica: "Va a medias, y es la idea más equilibrada: la lengua influye en la percepción, aunque no determina ni limita lo que podemos comprender." },
-  { id: "s10", text: "Quien solo nombra colores «claros» y «oscuros» percibe los colores de otra manera.", zone: 1,
-    explica: "Va a medias: cambia en qué se fija y cómo los clasifica, pero su vista percibe los mismos colores." },
+// R3 — DESCIFRAR. Llega un mensaje de otro mundo escrito en un idioma que
+// organiza la realidad distinto al español (relatividad lingüística, hipótesis
+// de Sapir-Whorf). El estudiante usa la CLAVE del planeta para traducirlo. Cada
+// planeta encarna un ejemplo real del libro: los colores (como el idioma dani),
+// el tiempo (como el árabe, derecha→izquierda) y los números (como el francés,
+// que arma el 92 por veintenas). makeProblemR3 toma uno de cada grupo en orden.
+const R3_COLORES = [
+  { id: "kael1", planeta: "KAEL", emoji: "🪐",
+    regla: "En Kael solo existen 2 colores: claro y oscuro.",
+    mensaje: ["TIK", "SORA", "LUM"],
+    clave: [ { a: "TIK", es: "el / la" }, { a: "SORA", es: "cielo" }, { a: "LUM", es: "claro", color: true }, { a: "DUN", es: "oscuro", color: true } ],
+    pregunta: "¿Qué dice el mensaje?",
+    opciones: [ { text: "El cielo claro", ok: true }, { text: "El cielo azul", ok: false }, { text: "El mar oscuro", ok: false } ],
+    explica: "En Kael no existe la palabra «azul»: solo «claro» y «oscuro». Por eso su lengua ve el cielo como «claro»." },
+  { id: "kael2", planeta: "KAEL", emoji: "🪐",
+    regla: "En Kael solo existen 2 colores: claro y oscuro.",
+    mensaje: ["NEVA", "LUM"],
+    clave: [ { a: "NEVA", es: "nieve" }, { a: "LUM", es: "claro", color: true }, { a: "DUN", es: "oscuro", color: true } ],
+    pregunta: "¿Qué dice el mensaje?",
+    opciones: [ { text: "Nieve clara", ok: true }, { text: "Nieve blanca", ok: false }, { text: "Nieve brillante", ok: false } ],
+    explica: "En Kael no hay «blanco» ni «brillante»: la nieve solo puede ser «clara». Su lengua distingue únicamente claro y oscuro." },
+  { id: "vure1", planeta: "VURË", emoji: "🌑",
+    regla: "En Vurë solo existen 2 colores: claro y oscuro.",
+    mensaje: ["TIK", "MARU", "DUN"],
+    clave: [ { a: "TIK", es: "el / la" }, { a: "MARU", es: "mar" }, { a: "LUM", es: "claro", color: true }, { a: "DUN", es: "oscuro", color: true } ],
+    pregunta: "¿Qué dice el mensaje?",
+    opciones: [ { text: "El mar oscuro", ok: true }, { text: "El mar azul", ok: false }, { text: "El mar verde", ok: false } ],
+    explica: "En Vurë no existen «azul» ni «verde»: el mar solo puede ser «oscuro» o «claro»." },
+  { id: "vure2", planeta: "VURË", emoji: "🌑",
+    regla: "En Vurë solo existen 2 colores: claro y oscuro.",
+    mensaje: ["TIK", "FLORA", "LUM"],
+    clave: [ { a: "TIK", es: "la" }, { a: "FLORA", es: "flor" }, { a: "LUM", es: "claro", color: true }, { a: "DUN", es: "oscuro", color: true } ],
+    pregunta: "¿Qué dice el mensaje?",
+    opciones: [ { text: "La flor clara", ok: true }, { text: "La flor roja", ok: false }, { text: "La flor amarilla", ok: false } ],
+    explica: "En Vurë no hay «roja» ni «amarilla»: la flor solo puede ser «clara» u «oscura»." },
 ];
-
-const ZONE_LABELS = ["Es un mito", "A medias", "Es verdad"];
+const R3_TIEMPO = [
+  { id: "zira1", planeta: "ZIRA", emoji: "🌌",
+    rtl: true,
+    regla: "En Zira el tiempo se lee al revés: de DERECHA a IZQUIERDA.",
+    mensaje: ["KEEN", "MOLA", "ZUP"],
+    clave: [ { a: "ZUP", es: "comer" }, { a: "MOLA", es: "jugar" }, { a: "KEEN", es: "dormir" } ],
+    pregunta: "¿Qué hace PRIMERO el extraterrestre?",
+    opciones: [ { text: "Comer", ok: true }, { text: "Jugar", ok: false }, { text: "Dormir", ok: false } ],
+    explica: "En Zira el tiempo va de derecha a izquierda, así que lo primero es lo de la derecha: ZUP = comer." },
+  { id: "zira2", planeta: "ZIRA", emoji: "🌌",
+    rtl: true,
+    regla: "En Zira el tiempo se lee al revés: de DERECHA a IZQUIERDA.",
+    mensaje: ["SUNA", "REMA", "TOBI"],
+    clave: [ { a: "TOBI", es: "estudiar" }, { a: "REMA", es: "comer" }, { a: "SUNA", es: "dormir" } ],
+    pregunta: "¿Qué hace AL FINAL?",
+    opciones: [ { text: "Dormir", ok: true }, { text: "Comer", ok: false }, { text: "Estudiar", ok: false } ],
+    explica: "Lo último es lo de la izquierda: SUNA = dormir. En Zira el tiempo corre al revés del español." },
+  { id: "omak1", planeta: "OMAK", emoji: "🪐",
+    rtl: true,
+    regla: "En Omak el tiempo se lee al revés: de DERECHA a IZQUIERDA.",
+    mensaje: ["BRIL", "NOKA", "PESH"],
+    clave: [ { a: "PESH", es: "correr" }, { a: "NOKA", es: "leer" }, { a: "BRIL", es: "cantar" } ],
+    pregunta: "¿Qué hace PRIMERO el extraterrestre?",
+    opciones: [ { text: "Correr", ok: true }, { text: "Leer", ok: false }, { text: "Cantar", ok: false } ],
+    explica: "Lo primero es lo de la derecha: PESH = correr. En Omak el tiempo va de derecha a izquierda." },
+  { id: "omak2", planeta: "OMAK", emoji: "🪐",
+    rtl: true,
+    regla: "En Omak el tiempo se lee al revés: de DERECHA a IZQUIERDA.",
+    mensaje: ["GUNA", "TARO", "VEXA"],
+    clave: [ { a: "VEXA", es: "desayunar" }, { a: "TARO", es: "caminar" }, { a: "GUNA", es: "bañarse" } ],
+    pregunta: "¿Qué hace AL FINAL?",
+    opciones: [ { text: "Bañarse", ok: true }, { text: "Caminar", ok: false }, { text: "Desayunar", ok: false } ],
+    explica: "Lo último es lo de la izquierda: GUNA = bañarse. En Omak el tiempo corre al revés del español." },
+];
+const R3_NUMEROS = [
+  { id: "nove1", planeta: "NOVE", emoji: "🛰️",
+    regla: "En Nove los números se arman por veintenas: VEK = veinte (20).",
+    mensaje: ["VEK", "VEK", "VEK", "VEK", "+ 12"],
+    clave: [ { a: "VEK", es: "veinte (20)" }, { a: "+ 12", es: "más doce" } ],
+    pregunta: "¿Qué número es «cuatro VEK y doce»?",
+    opciones: [ { text: "92", ok: true }, { text: "82", ok: false }, { text: "412", ok: false } ],
+    explica: "Cuatro veintes (4×20 = 80) más doce = 92. En Nove los números se arman así." },
+  { id: "nove2", planeta: "NOVE", emoji: "🛰️",
+    regla: "En Nove los números se arman por veintenas: VEK = veinte (20).",
+    mensaje: ["VEK", "VEK", "VEK", "+ 5"],
+    clave: [ { a: "VEK", es: "veinte (20)" }, { a: "+ 5", es: "más cinco" } ],
+    pregunta: "¿Qué número es «tres VEK y cinco»?",
+    opciones: [ { text: "65", ok: true }, { text: "35", ok: false }, { text: "305", ok: false } ],
+    explica: "Tres veintes (3×20 = 60) más cinco = 65. Nove arma los números por veintenas." },
+  { id: "trell1", planeta: "TRELL", emoji: "☄️",
+    regla: "En Trell los números se arman por veintenas: VEK = veinte (20).",
+    mensaje: ["VEK", "VEK", "+ 7"],
+    clave: [ { a: "VEK", es: "veinte (20)" }, { a: "+ 7", es: "más siete" } ],
+    pregunta: "¿Qué número es «dos VEK y siete»?",
+    opciones: [ { text: "47", ok: true }, { text: "27", ok: false }, { text: "207", ok: false } ],
+    explica: "Dos veintes (2×20 = 40) más siete = 47. En Trell los números se arman así." },
+  { id: "trell2", planeta: "TRELL", emoji: "☄️",
+    regla: "En Trell los números se arman por veintenas: VEK = veinte (20).",
+    mensaje: ["VEK", "VEK", "VEK", "+ 10"],
+    clave: [ { a: "VEK", es: "veinte (20)" }, { a: "+ 10", es: "más diez" } ],
+    pregunta: "¿Qué número es «tres VEK y diez»?",
+    opciones: [ { text: "70", ok: true }, { text: "40", ok: false }, { text: "310", ok: false } ],
+    explica: "Tres veintes (3×20 = 60) más diez = 70. En Trell los números se arman así." },
+];
 
 // ─────────────────────────────────────────────────────────────
 // makeProblem por ronda (una sola vez por montaje del juego)
 // ─────────────────────────────────────────────────────────────
 function makeProblemR1() {
-  const est = pickFreshN(R1_ESTEREOTIPOS, "est", (x) => x.id, 4);
-  const inc = pickFreshN(R1_INCLUSIVOS, "inc", (x) => x.id, 4);
+  const est = pickFreshN(R1_ESTEREOTIPOS, "est", (x) => x.id, 2);
+  const inc = pickFreshN(R1_INCLUSIVOS, "inc", (x) => x.id, 2);
   const deck = shuffle([
     ...est.map((c) => ({ ...c, isEstereotipo: true })),
     ...inc.map((c) => ({ ...c, isEstereotipo: false })),
-  ]);
+  ]).slice(0, 3); // solo 3 cartas (mezcla variable de estereotipos e inclusivos)
   return { deck };
 }
 function makeProblemR2() {
@@ -819,7 +945,11 @@ function makeProblemR2() {
   return { cards: shuffle([...buenas, ...malas]) };
 }
 function makeProblemR3() {
-  return { stmts: pickFreshN(R3_MEDIDOR, "med", (x) => x.id, 3) };
+  // Un reto de cada concepto, en orden: colores → tiempo → números.
+  const c = pickFreshN(R3_COLORES, "pcol", (x) => x.id, 1)[0];
+  const t = pickFreshN(R3_TIEMPO, "ptie", (x) => x.id, 1)[0];
+  const n = pickFreshN(R3_NUMEROS, "pnum", (x) => x.id, 1)[0];
+  return { retos: [c, t, n] };
 }
 
 // ═════════════════════════════════════════════════════════════
@@ -1114,13 +1244,8 @@ function LenguaGame({ app, setApp, go, onRestart }) {
   const r1DoneRef = useRefG(false);
   // R2 — rescate (auto-evaluado)
   const r2DoneRef = useRefG(false);
-  // R3 — medidor: estado controlado por el padre; se califica con VERIFICAR.
-  const [r3StmtIdx, setR3StmtIdx] = useStateG(0);
-  const [r3Zone, setR3Zone] = useStateG(null);
-  const [r3Locked, setR3Locked] = useStateG(false);
-  const r3CorrectRef = useRefG(0);
-  const r3AutoRef = useRefG(null);
-  const r3ZoneRef = useRefG(null);
+  // R3 — descifrar (auto-evaluado, como R1 y R2)
+  const r3DoneRef = useRefG(false);
 
   // Shell state
   const [elapsed, setElapsed] = useStateG(0);
@@ -1140,7 +1265,6 @@ function LenguaGame({ app, setApp, go, onRestart }) {
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - started.current) / 1000)), 500);
     return () => clearInterval(id);
   }, []);
-  useEffectG(() => () => clearTimeout(r3AutoRef.current), []);
 
   // Las 3 rondas se AUTO-EVALÚAN (R1 deslizar, R2 rescate, R3 medidor al soltar),
   // así que no hay VERIFICAR manual en ninguna.
@@ -1149,7 +1273,7 @@ function LenguaGame({ app, setApp, go, onRestart }) {
   function handleSwipeFinish(s) {
     if (r1DoneRef.current) return;
     r1DoneRef.current = true;
-    const correct = s.aciertos >= 6;
+    const correct = s.aciertos >= 2;
     const u = `${s.aciertos}/${s.total} bien clasificadas`;
     answer(correct, u, "Distinguir estereotipo vs inclusión", "📺", "Detector de estereotipos", null);
   }
@@ -1162,30 +1286,12 @@ function LenguaGame({ app, setApp, go, onRestart }) {
     answer(correct, u, "Elegir solo acciones que la mantienen viva", "🪶", "Rescata la lengua", null);
   }
 
-  // R3 (medidor) AUTO: tras soltar el marcador y una breve pausa, se califica
-  // sola (con ventana para recolocarlo). Muestra feedback, revela la zona
-  // correcta y avanza (o termina la ronda).
-  function gradeR3() {
-    if (r3Locked) return;
-    const stmt = r3Pick.stmts[r3StmtIdx];
-    const zone = r3ZoneRef.current;
-    if (zone === null) return;
-    const ok = zone === stmt.zone;
-    if (ok) r3CorrectRef.current += 1;
-    setR3Locked(true);
-    const last = r3StmtIdx + 1 >= r3Pick.stmts.length;
-    setTimeout(() => {
-      if (last) {
-        const correct = r3CorrectRef.current >= 2;
-        const u = `${r3CorrectRef.current}/${r3Pick.stmts.length} afirmaciones ubicadas`;
-        answer(correct, u, "Ubicar bien al menos 2 de 3 afirmaciones", "🌎", "El medidor: ¿mito o verdad?", null);
-      } else {
-        setR3StmtIdx((p) => p + 1);
-        setR3Zone(null);
-        r3ZoneRef.current = null;
-        setR3Locked(false);
-      }
-    }, ok ? 1900 : 4400);
+  function handleDescifraFinish(s) {
+    if (r3DoneRef.current) return;
+    r3DoneRef.current = true;
+    const correct = s.aciertos >= 2;
+    const u = `${s.aciertos}/${s.total} mensajes descifrados`;
+    answer(correct, u, "Descifrar mensajes de otros mundos", "🛸", "Descifra otro mundo", null);
   }
 
   function answer(isCorrect, userText, correctText, opIcon, reto, note) {
@@ -1235,17 +1341,17 @@ function LenguaGame({ app, setApp, go, onRestart }) {
   const enunciado =
     ronda === 0 ? "Decide si cada mensaje refuerza un estereotipo o es inclusivo." :
     ronda === 1 ? "Elige las acciones que mantienen viva la lengua." :
-    "Ubica cuánta razón tiene cada afirmación.";
+    "Descifra el mensaje de otro mundo.";
   const bocadillo =
     ronda === 0 ? "Desliza la carta:\nizquierda si es estereotipo,\nderecha si es inclusiva." :
     ronda === 1 ? "Toca solo las acciones\nque ayudan a que la\nlengua siga viva." :
-    "Arrastra el marcador:\n¿es un mito, va a medias\no es verdad?";
+    "Usa la clave del planeta\npara traducir el mensaje.";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
       <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} />
       <CharacterCorner char={char} message={bocadillo} />
-      <GameEnunciado text={enunciado} top={ronda === 0 ? 100 : 108} />
+      <GameEnunciado text={enunciado} top={ronda === 0 ? 100 : ronda === 2 ? 102 : 108} />
 
       {ronda === 0 && (
         <EstereotipoSwipe deck={r1Pick.deck} onFinish={handleSwipeFinish} />
@@ -1256,20 +1362,7 @@ function LenguaGame({ app, setApp, go, onRestart }) {
       )}
 
       {ronda === 2 && (
-        <MedidorLengua
-          key={`med-${r3StmtIdx}`}
-          stmt={r3Pick.stmts[r3StmtIdx]}
-          idx={r3StmtIdx}
-          total={r3Pick.stmts.length}
-          locked={r3Locked}
-          chosenZone={r3Zone}
-          onPick={(z) => { if (!r3Locked) { setR3Zone(z); r3ZoneRef.current = z; } }}
-          onSettle={() => {
-            if (r3Locked) return;
-            clearTimeout(r3AutoRef.current);
-            r3AutoRef.current = setTimeout(() => gradeR3(), 900);
-          }}
-        />
+        <DescifraMundo retos={r3Pick.retos} onFinish={handleDescifraFinish} />
       )}
 
       <ActionRail
@@ -1305,6 +1398,7 @@ function EstereotipoSwipe({ deck, onFinish }) {
   const lockRef = useRefG(false);
   const draggingRef = useRefG(false);
   const startXRef = useRefG(0);
+  const scaleRef = useRefG(1);
   const THRESH = 80;
 
   const card = deck[idx];
@@ -1316,11 +1410,9 @@ function EstereotipoSwipe({ deck, onFinish }) {
     const chosenEstereotipo = dir < 0;
     const correct = chosenEstereotipo === card.isEstereotipo;
     if (correct) aciertosRef.current += 1; else erroresRef.current += 1;
-    // 1) Feedback con la carta centrada (✓/✗ + la respuesta correcta).
-    setResult({ correct, real: card.isEstereotipo });
-    setDrag(0);
-    setTimeout(() => {
-      // 2) La carta sale volando hacia el lado elegido.
+
+    // La carta sale volando hacia el lado elegido y pasa a la siguiente.
+    const flyAndNext = () => {
       setFlyOut({ dir });
       setDrag(dir * 520);
       setTimeout(() => {
@@ -1335,20 +1427,42 @@ function EstereotipoSwipe({ deck, onFinish }) {
           setDrag(0);
         }
       }, 420);
-    }, 1300);
+    };
+
+    if (correct) {
+      // Acierto: la carta se pinta de verde un instante (confirmación) y vuela;
+      // sin la pantalla grande de feedback (eso queda solo para los errores).
+      setResult({ correct: true });
+      setDrag(0);
+      setTimeout(flyAndNext, 650);
+    } else {
+      // Error: mostrar la respuesta correcta (✗ + "Era…") un momento y avanzar.
+      setResult({ correct, real: card.isEstereotipo });
+      setDrag(0);
+      setTimeout(flyAndNext, 1700);
+    }
   }
 
   function onPointerDown(e) {
     if (lockRef.current) return;
+    // preventDefault corta el gesto nativo del navegador (selección de texto /
+    // arrastrar) que, si no, dispara pointercancel a mitad del swipe y mataba
+    // el arrastre (la carta no se movía). Ver QA del 2026-06-18.
+    e.preventDefault();
     draggingRef.current = true;
     startXRef.current = e.clientX;
-    if (e.currentTarget.setPointerCapture) {
-      try { e.currentTarget.setPointerCapture(e.pointerId); } catch {}
+    // Escala real del lienzo (DeviceStage escala el 900×540 al viewport): ancho
+    // renderizado / ancho lógico, para que la carta siga al dedo 1:1.
+    const t = e.currentTarget;
+    scaleRef.current = (t.getBoundingClientRect().width / t.offsetWidth) || 1;
+    if (t.setPointerCapture) {
+      try { t.setPointerCapture(e.pointerId); } catch {}
     }
   }
   function onPointerMove(e) {
     if (!draggingRef.current) return;
-    setDrag(e.clientX - startXRef.current);
+    e.preventDefault();
+    setDrag((e.clientX - startXRef.current) / scaleRef.current);
   }
   function onPointerUp() {
     if (!draggingRef.current) return;
@@ -1387,6 +1501,8 @@ function EstereotipoSwipe({ deck, onFinish }) {
         {card && (
           <div
             className="ed-draggable"
+            draggable={false}
+            onDragStart={(e) => e.preventDefault()}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
@@ -1396,7 +1512,9 @@ function EstereotipoSwipe({ deck, onFinish }) {
               display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
               textAlign: "center", padding: "12px 18px",
               borderRadius: 18,
-              background: "linear-gradient(180deg, #ffffff, #eef2ff)",
+              background: result && result.correct
+                ? "linear-gradient(180deg, #e6fff2, #b9ffdd)"
+                : "linear-gradient(180deg, #ffffff, #eef2ff)",
               border: result
                 ? `3px solid ${result.correct ? "#2ecc8f" : "#ff6b6b"}`
                 : "3px solid #f2c260",
@@ -1408,22 +1526,23 @@ function EstereotipoSwipe({ deck, onFinish }) {
               opacity: flyOut ? 0 : 1,
               touchAction: "none",
             }}>
-            <div style={{ fontSize: 22, marginBottom: 6 }}>📺</div>
+            <div style={{ fontSize: 22, marginBottom: 6 }}>{card.emoji || "📺"}</div>
             <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 15, lineHeight: 1.22 }}>
               “{card.text}”
             </div>
 
-            {/* Feedback: etiqueta limpia DEBAJO del texto (no lo tapa) */}
-            {result && (
+            {/* Solo al fallar: etiqueta con la respuesta correcta DEBAJO del texto.
+                Al acertar no se muestra texto: basta con que la carta se pinte verde. */}
+            {result && !result.correct && (
               <div style={{
                 marginTop: 9, fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 13.5,
-                color: result.correct ? "#1e8a5d" : "#c33b3b",
+                color: "#c33b3b",
               }}>
-                {result.correct ? "¡Correcto!" : `Era ${result.real ? "estereotipo" : "inclusivo"}`}
+                {`Era ${result.real ? "estereotipo" : "inclusivo"}`}
               </div>
             )}
 
-            {/* Insignia ✓/✗ en la esquina de la carta */}
+            {/* Insignia en la esquina: ✓ verde al acertar, ✗ roja al fallar */}
             {result && (
               <span style={{
                 position: "absolute", top: -13, right: -13, width: 32, height: 32, borderRadius: "50%",
@@ -1580,158 +1699,195 @@ function RescateLengua({ cards, onFinish }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// R3 · El medidor: ¿mito o verdad? (DESLIZAR marcador). Aparece una
-// afirmación sobre la lengua y el pensamiento; el estudiante arrastra el
-// marcador sobre una barra de 3 zonas (Es un mito · A medias · Es verdad).
-// Componente CONTROLADO: el padre maneja la afirmación, el bloqueo y dispara
-// la calificación desde VERIFICAR.
+// R3 · Descifra otro mundo (DESCIFRAR, §9). Llega una transmisión en el idioma
+// de otro planeta; el estudiante usa la CLAVE del planeta para traducirla y
+// toca la opción correcta. Cada planeta organiza la realidad distinto (colores,
+// tiempo, números) → el chico VIVE la relatividad lingüística (Sapir-Whorf).
+// Auto-evaluado (como R1/R2): se logra con aciertos ≥ 2 de 3. Al fallar marca
+// la opción correcta en verde con ✓ (§11) y muestra la explicación más tiempo.
 // ─────────────────────────────────────────────────────────────
-function MedidorLengua({ stmt, idx, total, locked, chosenZone, onPick, onSettle }) {
-  const [frac, setFrac] = useStateG(0.5);
-  const trackRef = useRefG(null);
-  const draggingRef = useRefG(false);
-  const settleTimer = useRefG(null);
-  const zone = Math.min(2, Math.floor(frac * 3));
-  const chosenOk = chosenZone === stmt.zone;
+function DescifraMundo({ retos, onFinish }) {
+  const [idx, setIdx] = useStateG(0);
+  const [picked, setPicked] = useStateG(null); // texto de la opción elegida
+  const [result, setResult] = useStateG(null); // { correct }
+  const aciertosRef = useRefG(0);
+  const erroresRef = useRefG(0);
+  const lockRef = useRefG(false);
+  const timerRef = useRefG(null);
 
-  // Reporta al padre la zona elegida cada vez que cambia.
-  useEffectG(() => { onPick(zone); }, [zone]);
-  useEffectG(() => () => { if (settleTimer.current) clearTimeout(settleTimer.current); }, []);
+  useEffectG(() => () => clearTimeout(timerRef.current), []);
 
-  function setFromClientX(cx) {
-    const el = trackRef.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    let f = (cx - r.left) / r.width;
-    f = Math.max(0, Math.min(0.999, f));
-    setFrac(f);
-  }
-  function onPointerDown(e) {
-    if (locked) return;
-    if (settleTimer.current) { clearTimeout(settleTimer.current); settleTimer.current = null; }
-    draggingRef.current = true;
-    setFromClientX(e.clientX);
-    if (e.currentTarget.setPointerCapture) {
-      try { e.currentTarget.setPointerCapture(e.pointerId); } catch {}
-    }
-  }
-  function onPointerMove(e) {
-    if (!draggingRef.current || locked) return;
-    setFromClientX(e.clientX);
-  }
-  function onPointerUp() {
-    if (!draggingRef.current) return;
-    draggingRef.current = false;
-    if (locked) return;
-    // No calificar de inmediato: ventana para recolocar el marcador. Si el
-    // estudiante vuelve a tocar la barra antes, el timer se cancela y sigue.
-    if (settleTimer.current) clearTimeout(settleTimer.current);
-    settleTimer.current = setTimeout(() => { if (onSettle) onSettle(); }, 1200);
+  const reto = retos[idx];
+  const reveal = !!result;
+
+  function choose(opt) {
+    if (lockRef.current || !reto) return;
+    lockRef.current = true;
+    if (opt.ok) aciertosRef.current += 1; else erroresRef.current += 1;
+    setPicked(opt.text);
+    setResult({ correct: opt.ok });
+    // Más tiempo al fallar para leer con calma la explicación (enseña el concepto).
+    const wait = opt.ok ? 2100 : 5200;
+    timerRef.current = setTimeout(() => {
+      const next = idx + 1;
+      setResult(null);
+      setPicked(null);
+      lockRef.current = false;
+      if (next >= retos.length) {
+        onFinish({ aciertos: aciertosRef.current, errores: erroresRef.current, total: retos.length });
+      } else {
+        setIdx(next);
+      }
+    }, wait);
   }
 
-  const ZONE_BG = ["#ff6b6b", "#f2c260", "#2ecc8f"];
+  if (!reto) return null;
 
   return (
     <div data-qa="zona-central" style={{
-      position: "absolute", top: 116, bottom: 12, left: "50%", transform: "translateX(-50%)",
-      width: 452, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 26,
+      position: "absolute", top: 126, bottom: 12, left: "50%", transform: "translateX(-50%)",
+      width: 384, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-evenly", gap: 6,
     }}>
-      {/* Afirmación */}
+      {/* Encabezado: planeta + progreso */}
       <div style={{
-        width: "fit-content", maxWidth: 440, borderRadius: 16, padding: "18px 22px",
-        background: "linear-gradient(180deg, rgba(255,255,255,0.97), rgba(238,242,255,0.93))",
-        border: "3px solid #f2c260", boxShadow: "0 10px 24px rgba(0,0,0,0.38)",
-        textAlign: "center", color: "#1c2440",
+        fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
+        color: "#fce9a8", letterSpacing: "0.04em",
+      }}>
+        {reto.emoji} Planeta {reto.planeta} · Mensaje {Math.min(idx + 1, retos.length)} de {retos.length}
+      </div>
+
+      {/* Transmisión entrante (mensaje alienígena) */}
+      <div style={{
+        width: 356, borderRadius: 14, padding: "9px 12px 12px",
+        background: "rgba(8,30,24,0.55)", border: "2px solid rgba(79,216,255,0.55)",
+        boxShadow: "inset 0 0 18px rgba(79,216,255,0.22)",
       }}>
         <div style={{
-          display: "inline-block", marginBottom: 6,
-          background: "#7b5cff", color: "#fff", borderRadius: 8, padding: "2px 12px",
-          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11, letterSpacing: "0.05em",
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 10.5,
+          color: "#7fe6ff", letterSpacing: "0.12em", textAlign: "center", marginBottom: 7,
         }}>
-          Afirmación {idx + 1}/{total}
+          🛸 TRANSMISIÓN ENTRANTE
         </div>
-        <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 18, lineHeight: 1.32 }}>
-          “{stmt.text}”
+        <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap" }}>
+          {reto.mensaje.map((w, i) => (
+            <span key={i} style={{
+              fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 18,
+              color: "#eafcff", background: "rgba(79,216,255,0.16)",
+              border: "1.5px solid rgba(79,216,255,0.5)", borderRadius: 9,
+              padding: "7px 15px", letterSpacing: "0.06em",
+            }}>{w}</span>
+          ))}
         </div>
-      </div>
-
-      {/* Medidor de 3 zonas */}
-      <div style={{ width: 440 }}>
-        <div
-          ref={trackRef}
-          className="ed-draggable"
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerUp}
-          style={{
-            position: "relative", width: "100%", height: 58, borderRadius: 12,
-            display: "flex", overflow: "hidden",
-            border: "2px solid rgba(242,194,96,0.55)",
-            cursor: locked ? "default" : "pointer", touchAction: "none",
-          }}>
-          {ZONE_LABELS.map((lab, i) => {
-            const isTarget = locked && i === stmt.zone;
-            const isWrong = locked && i === chosenZone && chosenZone !== stmt.zone;
-            let bg = "rgba(255,255,255,0.08)";
-            if (isTarget) bg = "rgba(46,204,143,0.5)";
-            else if (isWrong) bg = "rgba(255,107,107,0.5)";
-            else if (!locked && i === zone) bg = "rgba(79,216,255,0.22)";
-            return (
-              <div key={i} style={{
-                flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-                borderRight: i < 2 ? "2px solid rgba(242,194,96,0.35)" : "none",
-                background: bg,
-                fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 14,
-                color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,0.6)",
-                position: "relative",
-              }}>
-                <span style={{ pointerEvents: "none" }}>
-                  {isTarget ? "✓ " : isWrong ? "✗ " : ""}{lab}
-                </span>
-                <span style={{
-                  position: "absolute", bottom: 4, left: "50%", transform: "translateX(-50%)",
-                  width: 8, height: 4, borderRadius: 2, background: ZONE_BG[i], opacity: 0.85,
-                }} />
-              </div>
-            );
-          })}
-          {/* Marcador */}
+        {reto.rtl && (
           <div style={{
-            position: "absolute", top: -6, bottom: -6, left: `calc(${frac * 100}% - 11px)`,
-            width: 22, pointerEvents: "none",
-            display: "flex", alignItems: "center", justifyContent: "center",
+            marginTop: 7, textAlign: "center",
+            fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
+            color: "#ffd76b", letterSpacing: "0.02em",
           }}>
-            <div style={{
-              width: 22, height: 72, borderRadius: 8,
-              background: locked ? (chosenOk ? "#2ecc8f" : "#ff6b6b") : "#4fd8ff",
-              border: "2px solid #fff",
-              boxShadow: "0 3px 10px rgba(0,0,0,0.55), 0 0 14px rgba(79,216,255,0.6)",
-            }} />
+            ⟸ se lee de DERECHA a IZQUIERDA
           </div>
+        )}
+      </div>
+
+      {/* Clave del planeta */}
+      <div style={{
+        width: 356, borderRadius: 14, padding: "9px 14px 10px",
+        background: "linear-gradient(180deg, #fffef8, #fdf3d8)",
+        border: "3px solid #f2c260", boxShadow: "0 8px 20px rgba(0,0,0,0.32)", color: "#1c2440",
+      }}>
+        <div style={{
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 10.5,
+          color: "#9a6a16", letterSpacing: "0.08em", textAlign: "center", marginBottom: 4,
+        }}>
+          🔑 CLAVE DEL PLANETA {reto.planeta}
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "1px 16px", marginBottom: 5 }}>
+          {reto.clave.map((k, i) => (
+            <span key={i} style={{
+              fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12.5,
+              color: k.color ? "#1e6fae" : "#2a3350",
+            }}>
+              <b>{k.a}</b> = {k.es}
+            </span>
+          ))}
+        </div>
+        <div style={{
+          marginTop: 3,
+          background: "rgba(255,138,76,0.18)",
+          border: "1.5px solid rgba(214,90,30,0.5)",
+          borderRadius: 9, padding: "5px 10px",
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 13,
+          color: "#c0410f", textAlign: "center", lineHeight: 1.28,
+        }}>
+          ⚠ {reto.regla}
         </div>
       </div>
 
-      {!locked && (
+      {/* Pregunta */}
+      {!reveal && (
         <div style={{
-          fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12.5,
-          color: "rgba(252,233,168,0.85)", textAlign: "center", maxWidth: 400, lineHeight: 1.3,
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 15,
+          color: "#fff", textAlign: "center", textShadow: "0 1px 4px rgba(0,0,0,0.5)",
         }}>
-          Arrastra el marcador y suéltalo donde creas; se califica solo.
+          {reto.pregunta}
         </div>
       )}
 
-      {/* Explicación (tras VERIFICAR). El avance lo dispara el padre. */}
-      {locked && (
+      {/* Opciones de traducción */}
+      <div style={{ display: "flex", justifyContent: "center", gap: 10, flexWrap: "wrap", width: 384 }}>
+        {reto.opciones.map((opt, i) => {
+          const isChosen = picked === opt.text;
+          let border = "2px solid rgba(255,255,255,0.55)";
+          let bg = "rgba(255,255,255,0.12)";
+          if (reveal) {
+            if (opt.ok) { border = "3px solid #2ecc8f"; bg = "rgba(46,204,143,0.22)"; }
+            else if (isChosen) { border = "3px solid #ff6b6b"; bg = "rgba(255,107,107,0.2)"; }
+            else { bg = "rgba(255,255,255,0.05)"; }
+          }
+          return (
+            <button key={i} onClick={() => choose(opt)} disabled={reveal}
+              style={{
+                position: "relative", padding: "12px 18px", borderRadius: 12,
+                border, background: bg, color: "#fff",
+                fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 14,
+                cursor: reveal ? "default" : "pointer", maxWidth: 240, lineHeight: 1.15,
+                transition: "background 0.2s, border-color 0.2s",
+              }}>
+              {opt.text}
+              {reveal && opt.ok && (
+                <span style={{
+                  position: "absolute", top: -9, right: -9, width: 24, height: 24, borderRadius: "50%",
+                  background: "#2ecc8f", color: "#fff", fontSize: 14, fontWeight: 800,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  border: "2px solid #fff", boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+                }}>✓</span>
+              )}
+              {reveal && isChosen && !opt.ok && (
+                <span style={{
+                  position: "absolute", top: -9, right: -9, width: 24, height: 24, borderRadius: "50%",
+                  background: "#ff6b6b", color: "#fff", fontSize: 14, fontWeight: 800,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  border: "2px solid #fff", boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+                }}>✗</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Explicación al responder (enseña el concepto Sapir-Whorf) */}
+      {reveal && (
         <div style={{
-          width: "fit-content", maxWidth: 440, borderRadius: 12, padding: "9px 14px",
-          background: chosenOk ? "rgba(46,204,143,0.16)" : "rgba(255,107,107,0.14)",
-          border: `1.5px solid ${chosenOk ? "rgba(46,204,143,0.6)" : "rgba(255,107,107,0.55)"}`,
-          fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12.5, lineHeight: 1.3,
+          width: 356, borderRadius: 12, padding: "9px 14px",
+          background: result.correct ? "rgba(46,204,143,0.16)" : "rgba(255,107,107,0.14)",
+          border: `1.5px solid ${result.correct ? "rgba(46,204,143,0.6)" : "rgba(255,107,107,0.55)"}`,
+          fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12, lineHeight: 1.3,
           color: "#fce9a8", textAlign: "center",
         }}>
-          <span style={{ color: chosenOk ? "#7dffc4" : "#ffb3b3" }}>{chosenOk ? "¡Bien! " : "Recuerda: "}</span>
-          {stmt.explica}
+          <span style={{ color: result.correct ? "#7dffc4" : "#ffb3b3" }}>
+            {result.correct ? "¡Descifrado! " : "Casi: "}
+          </span>
+          {reto.explica}
         </div>
       )}
     </div>

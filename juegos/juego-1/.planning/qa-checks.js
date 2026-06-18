@@ -6,7 +6,7 @@
  * screenshots a .planning/qa-screenshots/.
  *
  * Uso:
- *   cd juegos/completa-palabras
+ *   cd juegos/juego-1
  *   node .planning/qa-checks.js
  *
  * Requiere: Node 18+, playwright 1.x con Chromium instalado.

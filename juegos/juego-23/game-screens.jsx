@@ -192,6 +192,9 @@ const R1_BANK = {
     "Ese man es full bacán.",
     "Ñaño, préstame un toque.",
     "Nos pillamos al rato, chao.",
+    "Qué chévere el plan, de una.",
+    "Estoy full cansado, mejor mañana.",
+    "Pana, pásame el dato, porfa.",
   ],
   estandar: [
     "Buenos días, ¿cómo está usted?",
@@ -199,6 +202,9 @@ const R1_BANK = {
     "Gracias por tu ayuda, te lo agradezco.",
     "Nos vemos mañana en la tarde.",
     "Con gusto, ¿en qué le ayudo?",
+    "Disculpe, ¿podría repetirlo, por favor?",
+    "Le escribo para confirmar la reunión.",
+    "Muchas gracias por su tiempo.",
   ],
   culto: [
     "La poesía transforma al lector.",
@@ -206,6 +212,9 @@ const R1_BANK = {
     "El conocimiento nos dota de recursos.",
     "La melancolía habita en sus versos.",
     "La palabra precisa ennoblece la idea.",
+    "La lectura ensancha los horizontes del alma.",
+    "Su prosa destila una sutil ironía.",
+    "El saber florece en la mente curiosa.",
   ],
 };
 
@@ -286,6 +295,102 @@ const R2_CHATS = [
         ] },
     ],
   },
+  {
+    id: "doctora",
+    name: "Dra. Cevallos",
+    emoji: "🩺",
+    hint: "Con la doctora, sé formal y explícate claro.",
+    accent: "#36c2b4",
+    turns: [
+      { incoming: "Buenas tardes, ¿qué la trae por aquí?",
+        options: [
+          { text: "Buenas tardes, doctora. Me duele la garganta desde ayer.", ok: true },
+          { text: "Hola, me siento full mal, doc.", ok: false },
+        ] },
+      { incoming: "¿Ha tenido fiebre?",
+        options: [
+          { text: "Sí pe, un montón anoche.", ok: false },
+          { text: "Sí, anoche tuve fiebre alta.", ok: true },
+        ] },
+      { incoming: "Le voy a recetar un medicamento.",
+        options: [
+          { text: "Muchas gracias, doctora.", ok: true },
+          { text: "Bacán, gracias mismo.", ok: false },
+        ] },
+    ],
+  },
+  {
+    id: "hermano",
+    name: "Dani (tu ñaño)",
+    emoji: "🎮",
+    hint: "Con tu hermano, un tono cercano y relajado.",
+    accent: "#9b8cff",
+    turns: [
+      { incoming: "¿Jugamos en la tarde?",
+        options: [
+          { text: "¡De una! Yo pongo la consola.", ok: true },
+          { text: "Estimado, acepto su invitación a jugar.", ok: false },
+        ] },
+      { incoming: "Trae algo de comer.",
+        options: [
+          { text: "Procederé a adquirir provisiones.", ok: false },
+          { text: "Listo, llevo papas.", ok: true },
+        ] },
+      { incoming: "No le digas a mamá.",
+        options: [
+          { text: "Tranqui, no digo nada.", ok: true },
+          { text: "Mantendré la confidencialidad del asunto.", ok: false },
+        ] },
+    ],
+  },
+  {
+    id: "vecina",
+    name: "Doña Carmen (vecina)",
+    emoji: "🧶",
+    hint: "Con la vecina mayor, respeto y amabilidad.",
+    accent: "#7bbf5a",
+    turns: [
+      { incoming: "Buenos días, ¿me ayudas con las bolsas?",
+        options: [
+          { text: "Claro, doña Carmen, yo le ayudo.", ok: true },
+          { text: "Ash, ya voy, espérese.", ok: false },
+        ] },
+      { incoming: "Gracias, eres muy amable.",
+        options: [
+          { text: "Con gusto, para eso estamos.", ok: true },
+          { text: "Full nada, vecina.", ok: false },
+        ] },
+      { incoming: "Salúdame a tu mamá.",
+        options: [
+          { text: "Ya pe, le aviso.", ok: false },
+          { text: "Le doy su saludo, que esté bien.", ok: true },
+        ] },
+    ],
+  },
+  {
+    id: "jefa",
+    name: "Lic. Torres (jefa)",
+    emoji: "💼",
+    hint: "Con tu jefa, registro formal y profesional.",
+    accent: "#c06bd6",
+    turns: [
+      { incoming: "¿Terminó el informe?",
+        options: [
+          { text: "Sí, licenciada, se lo envío enseguida.", ok: true },
+          { text: "Ya casi, deme un toque.", ok: false },
+        ] },
+      { incoming: "Necesito la presentación para mañana.",
+        options: [
+          { text: "Uf, mañana es full, pero ya veo.", ok: false },
+          { text: "De acuerdo, la tendré lista mañana.", ok: true },
+        ] },
+      { incoming: "Buen trabajo, gracias.",
+        options: [
+          { text: "Gracias a usted, quedo a sus órdenes.", ok: true },
+          { text: "Bacán, jefa, nos vemos.", ok: false },
+        ] },
+    ],
+  },
 ];
 
 // R3 — REPARAR. Frases con una palabra FUERA DE REGISTRO (coloquial) que debe
@@ -300,6 +405,9 @@ const R3_BANK = [
   { id: "plata",   wrong: "plata",   right: "dinero",      pre: "Necesito ahorrar ",      suf: "." },
   { id: "man",     wrong: "man",     right: "señor",       pre: "Ese ",                   suf: " es el profesor." },
   { id: "chevere", wrong: "chévere", right: "agradable",   pre: "La reunión fue ",        suf: "." },
+  { id: "porfa",   wrong: "porfa",   right: "por favor",   pre: "Ayúdame con esto, ",     suf: "." },
+  { id: "finde",   wrong: "finde",   right: "fin de semana", pre: "Nos vemos el ",        suf: "." },
+  { id: "depa",    wrong: "depa",    right: "departamento", pre: "Alquilé un ",           suf: " pequeño." },
 ];
 const R3_DECOYS = ["piola", "causa", "ñaño", "vacilón", "bróder"];
 
