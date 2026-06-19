@@ -837,8 +837,8 @@ const R2_BANK = [
     " a cada invitado.",
   ] },
   { id: "cuento", parts: [
-    "Mi maestra leyó un cuento donde un león salió de ", { options: ["caza", "casa"], answer: "caza" },
-    ". Llovía y el agua corría por un ", { options: ["tubo", "tuvo"], answer: "tubo" },
+    "Mi maestra leyó un cuento donde un león andaba de ", { options: ["caza", "casa"], answer: "caza" },
+    " por el bosque. Llovía y el agua corría por un ", { options: ["tubo", "tuvo"], answer: "tubo" },
     "; el león ", { options: ["tuvo", "tubo"], answer: "tuvo" },
     " miedo y gritó ¡", { options: ["ay", "hay"], answer: "ay" },
     "!, pero al final volvió feliz a su ", { options: ["casa", "caza"], answer: "casa" },
@@ -853,6 +853,15 @@ const R2_BANK = [
     "! bajito.",
   ] },
 ];
+
+// Guardia de autoría: cada hueco debe tener answer ∈ options. Un typo (p. ej.
+// answer:"caza" con options:["casa","caza"] mal escritas) rompería la
+// calificación en silencio; esto lo avisa una vez al cargar, sin afectar el juego.
+R2_BANK.forEach((row) => row.parts.forEach((p, i) => {
+  if (p && typeof p === "object" && Array.isArray(p.options) && !p.options.includes(p.answer)) {
+    console.error(`[juego-12] R2_BANK "${row.id}" hueco ${i}: answer "${p.answer}" no está en options ${JSON.stringify(p.options)}`);
+  }
+}));
 
 // R3 — Ruleta: frases de invitación. La rueda sortea una y el niño la
 // clasifica en formal o coloquial. Vocabulario ecuatoriano.
@@ -950,7 +959,7 @@ function GameEnunciado({ text, top = 84 }) {
   );
 }
 
-function GameHUD({ elapsed, stars, attempted, solved, total = 3 }) {
+function GameHUD({ elapsed, stars, attempted, solved, total = 3, roundResults = [] }) {
   return (
     <>
       <div data-qa="hud" style={{
@@ -984,14 +993,20 @@ function GameHUD({ elapsed, stars, attempted, solved, total = 3 }) {
         display: "flex", alignItems: "center", gap: 8,
       }}>
         <span className="ed-label" style={{ color: "rgba(255,255,255,0.7)" }}>Ronda</span>
-        {Array.from({ length: total }).map((_, i) => (
-          <div key={i} style={{
-            width: 10, height: 10, borderRadius: "50%",
-            background: i < attempted ? (i < solved ? "#fce9a8" : "#ff6b6b") : "rgba(255,255,255,0.2)",
-            boxShadow: i < attempted ? "0 0 10px currentColor" : "none",
-            color: i < solved ? "#fce9a8" : "#ff6b6b",
-          }} />
-        ))}
+        {Array.from({ length: total }).map((_, i) => {
+          // Colorea cada punto por el resultado REAL de SU ronda (no por conteo
+          // acumulado): verde si esa ronda se acertó, rojo si se falló.
+          const done = i < roundResults.length;
+          const ok = done && roundResults[i];
+          return (
+            <div key={i} style={{
+              width: 10, height: 10, borderRadius: "50%",
+              background: done ? (ok ? "#fce9a8" : "#ff6b6b") : "rgba(255,255,255,0.2)",
+              boxShadow: done ? "0 0 10px currentColor" : "none",
+              color: ok ? "#fce9a8" : "#ff6b6b",
+            }} />
+          );
+        })}
       </div>
     </>
   );
@@ -1268,19 +1283,21 @@ function FiestaGame({ app, setApp, go, onRestart }) {
     setR3Locked(true);
     const correct = choice === r3Landed.type;
     const userText = TYPE_LABEL[choice];
-    const correctText = `${TYPE_LABEL[r3Landed.type]} — "${r3Landed.text.slice(0, 26)}"`;
-    setTimeout(() => answer(correct, userText, correctText, "🎡"), 380);
+    const correctText = `${TYPE_LABEL[r3Landed.type]} — "${r3Landed.text}"`;
+    // Al fallar, deja ver el revelado (verde ✓ / rojo ✗) ~1.1 s antes del "¡UPS!".
+    setTimeout(() => answer(correct, userText, correctText, "🎡"), correct ? 450 : 1100);
   }
 
   // R1 — el shooter avisa cuando el niño cazó las palabras correctas.
   function handleShooterDone(caught, misses) {
     if (r1Locked) return;
     setR1Locked(true);
-    // Puntaje = palabras correctas atrapadas (menos medio punto por cada error).
-    const earned = Math.max(0, Math.min(10, caught - Math.floor(misses / 2)));
-    const correct = caught > 0 && caught >= misses;
+    // Puntaje = correctas atrapadas menos UNA por cada trampa tocada (penaliza
+    // tocar las de "n"). Acierta solo si discriminó: 3+ correctas y margen 3+.
+    const earned = Math.max(0, Math.min(10, caught - misses));
+    const correct = caught >= 3 && (caught - misses) >= 3;
     const userText = `${caught} cazadas · ${misses} ${misses === 1 ? "fallo" : "fallos"}`;
-    setTimeout(() => answer(correct, userText, "atrapar las mp/mb en 20 s", "🎯", earned), 380);
+    setTimeout(() => answer(correct, userText, "Cazar las de mp/mb y evitar las de n", "🎯", earned), 380);
   }
 
   function handleVerify() {
@@ -1291,7 +1308,8 @@ function FiestaGame({ app, setApp, go, onRestart }) {
       const correct = gaps.every((g, i) => r2Choices[i] === g.answer);
       const userText = r2Choices.join(", ");
       const correctText = gaps.map((g) => g.answer).join(", ");
-      setTimeout(() => answer(correct, userText, correctText, "📖"), 380);
+      // Al fallar, deja ver el revelado (verde ✓ / rojo ✗) ~1.1 s antes del "¡UPS!".
+      setTimeout(() => answer(correct, userText, correctText, "📖"), correct ? 450 : 1100);
     }
   }
 
@@ -1354,7 +1372,7 @@ function FiestaGame({ app, setApp, go, onRestart }) {
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
-      <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} />
+      <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} roundResults={log.map((e) => e.isCorrect)} />
       <CharacterCorner char={char} message={bocadillo} />
       {/* En R2 (lectura) el enunciado baja para acercarse a la hojita y
           equilibrar el espacio (el hueco de ~84px arriba quedaba enorme).
@@ -1418,9 +1436,9 @@ function FiestaGame({ app, setApp, go, onRestart }) {
 
 // ─────────────────────────────────────────────────────────────
 // R1 · Shooter "cazapalabras" — caen palabras desde arriba. El niño toca
-// las BIEN escritas (m antes de p/b) y deja caer las trampas con n. Al
-// cazar la meta (R1_GOAL) la ronda se auto-resuelve (sin VERIFICAR, según
-// el estándar de mecánicas tipo shooter).
+// las BIEN escritas (m antes de p/b) y deja caer las trampas con n. La ronda
+// dura R1_TIME (20 s) y termina por temporizador (sin VERIFICAR); el puntaje
+// son las correctas atrapadas menos una por cada trampa tocada.
 // ─────────────────────────────────────────────────────────────
 const R1_COLS = [18, 50, 82];   // centros de columna (% del carril) → sin overlap
 const R1_TIME = 20;             // segundos: atrapas cuantas puedas en este tiempo
@@ -1467,7 +1485,7 @@ function ShooterCard({ pick, locked, onComplete }) {
         const col = free[Math.floor(Math.random() * free.length)];
         const item = pick.pool[cursorRef.current % pick.pool.length];
         cursorRef.current += 1;
-        const ok = Math.random() < 0.55;
+        const ok = Math.random() < 0.5;
         const id = ++idRef.current;
         return [...ws, {
           id, text: ok ? item.ok : item.bad, ok, col,
@@ -1556,6 +1574,8 @@ function ShooterCard({ pick, locked, onComplete }) {
                 position: "absolute", left: R1_COLS[w.col] + "%", top: "-14%",
                 transform: "translateX(-50%)",
                 animation: `ed-fall ${w.dur}s linear forwards`,
+                // Al bloquear (fin de ronda), congela el carril bajo el overlay.
+                animationPlayState: locked ? "paused" : "running",
                 padding: "7px 13px", borderRadius: 12,
                 border: `2px solid ${flashBad ? "#ff6b6b" : flashOk ? "#2ecc8f" : "rgba(116,72,32,0.3)"}`,
                 background: flashBad
