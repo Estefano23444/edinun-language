@@ -176,6 +176,90 @@ const NOTICIAS = [
       "Los parques de Guayaquil tienen senderos y juegos.",
     ],
   },
+  {
+    id: "ballenas",
+    emoji: "🐋",
+    fecha: "Esta semana",
+    titular: "Avistan ballenas jorobadas en Puerto López",
+    entrada: "Esta semana llegaron las primeras ballenas jorobadas a las costas de Puerto López, en Manabí, para iniciar su temporada de avistamiento.",
+    cuerpo: "Cada año, estas ballenas viajan miles de kilómetros desde la Antártida hasta las aguas cálidas del Ecuador para tener a sus crías.",
+    cierre: "Los guías turísticos recomiendan observarlas a distancia y sin hacer ruido para no asustarlas.",
+    resumen_correcto: "Las ballenas jorobadas llegaron a Puerto López para su temporada de avistamiento.",
+    resumen_distractores: [
+      "Las ballenas viajan desde la Antártida cada año.",
+      "Puerto López está ubicado en la provincia de Manabí.",
+    ],
+  },
+  {
+    id: "robotica",
+    emoji: "🤖",
+    fecha: "Ayer",
+    titular: "Estudiantes ecuatorianos ganan un concurso de robótica",
+    entrada: "Un grupo de estudiantes de un colegio de Ambato ganó ayer el primer lugar en un concurso nacional de robótica.",
+    cuerpo: "Los jóvenes construyeron un robot capaz de clasificar la basura por colores, hecho con materiales reciclados.",
+    cierre: "El equipo representará al Ecuador en una competencia internacional el próximo año.",
+    resumen_correcto: "Estudiantes de Ambato ganaron el concurso nacional de robótica.",
+    resumen_distractores: [
+      "El robot fue construido con materiales reciclados.",
+      "La competencia internacional será el próximo año.",
+    ],
+  },
+  {
+    id: "biblioteca",
+    emoji: "📚",
+    fecha: "Este mes",
+    titular: "Inauguran una biblioteca móvil para escuelas rurales",
+    entrada: "Este mes empezó a funcionar una biblioteca móvil que recorre las escuelas rurales de la provincia de Loja.",
+    cuerpo: "El vehículo lleva más de mil libros de cuentos, ciencia y poesía para que los niños puedan leerlos y llevarlos prestados.",
+    cierre: "La biblioteca visitará una escuela diferente cada semana durante todo el año escolar.",
+    resumen_correcto: "Una biblioteca móvil llevará libros a las escuelas rurales de Loja.",
+    resumen_distractores: [
+      "El vehículo transporta más de mil libros.",
+      "La biblioteca visitará una escuela cada semana.",
+    ],
+  },
+  {
+    id: "ciclovia",
+    emoji: "🚲",
+    fecha: "El fin de semana",
+    titular: "Nueva ciclovía conecta los parques de Cuenca",
+    entrada: "El fin de semana se abrió una nueva ciclovía que une los principales parques de la ciudad de Cuenca.",
+    cuerpo: "El recorrido de ocho kilómetros permite a las familias pasear en bicicleta de forma segura, lejos de los autos.",
+    cierre: "La municipalidad planea ampliar la ciclovía hasta las afueras de la ciudad el próximo año.",
+    resumen_correcto: "Cuenca abrió una ciclovía que conecta sus principales parques.",
+    resumen_distractores: [
+      "El recorrido tiene ocho kilómetros de largo.",
+      "La municipalidad ampliará la ruta el próximo año.",
+    ],
+  },
+  {
+    id: "condor",
+    emoji: "🦅",
+    fecha: "La semana pasada",
+    titular: "Realizan el censo nacional del cóndor andino",
+    entrada: "La semana pasada, decenas de voluntarios participaron en el censo nacional del cóndor andino, el ave símbolo del Ecuador.",
+    cuerpo: "Desde distintos miradores en la montaña, los observadores contaron cuántos cóndores volaban y anotaron sus características.",
+    cierre: "Los resultados ayudarán a proteger mejor a esta especie, que se encuentra en peligro de extinción.",
+    resumen_correcto: "Voluntarios realizaron el censo nacional del cóndor andino.",
+    resumen_distractores: [
+      "El cóndor es el ave símbolo del Ecuador.",
+      "Los observadores contaron desde miradores en la montaña.",
+    ],
+  },
+  {
+    id: "ciencias",
+    emoji: "🔬",
+    fecha: "Hoy",
+    titular: "Una feria de ciencias reúne a colegios de todo el país",
+    entrada: "Hoy se inauguró en Quito una gran feria de ciencias que reúne proyectos de colegios de todas las provincias del Ecuador.",
+    cuerpo: "Entre los inventos destacan un purificador de agua solar y una huerta que se riega sola con sensores.",
+    cierre: "Los visitantes podrán recorrer la feria de forma gratuita durante tres días.",
+    resumen_correcto: "Una feria de ciencias en Quito reúne proyectos de colegios de todo el país.",
+    resumen_distractores: [
+      "Entre los inventos hay un purificador de agua solar.",
+      "La feria estará abierta al público durante tres días.",
+    ],
+  },
 ];
 
 const NOTICIA_CONCEPTOS = [
@@ -253,6 +337,39 @@ const BLOG_MOCKUPS = [
       { kind: "CATEGORÍAS",   content: "#Móviles  #Apps  #Internet  #Gadgets" },
       { kind: "DISEÑO",       content: "Tema: oscuro · Fuente: moderna\nColor principal: azul." },
       { kind: "SOBRE MÍ",     content: "Hola, soy Sofía. Escribo sobre tecnología accesible para todos." },
+    ],
+  },
+  {
+    id: "mascotas",
+    titulo: "El mundo de mis mascotas",
+    autor: "Daniel",
+    sections: [
+      { kind: "ENTRADAS",     content: "• Cómo cuidar a tu cachorro (Mar 19)\n• Mi gato aprende trucos (Mar 15)\n• Peces de colores (Mar 12)" },
+      { kind: "COMENTARIOS",  content: "Lucía: ¡Qué lindo tu cachorro!\nPedro: Mi gato también hace trucos." },
+      { kind: "MULTIMEDIA",   content: "📷 40 fotos  ·  🎥 8 videos\nVideos divertidos de mis mascotas." },
+      { kind: "SOBRE MÍ",     content: "Soy Daniel y comparto consejos para cuidar a los animales." },
+    ],
+  },
+  {
+    id: "deportes",
+    titulo: "Pura adrenalina",
+    autor: "Valeria",
+    sections: [
+      { kind: "ENTRADAS",     content: "• La gran final de fútbol (Mar 21)\n• Cómo empezar a correr (Mar 17)\n• Reglas del básquet (Mar 13)" },
+      { kind: "CATEGORÍAS",   content: "#Fútbol  #Atletismo  #Básquet  #Natación" },
+      { kind: "BOTONES Y ENLACES", content: "🔗 Compartir partido\n📌 Guardar entrada\n📩 Suscribirse" },
+      { kind: "ARCHIVOS",     content: "Marzo 2024  ·  Febrero 2024\nEnero 2024  ·  Diciembre 2023" },
+    ],
+  },
+  {
+    id: "naturaleza",
+    titulo: "Cuidemos el planeta",
+    autor: "Tomás",
+    sections: [
+      { kind: "ENTRADAS",     content: "• Reciclar en casa (Mar 22)\n• Animales en peligro (Mar 18)\n• Sembrar un árbol (Mar 14)" },
+      { kind: "CATEGORÍAS",   content: "#Reciclaje  #Animales  #Bosques  #Agua" },
+      { kind: "DISEÑO",       content: "Tema: claro · Fuente: redonda\nColor principal: verde." },
+      { kind: "COMENTARIOS",  content: "Inés: Yo ya reciclo en casa.\nLuis: Sembré un árbol el sábado." },
     ],
   },
 ];
@@ -570,6 +687,11 @@ function LetraRGame({ app, setApp, go, onRestart }) {
   const [starsSession, setStarsSession] = useStateG(0);
   const [feedback, setFeedback] = useStateG(null);
   const [feedbackMsg, setFeedbackMsg] = useStateG("");
+  // Fase "reveal": al fallar, ANTES del overlay "¡UPS!" se rellena el slot con
+  // la letra correcta (en verde) y aparece un cartel "Correcta: ✓ palabra".
+  // Bloquea toda entrada. Mismo mecanismo que juego-1.
+  const [reveal, setReveal] = useStateG(null);
+  const REVEAL_MS = 2800;
   const [confirmingExit, setConfirmingExit] = useStateG(false);
   const [confirmingHome, setConfirmingHome] = useStateG(false);
   const [log, setLog] = useStateG([]);
@@ -600,6 +722,7 @@ function LetraRGame({ app, setApp, go, onRestart }) {
   }, []);
 
   function pressLetter(letter) {
+    if (reveal) return;
     setFilled((prev) => {
       const len = problem.hiddenIdx.length;
       const next = [...prev];
@@ -611,6 +734,7 @@ function LetraRGame({ app, setApp, go, onRestart }) {
     });
   }
   function eraseSlot(slotIdx) {
+    if (reveal) return;
     setFilled((prev) => {
       const next = [...prev];
       while (next.length < problem.hiddenIdx.length) next.push(undefined);
@@ -619,12 +743,14 @@ function LetraRGame({ app, setApp, go, onRestart }) {
     });
   }
   function erase() {
+    if (reveal) return;
     for (let i = problem.hiddenIdx.length - 1; i >= 0; i--) {
       if (filled[i] !== undefined) { eraseSlot(i); return; }
     }
   }
 
   function verify() {
+    if (reveal) return;
     const allFilled = problem.hiddenIdx.every((_, i) => filled[i] !== undefined);
     if (!allFilled) {
       setFeedback("err");
@@ -641,21 +767,34 @@ function LetraRGame({ app, setApp, go, onRestart }) {
     const exerciseSec = Math.max(0, Math.floor((Date.now() - exerciseStart.current) / 1000));
     const earned = calcStars(isCorrect, exerciseSec);
 
-    const newAttempted = attempted + 1;
-    const newSolved = solved + (isCorrect ? 1 : 0);
-    const newStarsTotal = stars + earned;
-    const newStarsSession = starsSession + earned;
-
     const entry = {
-      idx: newAttempted,
       a: problem.word,
       b: userWord,
       op: "🔤",
       correctAnswer: problem.word,
       userAnswer: userWord,
-      isCorrect, time: exerciseSec, earned,
+      time: exerciseSec, earned,
       emoji: problem.emoji,
     };
+
+    if (!isCorrect) {
+      // Revelar la palabra correcta ANTES del overlay "¡UPS!": los slots se
+      // rellenan con las letras correctas en verde + cartel "Correcta: ✓ …".
+      setReveal({ word: problem.word });
+      setTimeout(() => { setReveal(null); finalize(false, entry); }, REVEAL_MS);
+      return;
+    }
+    finalize(true, entry);
+  }
+
+  function finalize(isCorrect, partialEntry) {
+    const earned = isCorrect ? partialEntry.earned : 0;
+    const newAttempted = attempted + 1;
+    const newSolved = solved + (isCorrect ? 1 : 0);
+    const newStarsTotal = stars + earned;
+    const newStarsSession = starsSession + earned;
+
+    const entry = { idx: newAttempted, ...partialEntry, isCorrect };
     const newLog = [...log, entry];
 
     setFeedback(isCorrect ? "ok" : "err");
@@ -666,7 +805,7 @@ function LetraRGame({ app, setApp, go, onRestart }) {
     setStarsSession(newStarsSession);
     setLog(newLog);
 
-    const wait = isCorrect ? 950 : 1200;
+    const wait = isCorrect ? 950 : 1100;
     setTimeout(() => {
       setFeedback(null);
       setFeedbackMsg("");
@@ -804,22 +943,25 @@ function LetraRGame({ app, setApp, go, onRestart }) {
               if (filled[k] === undefined) { activeIdx = k; break; }
             }
             const isActive = hiddenSlot === activeIdx;
+            // Durante el revelado, el slot muestra la LETRA CORRECTA en verde
+            // (la del problema, `ch`), no la que puso el niño.
+            const showReveal = !!reveal;
             return (
-              <button key={wordPos} onClick={() => { if (isFilled) eraseSlot(hiddenSlot); }}
+              <button key={wordPos} onClick={() => { if (isFilled && !showReveal) eraseSlot(hiddenSlot); }}
                 style={{
                   width: SLOT_W, height: SLOT_H, borderRadius: 12,
-                  border: `2.5px solid ${feedback === "ok" ? "#2ecc8f" : feedback === "err" ? "#ff6b6b" : isActive ? "#fce9a8" : "rgba(242,194,96,0.55)"}`,
-                  background: isFilled ? "linear-gradient(180deg, rgba(252,233,168,0.95), rgba(217,164,65,0.85))" : "rgba(10,6,35,0.55)",
-                  color: isFilled ? "#3a2608" : "rgba(252,233,168,0.5)",
+                  border: `2.5px solid ${showReveal ? "#2ecc8f" : feedback === "ok" ? "#2ecc8f" : feedback === "err" ? "#ff6b6b" : isActive ? "#fce9a8" : "rgba(242,194,96,0.55)"}`,
+                  background: showReveal ? "linear-gradient(180deg, rgba(46,204,143,0.95), rgba(34,160,108,0.9))" : isFilled ? "linear-gradient(180deg, rgba(252,233,168,0.95), rgba(217,164,65,0.85))" : "rgba(10,6,35,0.55)",
+                  color: showReveal ? "#06381f" : isFilled ? "#3a2608" : "rgba(252,233,168,0.5)",
                   fontFamily: "var(--ed-font-display)", fontWeight: 800,
                   fontSize: SLOT_H * 0.55,
-                  cursor: isFilled ? "pointer" : "default",
-                  boxShadow: isActive ? "0 0 14px rgba(252,233,168,0.5)" : isFilled ? "0 4px 10px rgba(0,0,0,0.35)" : "inset 0 1px 0 rgba(255,255,255,0.08)",
+                  cursor: isFilled && !showReveal ? "pointer" : "default",
+                  boxShadow: showReveal ? "0 0 16px rgba(46,204,143,0.6)" : isActive ? "0 0 14px rgba(252,233,168,0.5)" : isFilled ? "0 4px 10px rgba(0,0,0,0.35)" : "inset 0 1px 0 rgba(255,255,255,0.08)",
                   transition: "all 0.15s ease",
                 }}
                 title={isFilled ? "Toca para borrar" : "Toca una letra de abajo"}
               >
-                {isFilled ? f : "_"}
+                {showReveal ? ch : (isFilled ? f : "_")}
               </button>
             );
           })}
@@ -976,7 +1118,8 @@ function NoticiaGame({ app, setApp, go, onRestart }) {
     setStarsSession(newStarsSession);
     setLog(newLog);
 
-    const wait = isCorrect ? 950 : 1200;
+    // El revelado de la correcta ya ocurrió en la tarjeta → "¡UPS!" corto.
+    const wait = isCorrect ? 950 : 1100;
     setTimeout(() => {
       setFeedback(null);
       setFeedbackMsg("");
@@ -1095,9 +1238,38 @@ function NoticiaGame({ app, setApp, go, onRestart }) {
   );
 }
 
+// Tiempo de revelado de la respuesta correcta en las tarjetas de opción
+// múltiple (R2/R3): al fallar se marca la correcta en verde con ✓ y la
+// elegida en rojo, antes de avisar al padre (que muestra el "¡UPS!").
+const CARD_REVEAL_MS = 2400;
+
+// Estilo del chip/opción según el estado de revelado. `isCorrect` = es la
+// respuesta correcta; `isPicked` = la que tocó el niño.
+function revealChipStyle(locked, isCorrect, isPicked) {
+  if (!locked) return null;
+  if (isCorrect) return {
+    background: "linear-gradient(180deg, #2ecc8f, #22a06c)",
+    color: "#06381f", border: "2px solid #2ecc8f",
+    boxShadow: "0 0 16px rgba(46,204,143,0.55)",
+  };
+  if (isPicked) return {
+    background: "linear-gradient(180deg, #ff8b8b, #dc5050)",
+    color: "#3a0808", border: "2px solid #ff6b6b",
+    boxShadow: "0 0 14px rgba(255,107,107,0.4)",
+  };
+  return { opacity: 0.55 };
+}
+
 // Tarjeta de noticia con una parte resaltada + chips de respuesta.
 function NoticiaCard({ noticia, highlight, chips, onAnswer }) {
   const highlightBg = "linear-gradient(180deg, rgba(252,233,168,0.45), rgba(252,233,168,0.25))";
+  const [picked, setPicked] = useStateG(null);
+  const locked = picked !== null;
+  function choose(c) {
+    if (locked) return;
+    setPicked(c);
+    setTimeout(() => onAnswer(c), CARD_REVEAL_MS);
+  }
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: 12 }}>
       <div style={{
@@ -1142,18 +1314,28 @@ function NoticiaCard({ noticia, highlight, chips, onAnswer }) {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10 }}>
-        {chips.map((c) => (
-          <button key={c} onClick={() => onAnswer(c)}
-            style={{
-              padding: "14px 8px", borderRadius: 12,
-              background: "linear-gradient(180deg, #ffe97a, #d7b12a)",
-              color: "#3a2608",
-              fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13,
-              border: "none",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.18), 0 4px 10px -2px rgba(0,0,0,0.45)",
-              cursor: "pointer", letterSpacing: "0.02em",
-            }}>{c}</button>
-        ))}
+        {chips.map((c) => {
+          const rv = revealChipStyle(locked, c === highlight, c === picked);
+          return (
+            <button key={c} onClick={() => choose(c)}
+              style={{
+                position: "relative",
+                padding: "14px 8px", borderRadius: 12,
+                background: "linear-gradient(180deg, #ffe97a, #d7b12a)",
+                color: "#3a2608",
+                fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13,
+                border: "none",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.18), 0 4px 10px -2px rgba(0,0,0,0.45)",
+                cursor: locked ? "default" : "pointer", letterSpacing: "0.02em",
+                ...(rv || {}),
+              }}>
+              {c}
+              {locked && c === highlight && (
+                <span style={{ position: "absolute", top: -7, right: -7, width: 22, height: 22, borderRadius: "50%", background: "#2ecc8f", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>✓</span>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -1161,6 +1343,13 @@ function NoticiaCard({ noticia, highlight, chips, onAnswer }) {
 
 // Tarjeta de noticia con 3 frases de resumen.
 function NoticiaResumenCard({ noticia, options, onAnswer }) {
+  const [picked, setPicked] = useStateG(null);
+  const locked = picked !== null;
+  function choose(opt) {
+    if (locked) return;
+    setPicked(opt);
+    setTimeout(() => onAnswer(opt), CARD_REVEAL_MS);
+  }
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: 10 }}>
       <div style={{
@@ -1180,21 +1369,31 @@ function NoticiaResumenCard({ noticia, options, onAnswer }) {
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1, minHeight: 0 }}>
-        {options.map((opt, i) => (
-          <button key={i} onClick={() => onAnswer(opt)}
-            style={{
-              padding: "12px 16px", borderRadius: 14,
-              background: "rgba(255,233,122,0.92)",
-              color: "#1a1a1a",
-              fontFamily: "var(--ed-font-ui)", fontWeight: 600, fontSize: 14,
-              border: "2px solid rgba(242,194,96,0.7)",
-              textAlign: "left",
-              boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
-              cursor: "pointer",
-              lineHeight: 1.35,
-              flex: 1, minHeight: 0,
-            }}>{opt.text}</button>
-        ))}
+        {options.map((opt, i) => {
+          const rv = revealChipStyle(locked, opt.isCorrect, opt === picked);
+          return (
+            <button key={i} onClick={() => choose(opt)}
+              style={{
+                position: "relative",
+                padding: "12px 16px", borderRadius: 14,
+                background: "rgba(255,233,122,0.92)",
+                color: "#1a1a1a",
+                fontFamily: "var(--ed-font-ui)", fontWeight: 600, fontSize: 14,
+                border: "2px solid rgba(242,194,96,0.7)",
+                textAlign: "left",
+                boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+                cursor: locked ? "default" : "pointer",
+                lineHeight: 1.35,
+                flex: 1, minHeight: 0,
+                ...(rv || {}),
+              }}>
+              {opt.text}
+              {locked && opt.isCorrect && (
+                <span style={{ position: "absolute", top: -7, right: -7, width: 22, height: 22, borderRadius: "50%", background: "#2ecc8f", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>✓</span>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -1202,6 +1401,13 @@ function NoticiaResumenCard({ noticia, options, onAnswer }) {
 
 // Tarjeta de concepto: definición + 4 chips
 function ConceptoCard({ def, chips, correct, onAnswer }) {
+  const [picked, setPicked] = useStateG(null);
+  const locked = picked !== null;
+  function choose(c) {
+    if (locked) return;
+    setPicked(c);
+    setTimeout(() => onAnswer(c), CARD_REVEAL_MS);
+  }
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-evenly", gap: 0 }}>
       <div style={{
@@ -1217,18 +1423,28 @@ function ConceptoCard({ def, chips, correct, onAnswer }) {
         "{def}"
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-        {chips.map((c, i) => (
-          <button key={i} onClick={() => onAnswer(c)}
-            style={{
-              padding: "22px 12px", borderRadius: 14,
-              background: "linear-gradient(180deg, #ffe97a, #d7b12a)",
-              color: "#3a2608",
-              fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 16,
-              border: "none",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.18), 0 4px 12px -2px rgba(0,0,0,0.45)",
-              cursor: "pointer", letterSpacing: "0.02em",
-            }}>{c}</button>
-        ))}
+        {chips.map((c, i) => {
+          const rv = revealChipStyle(locked, c === correct, c === picked);
+          return (
+            <button key={i} onClick={() => choose(c)}
+              style={{
+                position: "relative",
+                padding: "22px 12px", borderRadius: 14,
+                background: "linear-gradient(180deg, #ffe97a, #d7b12a)",
+                color: "#3a2608",
+                fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 16,
+                border: "none",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.18), 0 4px 12px -2px rgba(0,0,0,0.45)",
+                cursor: locked ? "default" : "pointer", letterSpacing: "0.02em",
+                ...(rv || {}),
+              }}>
+              {c}
+              {locked && c === correct && (
+                <span style={{ position: "absolute", top: -7, right: -7, width: 22, height: 22, borderRadius: "50%", background: "#2ecc8f", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>✓</span>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -1328,7 +1544,8 @@ function BlogGame({ app, setApp, go, onRestart }) {
     setStarsSession(newStarsSession);
     setLog(newLog);
 
-    const wait = isCorrect ? 950 : 1200;
+    // El revelado de la correcta ya ocurrió en la tarjeta → "¡UPS!" corto.
+    const wait = isCorrect ? 950 : 1100;
     setTimeout(() => {
       setFeedback(null);
       setFeedbackMsg("");
@@ -1452,6 +1669,13 @@ function BlogGame({ app, setApp, go, onRestart }) {
 // Mockup visual del blog para ronda 0
 function BlogMockupCard({ mockup, highlight, chips, onAnswer }) {
   const highlightBg = "linear-gradient(180deg, rgba(123,184,255,0.45), rgba(123,184,255,0.25))";
+  const [picked, setPicked] = useStateG(null);
+  const locked = picked !== null;
+  function choose(c) {
+    if (locked) return;
+    setPicked(c);
+    setTimeout(() => onAnswer(c), CARD_REVEAL_MS);
+  }
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: 12 }}>
       <div style={{
@@ -1482,29 +1706,39 @@ function BlogMockupCard({ mockup, highlight, chips, onAnswer }) {
         </div>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10 }}>
-        {chips.map((c) => (
-          <button key={c} onClick={() => onAnswer(c)}
-            style={{
-              padding: "14px 4px", borderRadius: 12,
-              background: "linear-gradient(180deg, #7ab8ff, #2773d8)",
-              color: "#fff",
-              fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12,
-              border: "none",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -3px 0 rgba(0,0,0,0.25), 0 4px 10px -2px rgba(0,0,0,0.45)",
-              cursor: "pointer", letterSpacing: "0.02em",
-            }}>{c}</button>
-        ))}
+        {chips.map((c) => {
+          const rv = revealChipStyle(locked, c === highlight, c === picked);
+          return (
+            <button key={c} onClick={() => choose(c)}
+              style={{
+                position: "relative",
+                padding: "14px 4px", borderRadius: 12,
+                background: "linear-gradient(180deg, #7ab8ff, #2773d8)",
+                color: "#fff",
+                fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12,
+                border: "none",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -3px 0 rgba(0,0,0,0.25), 0 4px 10px -2px rgba(0,0,0,0.45)",
+                cursor: locked ? "default" : "pointer", letterSpacing: "0.02em",
+                ...(rv || {}),
+              }}>
+              {c}
+              {locked && c === highlight && (
+                <span style={{ position: "absolute", top: -7, right: -7, width: 22, height: 22, borderRadius: "50%", background: "#2ecc8f", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>✓</span>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
 }
 
 // Shooter: burbujas que caen, el niño toca elementos del blog (correctas)
-// y evita los distractores. 20 segundos.
+// y evita los distractores. 10 segundos.
 function BlogShooterCard({ onFinish }) {
   const [bubbles, setBubbles] = useStateG([]);
   const [stats, setStats] = useStateG({ aciertos: 0, errores: 0, perdidas: 0 });
-  const [timeLeft, setTimeLeft] = useStateG(20);
+  const [timeLeft, setTimeLeft] = useStateG(10);
   const nextIdRef = useRefG(0);
   const finishedRef = useRefG(false);
   const containerRef = useRefG(null);

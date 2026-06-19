@@ -270,6 +270,15 @@ function GameScreen({ app, setApp, go }) {
   const [starsSession, setStarsSession] = useStateG(0);
   const [feedback, setFeedback] = useStateG(null);
   const [feedbackMsg, setFeedbackMsg] = useStateG("");
+  // Fase "reveal": al fallar, ANTES del overlay "¡UPS!" se muestra la
+  // respuesta correcta — las casillas ocultas se rellenan con las letras
+  // correctas en verde y aparece un cartel "Correcta: ✓ palabra". Bloquea
+  // toda entrada. `null` = sin revelado. Mismo mecanismo que los juegos de
+  // mate. `{ word: "ventana" }`.
+  const [reveal, setReveal] = useStateG(null);
+  // El revelado (respuesta correcta) es el momento educativo → dura más.
+  // El overlay "¡UPS!" es solo refuerzo emocional → corto.
+  const REVEAL_MS = 2800;
   const [confirmingExit, setConfirmingExit] = useStateG(false);
   const [confirmingRestart, setConfirmingRestart] = useStateG(false);
   // pendingLevel: id del nivel al que se quiere cambiar desde los chips
@@ -327,6 +336,7 @@ function GameScreen({ app, setApp, go }) {
   }, []);
 
   function pressLetter(letter) {
+    if (reveal) return;
     // Calcular el siguiente slot vacío DENTRO del setter para que el state
     // sea consistente cuando el usuario toca varias vocales seguidas muy
     // rápido (palabras con 2-3 vocales ocultas). Antes había bug: dos
@@ -344,6 +354,7 @@ function GameScreen({ app, setApp, go }) {
   }
 
   function eraseSlot(slotIdx) {
+    if (reveal) return;
     setFilled((prev) => {
       const next = [...prev];
       while (next.length < problem.hiddenIdx.length) next.push(undefined);
@@ -353,6 +364,7 @@ function GameScreen({ app, setApp, go }) {
   }
 
   function erase() {
+    if (reveal) return;
     // Borra la última letra colocada (el primer slot lleno empezando por la derecha).
     for (let i = problem.hiddenIdx.length - 1; i >= 0; i--) {
       if (filled[i] !== undefined) {
@@ -363,6 +375,7 @@ function GameScreen({ app, setApp, go }) {
   }
 
   function verify() {
+    if (reveal) return;
     const allFilled = problem.hiddenIdx.every((_, i) => filled[i] !== undefined);
     if (!allFilled) {
       setFeedback("err");
@@ -386,27 +399,40 @@ function GameScreen({ app, setApp, go }) {
     const exerciseSec = Math.max(0, Math.floor((Date.now() - exerciseStart.current) / 1000));
     const earned = isCorrect ? Math.max(1, 10 - Math.floor(exerciseSec / 3)) : 0;
 
-    const newAttempted = attempted + 1;
-    const newSolved = solved + (isCorrect ? 1 : 0);
-    const newStarsSession = starsSession + earned;
-    const newStarsTotal = stars + earned;
-
     // Para el reporte: si la palabra acepta variantes, mostrar todas
     // separadas por " o " (ej. "banana o banano", "gato o gata"). Si solo
     // hay una grafía válida, mostrar esa.
     const displayCorrect = accepted.length > 1 ? accepted.join(" o ") : problem.word;
     const entry = {
-      idx: newAttempted,
       a: displayCorrect,         // palabra(s) correcta(s) para el reporte
       b: userWord,               // palabra del estudiante
       op: "📝",
       correctAnswer: displayCorrect,
       userAnswer: userWord,
-      isCorrect,
       time: exerciseSec,
       earned,
       emoji: problem.emoji,
     };
+
+    if (!isCorrect) {
+      // Revelar la respuesta correcta ANTES del overlay "¡UPS!": las casillas
+      // ocultas se rellenan con las letras correctas (en verde) y aparece un
+      // cartel "Correcta: ✓ palabra". Toda entrada queda bloqueada.
+      setReveal({ word: problem.word });
+      setTimeout(() => { setReveal(null); finalize(false, entry); }, REVEAL_MS);
+      return;
+    }
+    finalize(true, entry);
+  }
+
+  function finalize(isCorrect, partialEntry) {
+    const earned = isCorrect ? partialEntry.earned : 0;
+    const newAttempted = attempted + 1;
+    const newSolved = solved + (isCorrect ? 1 : 0);
+    const newStarsSession = starsSession + earned;
+    const newStarsTotal = stars + earned;
+
+    const entry = { idx: newAttempted, ...partialEntry, isCorrect };
     const newLog = [...log, entry];
 
     setFeedback(isCorrect ? "ok" : "err");
@@ -420,7 +446,9 @@ function GameScreen({ app, setApp, go }) {
     setStarsSession(newStarsSession);
     setLog(newLog);
 
-    const wait = isCorrect ? 950 : 1200;
+    // El revelado ya cumplió el rol educativo del fallo → el overlay "¡UPS!"
+    // es solo refuerzo emocional y va corto, igual que el de acierto.
+    const wait = isCorrect ? 950 : 1100;
     setTimeout(() => {
       setFeedback(null);
       setFeedbackMsg("");
@@ -679,6 +707,11 @@ function GameScreen({ app, setApp, go }) {
               if (filled[k] === undefined) { activeIdx = k; break; }
             }
             const isActive = hiddenSlot === activeIdx;
+            // Durante el revelado, la casilla muestra la LETRA CORRECTA en
+            // verde (no la que puso el niño), para que vea la respuesta antes
+            // del "¡UPS!".
+            const correctLetter = problem.correctLetters[hiddenSlot];
+            const showReveal = !!reveal;
             return (
               <button
                 key={wordPos}
@@ -687,18 +720,23 @@ function GameScreen({ app, setApp, go }) {
                   width: SLOT_W, height: SLOT_H,
                   borderRadius: 12,
                   border: `2.5px solid ${
+                    showReveal ? "#2ecc8f" :
                     feedback === "ok" ? "#2ecc8f" :
                     feedback === "err" ? "#ff6b6b" :
                     isActive ? "#fce9a8" : "rgba(242,194,96,0.55)"
                   }`,
-                  background: isFilled
-                    ? "linear-gradient(180deg, rgba(252,233,168,0.95), rgba(217,164,65,0.85))"
-                    : "rgba(10,6,35,0.55)",
-                  color: isFilled ? "#3a2608" : "rgba(252,233,168,0.5)",
+                  background: showReveal
+                    ? "linear-gradient(180deg, rgba(46,204,143,0.95), rgba(34,160,108,0.9))"
+                    : isFilled
+                      ? "linear-gradient(180deg, rgba(252,233,168,0.95), rgba(217,164,65,0.85))"
+                      : "rgba(10,6,35,0.55)",
+                  color: showReveal ? "#06381f" : isFilled ? "#3a2608" : "rgba(252,233,168,0.5)",
                   fontFamily: "var(--ed-font-display)", fontWeight: 800,
                   fontSize: SLOT_H * 0.55,
-                  cursor: isFilled ? "pointer" : "default",
-                  boxShadow: isActive
+                  cursor: isFilled && !showReveal ? "pointer" : "default",
+                  boxShadow: showReveal
+                    ? "0 0 16px rgba(46,204,143,0.6), inset 0 1px 0 rgba(255,255,255,0.3)"
+                    : isActive
                     ? "0 0 14px rgba(252,233,168,0.5), inset 0 1px 0 rgba(255,255,255,0.15)"
                     : isFilled
                       ? "0 4px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.4)"
@@ -707,7 +745,7 @@ function GameScreen({ app, setApp, go }) {
                 }}
                 title={isFilled ? "Toca para borrar" : "Toca una letra de abajo"}
               >
-                {isFilled ? f : "_"}
+                {showReveal ? correctLetter : (isFilled ? f : "_")}
               </button>
             );
           })}

@@ -1209,9 +1209,9 @@ function pushRecent(key) {
 function pickFresh(bank, prefix) {
   const pre = prefix + ":";
   const recentIds = getRecent().filter((k) => k.startsWith(pre)).map((k) => k.slice(pre.length));
-  // Bloquea hasta N-1 recientes → solo deja libres los que llevan más
-  // tiempo sin aparecer (ciclo completo antes de repetir).
-  const windowN = Math.max(1, bank.length - 1);
+  // Bloquea la mitad más reciente del banco → deja la otra mitad como pool
+  // fresco (convención estándar del repo: buena variedad sin agotar el pool).
+  const windowN = Math.floor(bank.length / 2);
   const blocked = new Set(recentIds.slice(0, windowN));
   let pool = bank.filter((b) => !blocked.has(b.id));
   if (pool.length === 0) pool = bank;
@@ -1657,6 +1657,11 @@ const T2_OBRAS = [
     { id: "re1", n: 1, label: "Un estudiante se hace pasar por médico en la feria." },
     { id: "re2", n: 2, label: "Receta cosquillas y saltos para curar el dolor de muelas." },
     { id: "re3", n: 3, label: "El enfermo ríe tanto que olvida el dolor y le paga feliz." },
+  ] },
+  { id: "guitarra", parts: [
+    { id: "gu1", n: 1, label: "Un músico llega a la plaza para dar una serenata al alcalde." },
+    { id: "gu2", n: 2, label: "Se le rompen las cuerdas y canta con una olla y una cuchara." },
+    { id: "gu3", n: 3, label: "El alcalde aplaude encantado y lo invita a la fiesta del pueblo." },
   ] },
 ];
 

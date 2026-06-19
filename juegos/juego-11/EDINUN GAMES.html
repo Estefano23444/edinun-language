@@ -1319,7 +1319,9 @@ function RefranesGame({ app, setApp, go, onRestart }) {
       setR1Locked(true);
       const formed = r1Slots.map((i) => r1Pick.tray[i]).join("");
       const correct = formed === r1Pick.word;
-      setTimeout(() => answer(correct, formed, r1Pick.word, "🧪"), 380);
+      // Al fallar, dejar el tablero (con las sílabas correctas en verde)
+      // visible más tiempo ANTES del "¡UPS!" para que el niño lo lea.
+      setTimeout(() => answer(correct, formed, r1Pick.word, "🧪"), correct ? 380 : 2200);
     } else if (ronda === 1) {
       setR2Locked(true);
       let correct = true;
@@ -1328,7 +1330,8 @@ function RefranesGame({ app, setApp, go, onRestart }) {
       }
       const userText = r2Pick.words.map((w) => `${w}→${r2Placed[w] || "?"}`).join(" · ");
       const correctText = r2Pick.words.map((w) => `${w}→${r2Pick.wordGroup[w]}`).join(" · ");
-      setTimeout(() => answer(correct, userText, correctText, "🧴"), 380);
+      // Al fallar, tablero visible más tiempo (con "→ grupo correcto") antes del "¡UPS!".
+      setTimeout(() => answer(correct, userText, correctText, "🧴"), correct ? 380 : 2200);
     } else if (ronda === 2) {
       setR3Locked(true);
       // Memoria: completar el tablero = ronda lograda. Las estrellas bajan con
@@ -1369,7 +1372,8 @@ function RefranesGame({ app, setApp, go, onRestart }) {
     setStarsSession(newStarsSession);
     setLog(newLog);
 
-    const wait = isCorrect ? 1000 : 1450;
+    // El revelado ya se mostró en el tablero → el "¡UPS!" va corto.
+    const wait = isCorrect ? 1000 : 1100;
     setTimeout(() => {
       setFeedback(null);
       setFeedbackMsg("");
@@ -1507,23 +1511,29 @@ function LaboratorioCard({ pick, slots, locked, onTapTile, onClearSlot }) {
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {slots.map((_, slot) => {
             const v = formed[slot];
+            // Al fallar, la casilla muestra la sílaba CORRECTA (pick.syll) en
+            // verde para revelar cómo se formaba la palabra.
+            const showReveal = locked && !correct;
+            const revealSyl = pick.syll[slot];
             return (
               <button key={slot}
-                onClick={() => { if (v !== null) onClearSlot(slot); }}
+                onClick={() => { if (v !== null && !locked) onClearSlot(slot); }}
                 style={{
                   width: 96, height: 76, borderRadius: 14,
-                  border: `2.5px solid ${v !== null ? slotBorder : "rgba(242,194,96,0.5)"}`,
-                  background: v !== null
+                  border: `2.5px solid ${showReveal ? "#2ecc8f" : v !== null ? slotBorder : "rgba(242,194,96,0.5)"}`,
+                  background: showReveal
+                    ? "linear-gradient(180deg, rgba(46,204,143,0.95), rgba(34,160,108,0.9))"
+                    : v !== null
                     ? "linear-gradient(180deg, rgba(252,233,168,0.95), rgba(217,164,65,0.85))"
                     : "rgba(10,6,35,0.5)",
-                  color: v !== null ? "#3a2608" : "rgba(252,233,168,0.45)",
+                  color: showReveal ? "#06381f" : v !== null ? "#3a2608" : "rgba(252,233,168,0.45)",
                   fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 30,
                   cursor: v !== null && !locked ? "pointer" : "default",
-                  boxShadow: v !== null ? "0 4px 10px rgba(0,0,0,0.3)" : "inset 0 1px 0 rgba(255,255,255,0.08)",
+                  boxShadow: showReveal ? "0 0 16px rgba(46,204,143,0.6)" : v !== null ? "0 4px 10px rgba(0,0,0,0.3)" : "inset 0 1px 0 rgba(255,255,255,0.08)",
                   transition: "all 0.15s ease", letterSpacing: "0.03em",
                 }}
                 title={v !== null ? "Toca para quitar" : "Toca una sílaba de abajo"}>
-                {v !== null ? v : "—"}
+                {showReveal ? revealSyl : (v !== null ? v : "—")}
               </button>
             );
           })}
@@ -1642,22 +1652,27 @@ function ClasificaCard({ pick, placed, selected, locked, onSelect, onPlace, onUn
               <div style={{ display: "flex", flexDirection: "column", gap: 5, width: "100%", alignItems: "center" }}>
                 {inside.map((w) => {
                   const ok = locked ? pick.wordGroup[w] === g : null;
+                  // Al fallar, revelamos a qué grupo pertenecía realmente.
+                  const correctBin = (locked && ok === false) ? pick.wordGroup[w] : null;
                   return (
                     <div key={w}
                       onClick={(e) => { e.stopPropagation(); if (!locked) onUnplace(w); }}
                       style={{
                         fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 14,
-                        padding: "4px 8px", borderRadius: 8, lineHeight: 1,
+                        padding: "4px 8px", borderRadius: 8, lineHeight: 1.05,
                         background: locked
                           ? (ok ? "linear-gradient(180deg,#2ecc8f,#22a06c)" : "linear-gradient(180deg,#ff6b6b,#dc5050)")
                           : "rgba(255,255,255,0.92)",
                         color: locked ? "#fff" : "#3a2608",
                         cursor: locked ? "default" : "pointer",
                         boxShadow: "0 2px 5px rgba(0,0,0,0.25)",
-                        whiteSpace: "nowrap",
+                        whiteSpace: "nowrap", textAlign: "center",
                       }}
                       title={locked ? "" : "Toca para sacar"}>
                       {locked ? (ok ? "✓ " : "✗ ") : ""}{w}
+                      {correctBin && (
+                        <span style={{ display: "block", marginTop: 2, fontSize: 10.5, fontWeight: 800, color: "#eafff4" }}>→ {correctBin}</span>
+                      )}
                     </div>
                   );
                 })}

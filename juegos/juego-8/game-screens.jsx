@@ -653,6 +653,34 @@ const LAB_BANK = [
       color:  ["alegres", "tristes", "oxidados", "polvorientos"],
     },
   },
+  {
+    id: "kiosco",
+    titulo: "El kiosco de la esquina",
+    frases: [
+      { categoria: "tiempo", texto: "El kiosco había abierto sin falta por veinte años. ___, don Julio levantó la persiana.", correcta: "Cada mañana" },
+      { categoria: "sonido", texto: "Un cliente apurado ___ su pedido desde la vereda.",                                     correcta: "exclamó" },
+      { categoria: "color",  texto: "Las revistas, recién llegadas y ordenadas, se veían ___ en el estante.",               correcta: "relucientes" },
+    ],
+    frascos: {
+      tiempo: ["Cada mañana", "A medianoche", "El año pasado", "En invierno"],
+      sonido: ["exclamó", "susurró", "balbuceó", "tartamudeó"],
+      color:  ["relucientes", "polvorientas", "diminutas", "oxidadas"],
+    },
+  },
+  {
+    id: "columpio",
+    titulo: "El columpio del parque",
+    frases: [
+      { categoria: "tiempo", texto: "Los juegos estaban en silencio y vacíos. ___, un chirrido salió del viejo columpio.", correcta: "De pronto" },
+      { categoria: "sonido", texto: "Una niña ___ de alegría al subirse por primera vez.",                                  correcta: "gritó" },
+      { categoria: "color",  texto: "Las cadenas, gastadas por los años, se veían ___ bajo la lluvia.",                     correcta: "oxidadas" },
+    ],
+    frascos: {
+      tiempo: ["De pronto", "Muy despacio", "Como siempre", "Mañana mismo"],
+      sonido: ["gritó", "murmuró", "susurró", "tartamudeó"],
+      color:  ["oxidadas", "relucientes", "perfumadas", "diminutas"],
+    },
+  },
 ];
 
 // R2 — Camino del cuentacuentos: 5 piedras (lugar → personajes → conflicto
@@ -701,6 +729,50 @@ const CAMINO_BANK = [
       { elemento: "conflicto",  opciones: ["Abrieron las puertas muy temprano.",                 "El barrio celebró con un desayuno especial.",     "El horno se apagó justo antes del amanecer."],   correctaIdx: 2 },
       { elemento: "acciones",   opciones: ["Encendieron el horno con leña vieja y paciencia.",   "Don Pancho llevaba treinta años amasando pan.",   "La panadería quedaba en una calle larga."],     correctaIdx: 0 },
       { elemento: "resolucion", opciones: ["Don Pancho horneaba todos los días.",                "El pan caliente alegró a todo el vecindario.",     "El horno funcionaba con leña."],                correctaIdx: 1 },
+    ],
+  },
+  {
+    id: "huerto",
+    titulo: "El huerto de la escuela",
+    pasos: [
+      { elemento: "lugar",      opciones: ["En el huerto de la escuela del barrio",            "La maestra Lucía y sus alumnos de quinto",       "Sembraron tomates y lechugas en hileras."],     correctaIdx: 0 },
+      { elemento: "personajes", opciones: ["Una mañana, las plantas amanecieron marchitas.",    "La maestra Lucía y sus alumnos de quinto grado", "Regaron el huerto con baldes de agua."],        correctaIdx: 1 },
+      { elemento: "conflicto",  opciones: ["Revisaron la tierra con las manos.",                "Las verduras crecieron sanas y verdes.",         "Una semana sin lluvia secó todo el huerto."],   correctaIdx: 2 },
+      { elemento: "acciones",   opciones: ["Regaron y abonaron la tierra cada tarde.",          "El huerto estaba junto a las canchas.",          "La maestra Lucía enseñaba ciencias."],          correctaIdx: 0 },
+      { elemento: "resolucion", opciones: ["Los alumnos estudiaban en quinto grado.",           "Al poco tiempo, cosecharon verduras para todos.","El sol calentó mucho esa semana."],             correctaIdx: 1 },
+    ],
+  },
+  {
+    id: "balsa",
+    titulo: "La balsa del río",
+    pasos: [
+      { elemento: "lugar",      opciones: ["A orillas del río que cruza el pueblo",            "Joaquín y su tío Ernesto, dos pescadores",       "Ataron los troncos con cuerdas resistentes."],  correctaIdx: 0 },
+      { elemento: "personajes", opciones: ["Una tarde, la corriente creció de golpe.",          "Joaquín y su tío Ernesto, grandes pescadores",   "Remaron juntos hasta la otra orilla."],         correctaIdx: 1 },
+      { elemento: "conflicto",  opciones: ["Empujaron la balsa hacia el agua.",                 "Llegaron sanos a la orilla opuesta.",            "La crecida del río arrastró su vieja balsa."],  correctaIdx: 2 },
+      { elemento: "acciones",   opciones: ["Construyeron una balsa nueva con troncos y cuerdas.","El río pasaba junto al pueblo.",                 "El tío Ernesto pescaba desde niño."],           correctaIdx: 0 },
+      { elemento: "resolucion", opciones: ["Joaquín acompañaba a su tío a pescar.",             "Por la tarde, cruzaron el río en su nueva balsa.","La corriente bajaba con fuerza."],              correctaIdx: 1 },
+    ],
+  },
+  {
+    id: "campana",
+    titulo: "La campana de la iglesia",
+    pasos: [
+      { elemento: "lugar",      opciones: ["En la torre de la iglesia del pueblo",             "Don Aurelio, el campanero del lugar",            "Subió los escalones con su caja de herramientas."], correctaIdx: 0 },
+      { elemento: "personajes", opciones: ["Cierto domingo, la campana no sonó.",               "Don Aurelio, el campanero de toda la vida",      "Ajustó la cuerda y limpió el badajo."],         correctaIdx: 1 },
+      { elemento: "conflicto",  opciones: ["Revisó cada rincón de la torre.",                   "La campana volvió a sonar con fuerza.",          "Un domingo, la campana quedó muda de repente."], correctaIdx: 2 },
+      { elemento: "acciones",   opciones: ["Engrasó la cuerda y ajustó el badajo con paciencia.","La iglesia tenía una torre muy alta.",           "Don Aurelio cuidaba la campana hace años."],    correctaIdx: 0 },
+      { elemento: "resolucion", opciones: ["Don Aurelio vivía cerca de la iglesia.",            "Esa misma tarde, la campana llamó a todos a misa.","La torre se alzaba sobre el pueblo."],          correctaIdx: 1 },
+    ],
+  },
+  {
+    id: "telescopio",
+    titulo: "El telescopio del abuelo",
+    pasos: [
+      { elemento: "lugar",      opciones: ["En la azotea de la casa del abuelo",               "El abuelo Ramón y su nieta Elisa",               "Apuntaron el telescopio hacia la luna."],       correctaIdx: 0 },
+      { elemento: "personajes", opciones: ["Una noche estrellada, el lente se empañó.",         "El abuelo Ramón y su nieta Elisa, curiosa del cielo","Observaron juntos las estrellas."],         correctaIdx: 1 },
+      { elemento: "conflicto",  opciones: ["Limpiaron el lente con un paño suave.",             "Vieron los cráteres de la luna con claridad.",   "Una noche, la niebla cubrió todo el cielo."],   correctaIdx: 2 },
+      { elemento: "acciones",   opciones: ["Esperaron con paciencia hasta que la niebla se fue.","La azotea estaba sobre la casa del abuelo.",    "El abuelo Ramón amaba la astronomía."],         correctaIdx: 0 },
+      { elemento: "resolucion", opciones: ["Elisa visitaba al abuelo cada fin de semana.",      "Más tarde, el cielo se despejó y vieron mil estrellas.","La niebla era espesa esa noche."],        correctaIdx: 1 },
     ],
   },
 ];
@@ -752,6 +824,50 @@ const ORDEN_BANK = [
       { id: "f3", orden: 3, texto: "Esa misma tarde, subió a la montaña buscando flores brillantes." },
       { id: "f4", orden: 4, texto: "Antes del amanecer, mezcló los pétalos con el rocío fresco." },
       { id: "f5", orden: 5, texto: "Al caer la tarde, pintó el atardecer más hermoso de su vida." },
+    ],
+  },
+  {
+    id: "semilla",
+    titulo: "El árbol de la plaza",
+    frases: [
+      { id: "f1", orden: 1, texto: "Hace muchos años, doña Inés plantó una semilla en la plaza del pueblo." },
+      { id: "f2", orden: 2, texto: "Al principio, apenas asomaba un brote verde entre la tierra." },
+      { id: "f3", orden: 3, texto: "Con el tiempo, el brote se convirtió en un árbol fuerte y frondoso." },
+      { id: "f4", orden: 4, texto: "Cada tarde, los niños se reunían a jugar bajo su sombra." },
+      { id: "f5", orden: 5, texto: "Hoy, ese árbol es el lugar favorito de todo el vecindario." },
+    ],
+  },
+  {
+    id: "cometa",
+    titulo: "La cometa de papel",
+    frases: [
+      { id: "f1", orden: 1, texto: "Una tarde de viento, Mateo construyó una cometa con papel de colores." },
+      { id: "f2", orden: 2, texto: "Apenas salió al campo, la cometa se elevó muy alto en el cielo." },
+      { id: "f3", orden: 3, texto: "De pronto, el hilo se soltó de sus manos sin aviso." },
+      { id: "f4", orden: 4, texto: "Corriendo entre los pastizales, Mateo siguió la cometa colina arriba." },
+      { id: "f5", orden: 5, texto: "Al final, la encontró enredada con cuidado en un girasol gigante." },
+    ],
+  },
+  {
+    id: "gotera",
+    titulo: "La gotera del aula",
+    frases: [
+      { id: "f1", orden: 1, texto: "Un lunes lluvioso, los niños notaron una gota cayendo del techo del aula." },
+      { id: "f2", orden: 2, texto: "Enseguida, colocaron un balde debajo para no mojar el piso." },
+      { id: "f3", orden: 3, texto: "Más tarde, le contaron al profesor lo que estaba pasando." },
+      { id: "f4", orden: 4, texto: "Esa misma semana, el portero subió al techo a revisar las tejas." },
+      { id: "f5", orden: 5, texto: "Por fin, el aula quedó seca y todos siguieron sus clases tranquilos." },
+    ],
+  },
+  {
+    id: "feria",
+    titulo: "La feria de ciencias",
+    frases: [
+      { id: "f1", orden: 1, texto: "Semanas antes, Valentina eligió hacer un volcán para la feria de ciencias." },
+      { id: "f2", orden: 2, texto: "Cada tarde, mezclaba con cuidado los ingredientes de su experimento." },
+      { id: "f3", orden: 3, texto: "El día de la feria, llevó su maqueta con mucho entusiasmo." },
+      { id: "f4", orden: 4, texto: "Cuando llegó su turno, el volcán soltó una espuma anaranjada." },
+      { id: "f5", orden: 5, texto: "Al terminar, los jueces la felicitaron por su gran esfuerzo." },
     ],
   },
 ];
@@ -1567,31 +1683,38 @@ function SujetoPredicadoCard({ picks, splits, locked, onChooseSplit }) {
                       boxShadow: chosen !== null ? "0 2px 3px rgba(0,0,0,0.2)" : "none",
                       transition: "all 0.18s",
                     }}>{p}</span>
-                    {i < palabras.length - 1 && (
-                      <button
-                        onClick={() => !locked && onChooseSplit(oracionIdx, i)}
-                        disabled={locked}
-                        style={{
-                          width: chosen === i ? 5 : 20, height: 28,
-                          padding: 0,
-                          background: chosen === i
-                            ? (isCorrect ? "#2ecc8f" : isWrong ? "#ff6b6b" : "#4fd8ff")
-                            : "transparent",
-                          border: chosen === i ? "none" : "2px dashed rgba(180,136,23,0.5)",
-                          borderRadius: chosen === i ? 3 : 6,
-                          color: "#b48817",
-                          cursor: locked ? "default" : "pointer",
-                          fontSize: 12, fontWeight: 800,
-                          lineHeight: 1,
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          transition: "all 0.18s",
-                          boxShadow: chosen === i ? "0 0 10px currentColor" : "none",
-                        }}
-                        title={chosen === i ? "Corte aquí" : "Toca para cortar aquí"}
-                      >
-                        {chosen === i ? "" : "✂"}
-                      </button>
-                    )}
+                    {i < palabras.length - 1 && (() => {
+                      const isCutChosen = chosen === i;
+                      // Al fallar, revelamos en verde (✓) dónde iba realmente el corte.
+                      const revealCut = isWrong && i === splitOk && !isCutChosen;
+                      const asBar = isCutChosen || revealCut;
+                      const barColor = isCutChosen
+                        ? (isCorrect ? "#2ecc8f" : isWrong ? "#ff6b6b" : "#4fd8ff")
+                        : "#2ecc8f";
+                      return (
+                        <button
+                          onClick={() => !locked && onChooseSplit(oracionIdx, i)}
+                          disabled={locked}
+                          style={{
+                            width: isCutChosen ? 5 : revealCut ? 22 : 20, height: 28,
+                            padding: 0,
+                            background: asBar ? barColor : "transparent",
+                            border: asBar ? "none" : "2px dashed rgba(180,136,23,0.5)",
+                            borderRadius: isCutChosen ? 3 : 6,
+                            color: revealCut ? "#fff" : "#b48817",
+                            cursor: locked ? "default" : "pointer",
+                            fontSize: 12, fontWeight: 800,
+                            lineHeight: 1,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            transition: "all 0.18s",
+                            boxShadow: asBar ? `0 0 10px ${barColor}` : "none",
+                          }}
+                          title={isCutChosen ? "Corte aquí" : revealCut ? "Aquí iba el corte" : "Toca para cortar aquí"}
+                        >
+                          {isCutChosen ? "" : revealCut ? "✓" : "✂"}
+                        </button>
+                      );
+                    })()}
                   </React.Fragment>
                 );
               })}
@@ -1789,6 +1912,8 @@ function DetectiveModCard({ pick, marks, pickedChip, locked, onPickChip, onAssig
           ) : dentro.map((t) => {
             const isWrong = locked && t.tipo !== tipo;
             const isCorrect = locked && t.tipo === tipo;
+            // Al fallar, revelamos a qué carpeta pertenecía la palabra.
+            const correctLabel = isWrong ? (t.tipo === "md" ? "DIRECTO" : "INDIRECTO") : null;
             return (
               <div
                 key={t._i}
@@ -1818,7 +1943,9 @@ function DetectiveModCard({ pick, marks, pickedChip, locked, onPickChip, onAssig
                   touchAction: "none",
                 }}
                 title={locked ? "" : "Arrástrala a la otra carpeta o tócala para devolver"}
-              >{t.w}</div>
+              >{t.w}{correctLabel && (
+                <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 800, color: "#1e8a5d", whiteSpace: "nowrap" }}>→ {correctLabel}</span>
+              )}</div>
             );
           })}
         </div>

@@ -1007,15 +1007,22 @@ function TiposDeTextoGame({ app, setApp, go, onRestart }) {
     };
     const newLog = [...log, entry];
 
-    setFeedback(isCorrect ? "ok" : "err");
-    setFeedbackMsg(isCorrect ? `+${earned} ⭐` : ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)]);
+    // Al fallar, el tablero (marcas verde/rojo + respuesta correcta) queda
+    // visible un momento ANTES del overlay "¡UPS!" para que se pueda leer.
+    const _revealDelay = isCorrect ? 0 : 3000;
+    const _okMsg = `+${earned} ⭐`;
+    const _errMsg = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
+    setTimeout(() => {
+      setFeedback(isCorrect ? "ok" : "err");
+      setFeedbackMsg(isCorrect ? _okMsg : _errMsg);
+    }, _revealDelay);
     setAttempted(newAttempted);
     setSolved(newSolved);
     setStars(newStarsTotal);
     setStarsSession(newStarsSession);
     setLog(newLog);
 
-    const wait = isCorrect ? 950 : 1200;
+    const wait = _revealDelay + (isCorrect ? 950 : 1100);
     setTimeout(() => {
       setFeedback(null);
       setFeedbackMsg("");
@@ -1044,7 +1051,7 @@ function TiposDeTextoGame({ app, setApp, go, onRestart }) {
 
   const bocadillo =
     ronda === 0 ? "Lee y elige." :
-    ronda === 1 ? "Coloca cada una donde corresponda." :
+    ronda === 1 ? "Arrastra cada pista a su cuadro." :
     "Toca las burbujas correctas.";
 
   return (
@@ -1155,25 +1162,47 @@ function TiposTriviaCard({ pick, selected, locked, onSelect }) {
       </div>
       {/* Opciones apiladas en columna debajo, mismo eje vertical — orden aleatorio */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "stretch", width: "100%", maxWidth: 280 }}>
-        {optionsShuffled.map((opt) => (
-          <button key={opt.id} onClick={() => choose(opt.id)}
-            disabled={locked}
-            style={{
-              padding: "14px 18px", borderRadius: 14,
-              background: selected === opt.id ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.92)",
-              color: "#3a2608", border: `3px solid ${opt.color}`,
-              fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 14, letterSpacing: "0.04em",
-              cursor: locked ? "default" : "pointer",
-              boxShadow: selected === opt.id
-                ? "0 0 0 4px rgba(255,255,255,1), 0 0 0 8px rgba(252,233,168,0.65), 0 0 38px rgba(252,233,168,0.9), 0 8px 22px -4px rgba(0,0,0,0.55)"
-                : "0 6px 14px rgba(0,0,0,0.35)",
-              transform: selected === opt.id ? "translateY(-4px) scale(1.04)" : "none",
-              transition: "all 0.18s ease",
-              opacity: locked && selected !== opt.id ? 0.5 : 1,
-            }}>
-            {opt.label}
-          </button>
-        ))}
+        {optionsShuffled.map((opt) => {
+          // Al bloquear: la opción correcta (pick.tipo) se pinta verde con ✓,
+          // la elegida equivocada en rojo.
+          const isRight = locked && opt.id === pick.tipo;
+          const isWrongPick = locked && selected === opt.id && opt.id !== pick.tipo;
+          return (
+            <button key={opt.id} onClick={() => choose(opt.id)}
+              disabled={locked}
+              style={{
+                position: "relative",
+                padding: "14px 18px", borderRadius: 14,
+                background: isRight
+                  ? "linear-gradient(180deg,#2ecc8f,#22a06c)"
+                  : isWrongPick
+                  ? "linear-gradient(180deg,#ff8b8b,#dc5050)"
+                  : selected === opt.id ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.92)",
+                color: isRight || isWrongPick ? "#fff" : "#3a2608",
+                border: `3px solid ${isRight ? "#2ecc8f" : isWrongPick ? "#ff6b6b" : opt.color}`,
+                fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 14, letterSpacing: "0.04em",
+                cursor: locked ? "default" : "pointer",
+                boxShadow: isRight
+                  ? "0 0 0 4px rgba(255,255,255,0.9), 0 0 26px rgba(46,204,143,0.85)"
+                  : selected === opt.id
+                  ? "0 0 0 4px rgba(255,255,255,1), 0 0 0 8px rgba(252,233,168,0.65), 0 0 38px rgba(252,233,168,0.9), 0 8px 22px -4px rgba(0,0,0,0.55)"
+                  : "0 6px 14px rgba(0,0,0,0.35)",
+                transform: (selected === opt.id && !locked) || isRight ? "translateY(-4px) scale(1.04)" : "none",
+                transition: "all 0.18s ease",
+                opacity: locked && !isRight && !isWrongPick ? 0.5 : 1,
+              }}>
+              {opt.label}
+              {isRight && (
+                <span style={{
+                  position: "absolute", top: -8, right: -8, width: 24, height: 24, borderRadius: "50%",
+                  background: "#2ecc8f", color: "#fff", fontSize: 14, fontWeight: 900,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  border: "2px solid #fff", boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
+                }}>✓</span>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -1197,6 +1226,9 @@ function OrganizadorCard({ pick, pieces, placed, picked, verified, onPickPiece, 
     const wrong = verified && piece && piece.slot !== slot;
     const isHover = dragOverSlot === slot;
     const isDragSource = piece && dragIdx === idx;
+    // Al verificar, revelamos la pieza CORRECTA de cada cuadro en verde
+    // (la que de verdad va aquí), para que se vea la solución.
+    const correctPiece = verified ? pieces.find((p) => p.slot === slot) : null;
     return (
       <div key={slot}
         // Tap: si tiene pieza y nada en mano → la levanta. Si no, intenta placeIn.
@@ -1229,11 +1261,15 @@ function OrganizadorCard({ pick, pieces, placed, picked, verified, onPickPiece, 
           ...pos,
           position: "absolute",
           width: 170, height: 70,
-          border: `2px dashed ${correct ? "#2ecc8f" : wrong ? "#ff6b6b" : isHover ? "#4fd8ff" : "rgba(252,233,168,0.55)"}`,
-          background: piece
+          border: `2px ${verified ? "solid" : "dashed"} ${
+            verified ? (correct ? "#2ecc8f" : "#ff6b6b") : isHover ? "#4fd8ff" : "rgba(252,233,168,0.55)"
+          }`,
+          background: correct
+            ? "linear-gradient(180deg, rgba(46,204,143,0.92), rgba(34,160,108,0.85))"
+            : piece
             ? "linear-gradient(180deg, rgba(252,233,168,0.95), rgba(217,164,65,0.85))"
             : isHover ? "rgba(79,216,255,0.18)" : "rgba(10,6,35,0.55)",
-          color: piece ? "#3a2608" : "rgba(252,233,168,0.65)",
+          color: correct ? "#06381f" : piece ? "#3a2608" : "rgba(252,233,168,0.65)",
           fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12, lineHeight: 1.2,
           borderRadius: 12, padding: "8px 10px",
           cursor: verified ? "default" : (piece ? "grab" : "pointer"),
@@ -1241,15 +1277,30 @@ function OrganizadorCard({ pick, pieces, placed, picked, verified, onPickPiece, 
           textAlign: piece && piece.slot === "dibujo" && piece.text.length < 4 ? "center" : "left",
           overflow: "hidden",
           opacity: isDragSource ? 0.4 : 1,
-          boxShadow: isHover ? "0 0 12px rgba(79,216,255,0.5)" : "none",
+          boxShadow: correct ? "0 0 14px rgba(46,204,143,0.55)" : wrong ? "0 0 14px rgba(255,107,107,0.5)" : isHover ? "0 0 12px rgba(79,216,255,0.5)" : "none",
           transition: "background 0.15s, border-color 0.15s, opacity 0.15s",
         }}>
-        <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.06em", color: piece ? "#3a2608" : "#a78bfa", textTransform: "uppercase", marginBottom: 2 }}>
-          {LABELS[slot]}
+        <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.06em", color: correct ? "#06381f" : piece ? "#3a2608" : "#a78bfa", textTransform: "uppercase", marginBottom: 2 }}>
+          {LABELS[slot]} {verified && (correct ? "✓" : "✗")}
         </div>
-        <div style={{ fontSize: piece && piece.text.length < 4 ? 28 : 11, lineHeight: 1.15 }}>
+        {/* Lo que puso el niño (su respuesta) — a 1 línea si hay revelado abajo */}
+        <div style={{
+          fontSize: piece && piece.text.length < 4 ? 28 : 11, lineHeight: 1.15,
+          ...(verified && !correct ? { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } : {}),
+        }}>
           {piece ? piece.text : "(vacío)"}
         </div>
+        {/* Al fallar, revelamos la pieza correcta de este cuadro en verde. */}
+        {verified && !correct && correctPiece && (
+          <div style={{
+            marginTop: 3, fontSize: correctPiece.text.length < 4 ? 20 : 9.5, fontWeight: 800,
+            color: "#0a3a1e", background: "rgba(46,204,143,0.85)",
+            borderRadius: 6, padding: "1px 5px", lineHeight: 1.15,
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+          }}>
+            ✓ {correctPiece.text}
+          </div>
+        )}
       </div>
     );
   }
@@ -1384,10 +1435,13 @@ function BurbujasCard({ data, picked, locked, onToggle }) {
           const showResult = locked;
           let bg = isPicked ? "linear-gradient(180deg,#ff9ecf,#c5418f)" : "rgba(255,255,255,0.92)";
           let border = isPicked ? "#c5418f" : "rgba(242,194,96,0.55)";
+          let mark = "";
           if (showResult) {
-            if (isCorrect && isPicked)       { bg = "linear-gradient(180deg,#9bf2c6,#2ecc8f)"; border = "#2ecc8f"; }
-            else if (isCorrect && !isPicked) { bg = "linear-gradient(180deg,#fce9a8,#f2c260)"; border = "#f2c260"; }
-            else if (!isCorrect && isPicked) { bg = "linear-gradient(180deg,#ffb3b3,#ff6b6b)"; border = "#ff6b6b"; }
+            // Simple: TODA respuesta correcta en verde (✓), las que tocaste
+            // mal en rojo (✗), el resto atenuado.
+            if (isCorrect)        { bg = "linear-gradient(180deg,#9bf2c6,#2ecc8f)"; border = "#2ecc8f"; mark = "✓ "; }
+            else if (isPicked)    { bg = "linear-gradient(180deg,#ffb3b3,#ff6b6b)"; border = "#ff6b6b"; mark = "✗ "; }
+            else                  { bg = "rgba(255,255,255,0.45)"; border = "rgba(242,194,96,0.35)"; }
           }
           return (
             <button key={i} onClick={() => toggle(w)} disabled={locked}
@@ -1400,7 +1454,7 @@ function BurbujasCard({ data, picked, locked, onToggle }) {
                 boxShadow: "0 4px 12px rgba(0,0,0,0.35)",
                 whiteSpace: "nowrap",
               }}>
-              {w}
+              {mark}{w}
             </button>
           );
         })}
@@ -1533,12 +1587,19 @@ function PoeticaGame({ app, setApp, go, onRestart }) {
       correctAnswer: correctText, userAnswer: userText, isCorrect, time: exerciseSec, earned };
     const newLog = [...log, entry];
 
-    setFeedback(isCorrect ? "ok" : "err");
-    setFeedbackMsg(isCorrect ? `+${earned} ⭐` : ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)]);
+    // Al fallar, el tablero (marcas verde/rojo + respuesta correcta) queda
+    // visible un momento ANTES del overlay "¡UPS!" para que se pueda leer.
+    const _revealDelay = isCorrect ? 0 : 3000;
+    const _okMsg = `+${earned} ⭐`;
+    const _errMsg = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
+    setTimeout(() => {
+      setFeedback(isCorrect ? "ok" : "err");
+      setFeedbackMsg(isCorrect ? _okMsg : _errMsg);
+    }, _revealDelay);
     setAttempted(newAttempted); setSolved(newSolved); setStars(newStarsTotal);
     setStarsSession(newStarsSession); setLog(newLog);
 
-    const wait = isCorrect ? 950 : 1200;
+    const wait = _revealDelay + (isCorrect ? 950 : 1100);
     setTimeout(() => {
       setFeedback(null); setFeedbackMsg("");
       if (newAttempted >= 3) {
@@ -1706,24 +1767,44 @@ function PoeticaTriviaCard({ pick, selected, locked, onSelect }) {
           { id: "poetica", label: "POÉTICA",   color: "#ffe97a" },
           { id: "informa", label: "INFORMA",   color: "#7ab8ff" },
           { id: "pide",    label: "PIDE ALGO", color: "#ffc06e" },
-        ].map((opt) => (
-          <button key={opt.id} onClick={() => choose(opt.id)} disabled={locked}
-            style={{
-              padding: "12px 20px", borderRadius: 14,
-              background: selected === opt.id ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.92)",
-              color: "#3a2608", border: `3px solid ${opt.color}`,
-              fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 14, letterSpacing: "0.04em",
-              cursor: locked ? "default" : "pointer",
-              boxShadow: selected === opt.id
-                ? "0 0 0 4px rgba(255,255,255,1), 0 0 0 8px rgba(252,233,168,0.65), 0 0 38px rgba(252,233,168,0.9), 0 8px 22px -4px rgba(0,0,0,0.55)"
-                : "0 6px 14px rgba(0,0,0,0.35)",
-              transform: selected === opt.id ? "translateY(-4px) scale(1.04)" : "none",
-              transition: "all 0.18s ease",
-              opacity: locked && selected !== opt.id ? 0.5 : 1,
-            }}>
-            {opt.label}
-          </button>
-        ))}
+        ].map((opt) => {
+          const isRight = locked && opt.id === pick.funcion;
+          const isWrongPick = locked && selected === opt.id && opt.id !== pick.funcion;
+          return (
+            <button key={opt.id} onClick={() => choose(opt.id)} disabled={locked}
+              style={{
+                position: "relative",
+                padding: "12px 20px", borderRadius: 14,
+                background: isRight
+                  ? "linear-gradient(180deg,#2ecc8f,#22a06c)"
+                  : isWrongPick
+                  ? "linear-gradient(180deg,#ff8b8b,#dc5050)"
+                  : selected === opt.id ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.92)",
+                color: isRight || isWrongPick ? "#fff" : "#3a2608",
+                border: `3px solid ${isRight ? "#2ecc8f" : isWrongPick ? "#ff6b6b" : opt.color}`,
+                fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 14, letterSpacing: "0.04em",
+                cursor: locked ? "default" : "pointer",
+                boxShadow: isRight
+                  ? "0 0 0 4px rgba(255,255,255,0.9), 0 0 26px rgba(46,204,143,0.85)"
+                  : selected === opt.id
+                  ? "0 0 0 4px rgba(255,255,255,1), 0 0 0 8px rgba(252,233,168,0.65), 0 0 38px rgba(252,233,168,0.9), 0 8px 22px -4px rgba(0,0,0,0.55)"
+                  : "0 6px 14px rgba(0,0,0,0.35)",
+                transform: (selected === opt.id && !locked) || isRight ? "translateY(-4px) scale(1.04)" : "none",
+                transition: "all 0.18s ease",
+                opacity: locked && !isRight && !isWrongPick ? 0.5 : 1,
+              }}>
+              {opt.label}
+              {isRight && (
+                <span style={{
+                  position: "absolute", top: -8, right: -8, width: 24, height: 24, borderRadius: "50%",
+                  background: "#2ecc8f", color: "#fff", fontSize: 14, fontWeight: 900,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  border: "2px solid #fff", boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
+                }}>✓</span>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -1733,6 +1814,16 @@ function RefranesCard({ pairs, rightOrder, selectedLeft, connections, verified, 
   // Componente CONTROLADO — state vive en el padre.
   const tapLeft = (i) => onTapLeft && onTapLeft(i);
   const tapRight = (rightIdx) => onTapRight && onTapRight(rightIdx);
+
+  // Un color por pareja: al conectar un refrán con su significado, ambos lados
+  // (y el punto central) se pintan del mismo color, para ver de un vistazo qué
+  // va con qué. En la verificación manda el verde/rojo.
+  const PAIR_COLORS = [
+    { bg: "linear-gradient(180deg,#bfe3ff,#6fb3ec)", border: "#2b7fc4" }, // azul
+    { bg: "linear-gradient(180deg,#e7d2ff,#b78ff0)", border: "#7d4fc0" }, // morado
+    { bg: "linear-gradient(180deg,#ffe0b0,#f2b25a)", border: "#c47d1e" }, // naranja
+    { bg: "linear-gradient(180deg,#bff2d6,#6fd6a0)", border: "#1e9e5e" }, // verde agua
+  ];
 
   return (
     <div style={{ position: "absolute", inset: 0, padding: "8px 8px" }}>
@@ -1745,21 +1836,39 @@ function RefranesCard({ pairs, rightOrder, selectedLeft, connections, verified, 
               const isConnected = connections[i] !== undefined;
               const isCorrect = verified && connections[i] !== undefined && rightOrder[connections[i]].origIdx === i;
               const isWrong   = verified && (connections[i] === undefined || rightOrder[connections[i]].origIdx !== i);
-              let border = "rgba(242,194,96,0.55)";
-              if (isSel) border = "#4fd8ff";
-              if (isCorrect) border = "#2ecc8f";
-              if (isWrong) border = "#ff6b6b";
+              const pc = PAIR_COLORS[i % PAIR_COLORS.length];
+              // Al verificar: cada refrán muestra el color + número de su pareja
+              // (revela el emparejamiento correcto), y el borde verde/rojo dice
+              // si el niño lo conectó bien.
+              let bg, border;
+              if (verified) {
+                bg = pc.bg;
+                border = isCorrect ? "#2ecc8f" : "#ff6b6b";
+              } else {
+                bg = isConnected ? pc.bg : "rgba(255,255,255,0.92)";
+                border = isConnected ? pc.border : "rgba(242,194,96,0.55)";
+                if (isSel) border = "#4fd8ff";
+              }
               return (
                 <button key={i} onClick={() => tapLeft(i)} disabled={verified}
                   style={{
+                    display: "flex", alignItems: "center", gap: 8,
                     padding: "10px 12px", borderRadius: 12,
-                    background: isConnected ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.92)",
-                    color: "#3a2608", border: `2px solid ${border}`,
+                    background: bg,
+                    color: "#3a2608", border: `2.5px solid ${border}`,
                     fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13, lineHeight: 1.25,
                     textAlign: "left", cursor: "pointer",
-                    boxShadow: isSel ? "0 0 14px rgba(79,216,255,0.6)" : "0 4px 10px rgba(0,0,0,0.35)",
+                    boxShadow: isSel ? "0 0 14px rgba(79,216,255,0.6)" : isConnected && !verified ? `0 0 10px ${pc.border}66` : "0 4px 10px rgba(0,0,0,0.35)",
                   }}>
-                  "{p.refran}"
+                  {verified && (
+                    <span style={{
+                      flexShrink: 0, width: 22, height: 22, borderRadius: "50%",
+                      background: pc.border, color: "#fff", fontWeight: 900, fontSize: 12,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      border: "2px solid #fff",
+                    }}>{i + 1}</span>
+                  )}
+                  <span>"{p.refran}"</span>
                 </button>
               );
             })}
@@ -1768,10 +1877,13 @@ function RefranesCard({ pairs, rightOrder, selectedLeft, connections, verified, 
           <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "center", justifyContent: "space-around" }}>
             {pairs.map((_, i) => {
               const has = connections[i] !== undefined;
+              const pc = PAIR_COLORS[i % PAIR_COLORS.length];
               return <div key={i} style={{
-                width: 12, height: 12, borderRadius: "50%",
-                background: has ? "#fce9a8" : "rgba(255,255,255,0.2)",
+                width: 14, height: 14, borderRadius: "50%",
+                background: has ? (verified ? "#fce9a8" : pc.border) : "rgba(255,255,255,0.2)",
                 border: "1px solid rgba(252,233,168,0.5)",
+                boxShadow: has && !verified ? `0 0 8px ${pc.border}` : "none",
+                transition: "all 0.15s ease",
               }} />;
             })}
           </div>
@@ -1783,19 +1895,46 @@ function RefranesCard({ pairs, rightOrder, selectedLeft, connections, verified, 
               const leftI = usedBy ? Number(usedBy[0]) : null;
               const isCorrect = verified && isConnected && r.origIdx === leftI;
               const isWrong   = verified && isConnected && r.origIdx !== leftI;
-              let border = "rgba(242,194,96,0.55)";
-              if (isCorrect) border = "#2ecc8f";
-              if (isWrong) border = "#ff6b6b";
+              // Al verificar: el significado muestra el color + número del refrán
+              // al que pertenece DE VERDAD (r.origIdx). El distractor va en gris.
+              const trueGroup = r.origIdx; // -1 = distractor (no va con ninguno)
+              const pcTrue = trueGroup >= 0 ? PAIR_COLORS[trueGroup % PAIR_COLORS.length] : null;
+              const pcPlay = leftI !== null ? PAIR_COLORS[leftI % PAIR_COLORS.length] : null;
+              let bg, border;
+              if (verified) {
+                bg = pcTrue ? pcTrue.bg : "rgba(180,180,180,0.45)";
+                border = isCorrect ? "#2ecc8f" : isWrong ? "#ff6b6b" : "rgba(242,194,96,0.55)";
+              } else {
+                bg = isConnected ? pcPlay.bg : "rgba(255,255,255,0.92)";
+                border = isConnected ? pcPlay.border : "rgba(242,194,96,0.55)";
+              }
               return (
                 <button key={j} onClick={() => tapRight(j)} disabled={verified}
                   style={{
+                    display: "flex", alignItems: "center", gap: 8,
                     padding: "10px 12px", borderRadius: 12,
-                    background: isConnected ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.92)",
-                    color: "#3a2608", border: `2px solid ${border}`,
+                    background: bg,
+                    color: "#3a2608", border: `2.5px solid ${border}`,
                     fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 12, lineHeight: 1.25,
-                    textAlign: "left", cursor: "pointer", boxShadow: "0 4px 10px rgba(0,0,0,0.35)",
+                    textAlign: "left", cursor: "pointer",
+                    boxShadow: isConnected && !verified ? `0 0 10px ${pcPlay.border}66` : "0 4px 10px rgba(0,0,0,0.35)",
                   }}>
-                  {r.sig}
+                  {verified && (
+                    pcTrue ? (
+                      <span style={{
+                        flexShrink: 0, width: 22, height: 22, borderRadius: "50%",
+                        background: pcTrue.border, color: "#fff", fontWeight: 900, fontSize: 12,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        border: "2px solid #fff",
+                      }}>{trueGroup + 1}</span>
+                    ) : (
+                      <span style={{
+                        flexShrink: 0, fontSize: 9, fontWeight: 800, color: "#555",
+                        background: "rgba(255,255,255,0.8)", borderRadius: 6, padding: "2px 6px",
+                      }}>sobra</span>
+                    )
+                  )}
+                  <span>{r.sig}</span>
                 </button>
               );
             })}
@@ -1829,16 +1968,16 @@ function FigurasCard({ poema, picked, locked, onToggle }) {
         </div>
         {poema.versos.map((v, i) => {
           const isPicked = picked.has(i);
-          const isCorrect = locked && v.figura;
-          const isWrong   = locked && isPicked && !v.figura;
-          const missed    = locked && v.figura && !isPicked;
+          const isCorrect = locked && v.figura;          // es figura → respuesta correcta
+          const isWrong   = locked && isPicked && !v.figura; // tocaste un verso sin figura
           let bg = isPicked ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "transparent";
-          let color = isPicked ? "#3a2608" : "#3a2608";
+          let color = "#3a2608";
           let border = isPicked ? "#d9a441" : "transparent";
           if (locked) {
-            if (isCorrect && isPicked) { bg = "linear-gradient(180deg,#9bf2c6,#2ecc8f)"; border = "#2ecc8f"; }
-            else if (isWrong)           { bg = "linear-gradient(180deg,#ffb3b3,#ff6b6b)"; border = "#ff6b6b"; color = "#fff"; }
-            else if (missed)            { bg = "linear-gradient(180deg,#fce9a8,#f2c260)"; border = "#f2c260"; }
+            // Simple: TODA figura en verde, lo que tocaste mal en rojo, el resto neutro.
+            if (isCorrect)      { bg = "linear-gradient(180deg,#9bf2c6,#2ecc8f)"; border = "#2ecc8f"; color = "#06381f"; }
+            else if (isWrong)   { bg = "linear-gradient(180deg,#ffb3b3,#ff6b6b)"; border = "#ff6b6b"; color = "#fff"; }
+            else                { bg = "transparent"; border = "rgba(255,255,255,0.15)"; color = "rgba(58,38,8,0.5)"; }
           }
           return (
             <button key={i} onClick={() => toggle(i)} disabled={locked}
@@ -1959,11 +2098,18 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
     const entry = { idx: newAttempted, a: correctText, b: userText, op: opIcon || "·",
       correctAnswer: correctText, userAnswer: userText, isCorrect, time: exerciseSec, earned };
     const newLog = [...log, entry];
-    setFeedback(isCorrect ? "ok" : "err");
-    setFeedbackMsg(isCorrect ? `+${earned} ⭐` : ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)]);
+    // Al fallar, el tablero (marcas verde/rojo + respuesta correcta) queda
+    // visible un momento ANTES del overlay "¡UPS!" para que se pueda leer.
+    const _revealDelay = isCorrect ? 0 : 3000;
+    const _okMsg = `+${earned} ⭐`;
+    const _errMsg = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
+    setTimeout(() => {
+      setFeedback(isCorrect ? "ok" : "err");
+      setFeedbackMsg(isCorrect ? _okMsg : _errMsg);
+    }, _revealDelay);
     setAttempted(newAttempted); setSolved(newSolved); setStars(newStarsTotal);
     setStarsSession(newStarsSession); setLog(newLog);
-    const wait = isCorrect ? 950 : 1200;
+    const wait = _revealDelay + (isCorrect ? 950 : 1100);
     setTimeout(() => {
       setFeedback(null); setFeedbackMsg("");
       if (newAttempted >= 3) {
@@ -2050,7 +2196,7 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
     "Encuentra las palabras con error.";
 
   const bocadillo =
-    ronda === 0 ? "Arrastra cada parte." :
+    ronda === 0 ? "¡Arrástralas y arma el informe en orden!" :
     ronda === 1 ? "Lee y elige." :
     "Toca las palabras con error.";
 
@@ -2184,20 +2330,33 @@ function OrdenInformeCard({ contexto, pieces, placed, picked, verified, onPickPi
                 style={{
                   display: "flex", alignItems: "center", gap: 8,
                   padding: "8px 12px", borderRadius: 10,
-                  background: t ? "linear-gradient(180deg,#fce9a8,#d9a441)"
+                  // Acierto → fondo verde sólido (resalta tu acierto); fallo →
+                  // dorado con borde rojo; vacío → oscuro.
+                  background: correct ? "linear-gradient(180deg,#9bf2c6,#2ecc8f)"
+                    : t ? "linear-gradient(180deg,#fce9a8,#d9a441)"
                     : isHover ? "rgba(79,216,255,0.18)" : "rgba(10,6,35,0.55)",
-                  color: t ? "#3a2608" : "rgba(252,233,168,0.5)",
-                  border: `2px dashed ${correct ? "#2ecc8f" : wrong ? "#ff6b6b" : isHover ? "#4fd8ff" : "rgba(252,233,168,0.45)"}`,
+                  color: correct ? "#06381f" : t ? "#3a2608" : "rgba(252,233,168,0.5)",
+                  border: `2px ${correct || wrong ? "solid" : "dashed"} ${correct ? "#2ecc8f" : wrong ? "#ff6b6b" : isHover ? "#4fd8ff" : "rgba(252,233,168,0.45)"}`,
                   fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12,
                   textAlign: "left", cursor: verified ? "default" : (t ? "grab" : "pointer"),
                   userSelect: "none",
                   width: "100%", minHeight: 38,
                   opacity: isDragSource ? 0.4 : 1,
-                  boxShadow: isHover ? "0 0 12px rgba(79,216,255,0.5)" : "none",
+                  boxShadow: correct ? "0 0 14px rgba(46,204,143,0.55)" : isHover ? "0 0 12px rgba(79,216,255,0.5)" : "none",
                   transition: "background 0.15s, border-color 0.15s, opacity 0.15s",
                 }}>
                 <span style={{ fontWeight: 800, fontSize: 14, color: t ? "#3a2608" : "#a78bfa" }}>{i + 1}.</span>
-                <span style={{ flex: 1 }}>{t || "(vacío)"}</span>
+                <span style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+                  <span>{t || "(vacío)"}</span>
+                  {/* Al fallar, revelamos qué parte va de verdad en esta posición. */}
+                  {wrong && (
+                    <span style={{
+                      alignSelf: "flex-start", fontSize: 10, fontWeight: 800,
+                      color: "#0a3a1e", background: "rgba(46,204,143,0.9)",
+                      borderRadius: 5, padding: "1px 6px",
+                    }}>✓ {INFORME_PARTES[i]}</span>
+                  )}
+                </span>
               </div>
             );
           })}
@@ -2391,9 +2550,9 @@ function ErroresCard({ pick, tokens, picked, locked, onToggle }) {
           let color = "#3a2608";
           let outline = "none";
           if (locked) {
-            if (tokenIsErr && isPicked) { bg = "rgba(46,204,143,0.45)"; outline = "2px solid #2ecc8f"; }
-            else if (tokenIsErr && !isPicked) { bg = "rgba(252,233,168,0.55)"; outline = "2px solid #f2c260"; }
-            else if (!tokenIsErr && isPicked) { bg = "rgba(255,107,107,0.5)"; outline = "2px solid #ff6b6b"; }
+            // Simple: TODA palabra con error en verde, lo que tocaste mal en rojo.
+            if (tokenIsErr)        { bg = "rgba(46,204,143,0.45)"; outline = "2px solid #2ecc8f"; }
+            else if (isPicked)     { bg = "rgba(255,107,107,0.5)"; outline = "2px solid #ff6b6b"; }
           }
           return (
             <span key={i} onClick={() => toggle(i)}
@@ -2523,11 +2682,18 @@ function EnriquecimientoGame({ app, setApp, go, onRestart }) {
     const entry = { idx: newAttempted, a: correctText, b: userText, op: opIcon || "·",
       correctAnswer: correctText, userAnswer: userText, isCorrect, time: exerciseSec, earned };
     const newLog = [...log, entry];
-    setFeedback(isCorrect ? "ok" : "err");
-    setFeedbackMsg(isCorrect ? `+${earned} ⭐` : ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)]);
+    // Al fallar, el tablero (marcas verde/rojo + respuesta correcta) queda
+    // visible un momento ANTES del overlay "¡UPS!" para que se pueda leer.
+    const _revealDelay = isCorrect ? 0 : 3000;
+    const _okMsg = `+${earned} ⭐`;
+    const _errMsg = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
+    setTimeout(() => {
+      setFeedback(isCorrect ? "ok" : "err");
+      setFeedbackMsg(isCorrect ? _okMsg : _errMsg);
+    }, _revealDelay);
     setAttempted(newAttempted); setSolved(newSolved); setStars(newStarsTotal);
     setStarsSession(newStarsSession); setLog(newLog);
-    const wait = isCorrect ? 950 : 1200;
+    const wait = _revealDelay + (isCorrect ? 950 : 1100);
     setTimeout(() => {
       setFeedback(null); setFeedbackMsg("");
       if (newAttempted >= 3) {
@@ -2703,19 +2869,37 @@ function PolisemiasCard({ pick, opciones, selected, locked, onSelect }) {
       </div>
       {/* Opciones apiladas en columna debajo — mismo ancho que la fila de emojis */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "stretch", width: "100%", maxWidth: 240 }}>
-        {opciones.map((opt, i) => (
-          <button key={i} onClick={() => choose(opt)} disabled={locked}
-            style={{
-              padding: "12px 18px", borderRadius: 12,
-              background: selected === opt ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.92)",
-              color: "#3a2608", border: "2px solid #c39cff",
-              fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 14,
-              cursor: locked ? "default" : "pointer", boxShadow: "0 4px 10px rgba(0,0,0,0.35)",
-              opacity: locked && selected !== opt ? 0.5 : 1,
-            }}>
-            {opt}
-          </button>
-        ))}
+        {opciones.map((opt, i) => {
+          const isRight = locked && opt === pick.palabra;
+          const isWrongPick = locked && selected === opt && opt !== pick.palabra;
+          return (
+            <button key={i} onClick={() => choose(opt)} disabled={locked}
+              style={{
+                position: "relative",
+                padding: "12px 18px", borderRadius: 12,
+                background: isRight
+                  ? "linear-gradient(180deg,#2ecc8f,#22a06c)"
+                  : isWrongPick
+                  ? "linear-gradient(180deg,#ff8b8b,#dc5050)"
+                  : selected === opt ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.92)",
+                color: isRight || isWrongPick ? "#fff" : "#3a2608",
+                border: `2px solid ${isRight ? "#2ecc8f" : isWrongPick ? "#ff6b6b" : "#c39cff"}`,
+                fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 14,
+                cursor: locked ? "default" : "pointer", boxShadow: "0 4px 10px rgba(0,0,0,0.35)",
+                opacity: locked && !isRight && !isWrongPick ? 0.5 : 1,
+              }}>
+              {opt}
+              {isRight && (
+                <span style={{
+                  position: "absolute", top: -8, right: -8, width: 22, height: 22, borderRadius: "50%",
+                  background: "#2ecc8f", color: "#fff", fontSize: 13, fontWeight: 900,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  border: "2px solid #fff", boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
+                }}>✓</span>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -2753,31 +2937,49 @@ function HomofonasCard({ pick, selected, locked, onSelect }) {
         {pick.pre.split("").map((c, i) => <span key={i}>{c}</span>)}
         <span style={{
           display: "inline-block", width: 60, height: 56, borderRadius: 8,
-          border: `3px ${selected ? "solid" : "dashed"} ${
-            locked ? (selected === pick.correcta ? "#2ecc8f" : "#ff6b6b") : (selected ? "#d9a441" : "#c39cff")
+          border: `3px ${locked || selected ? "solid" : "dashed"} ${
+            locked ? "#2ecc8f" : (selected ? "#d9a441" : "#c39cff")
           }`,
-          color: selected ? "#3a2608" : "#c39cff",
+          color: locked ? "#06381f" : (selected ? "#3a2608" : "#c39cff"),
           textAlign: "center", lineHeight: "50px",
           background: locked
-            ? (selected === pick.correcta ? "rgba(46,204,143,0.3)" : "rgba(255,107,107,0.3)")
+            ? "linear-gradient(180deg, rgba(46,204,143,0.9), rgba(34,160,108,0.8))"
             : (selected ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "transparent"),
-        }}>{selected || "?"}</span>
+        }}>{locked ? pick.correcta : (selected || "?")}</span>
         {pick.post.split("").map((c, i) => <span key={i}>{c}</span>)}
       </div>
       <div style={{ display: "flex", gap: 14 }}>
-        {opcionesShuffled.map((opt) => (
-          <button key={opt} onClick={() => choose(opt)} disabled={locked}
-            style={{
-              width: 84, height: 84, borderRadius: 16,
-              background: selected === opt ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.92)",
-              color: "#3a2608", border: "3px solid #c39cff",
-              fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 38,
-              cursor: locked ? "default" : "pointer", boxShadow: "0 4px 10px rgba(0,0,0,0.35)",
-              opacity: locked && selected !== opt ? 0.5 : 1,
-            }}>
-            {opt}
-          </button>
-        ))}
+        {opcionesShuffled.map((opt) => {
+          const isRight = locked && opt === pick.correcta;
+          const isWrongPick = locked && selected === opt && opt !== pick.correcta;
+          return (
+            <button key={opt} onClick={() => choose(opt)} disabled={locked}
+              style={{
+                position: "relative",
+                width: 84, height: 84, borderRadius: 16,
+                background: isRight
+                  ? "linear-gradient(180deg,#2ecc8f,#22a06c)"
+                  : isWrongPick
+                  ? "linear-gradient(180deg,#ff8b8b,#dc5050)"
+                  : selected === opt ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.92)",
+                color: isRight || isWrongPick ? "#fff" : "#3a2608",
+                border: `3px solid ${isRight ? "#2ecc8f" : isWrongPick ? "#ff6b6b" : "#c39cff"}`,
+                fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 38,
+                cursor: locked ? "default" : "pointer", boxShadow: "0 4px 10px rgba(0,0,0,0.35)",
+                opacity: locked && !isRight && !isWrongPick ? 0.5 : 1,
+              }}>
+              {opt}
+              {isRight && (
+                <span style={{
+                  position: "absolute", top: -8, right: -8, width: 26, height: 26, borderRadius: "50%",
+                  background: "#2ecc8f", color: "#fff", fontSize: 15, fontWeight: 900,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  border: "2px solid #fff", boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
+                }}>✓</span>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -2849,10 +3051,11 @@ function CondicionalCard({ pick, opciones, placed, picked, verified, onPickWord,
           style={{
             display: "inline-block", verticalAlign: "middle",
             padding: "3px 12px", margin: "0 3px",
-            background: filled ? "linear-gradient(180deg,#fce9a8,#d9a441)"
+            background: correct ? "linear-gradient(180deg,#9bf2c6,#2ecc8f)"
+              : filled ? "linear-gradient(180deg,#fce9a8,#d9a441)"
               : isHover ? "rgba(79,216,255,0.25)" : "rgba(195,156,255,0.18)",
-            color: filled ? "#3a2608" : "#c39cff",
-            border: `2px dashed ${correct ? "#2ecc8f" : wrong ? "#ff6b6b" : isHover ? "#4fd8ff" : "#c39cff"}`,
+            color: correct ? "#06381f" : filled ? "#3a2608" : "#c39cff",
+            border: `2px ${correct || wrong ? "solid" : "dashed"} ${correct ? "#2ecc8f" : wrong ? "#ff6b6b" : isHover ? "#4fd8ff" : "#c39cff"}`,
             borderRadius: 8, minWidth: 90,
             fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13,
             cursor: verified ? "default" : (filled ? "grab" : "pointer"),
@@ -2863,6 +3066,14 @@ function CondicionalCard({ pick, opciones, placed, picked, verified, onPickWord,
             transition: "background 0.15s, border-color 0.15s, opacity 0.15s",
           }}>
           {display || "___"}
+          {/* Al fallar, revelamos el verbo correcto de este hueco en verde. */}
+          {wrong && (
+            <span style={{
+              marginLeft: 6, fontSize: 11, fontWeight: 800,
+              color: "#0a3a1e", background: "rgba(46,204,143,0.9)",
+              borderRadius: 5, padding: "0 6px",
+            }}>✓ {pick.correctas[slotIdx]}</span>
+          )}
         </span>
       );
       holeIdx++;

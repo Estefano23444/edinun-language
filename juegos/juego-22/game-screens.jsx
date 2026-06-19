@@ -300,6 +300,117 @@ const R2_COLOQUIOS = [
       },
     ],
   },
+  {
+    id: "mercado",
+    title: "¿Qué llevamos de nuestros mercados?",
+    participants: ["🧑‍🌾", "👩‍🍳", "🧑‍🎓"],
+    phases: [
+      {
+        fase: "Presentación",
+        narr: "Abres un coloquio en la feria del mercado del pueblo. ¿Cómo lo inicias?",
+        options: [
+          { t: "Presento el tema y saludo a cada invitado con cortesía.", ok: true },
+          { t: "Digo que al final premiaré al que mejor venda su idea.", ok: false },
+          { t: "Arranco defendiendo mi puesto para convencer a todos.", ok: false },
+        ],
+        explica: "El coloquio abre con la introducción del tema y la presentación cortés de los invitados; no se busca premiar ni vencer como en el debate.",
+      },
+      {
+        fase: "Desarrollo",
+        narr: "Una casera que vende en kichwa quiere contar sus recetas. ¿Qué haces?",
+        options: [
+          { t: "Le doy la palabra para que comparta sus saberes con todos.", ok: true },
+          { t: "La apuro porque otros quieren rebatirla.", ok: false },
+          { t: "La pongo a discutir con otro para entretener al público.", ok: false },
+        ],
+        explica: "En el desarrollo se da la palabra a los participantes para intercambiar saberes e ideas; prima informar, no polemizar.",
+      },
+      {
+        fase: "Cierre",
+        narr: "Se termina el tiempo de la feria. ¿Cómo cierras el coloquio?",
+        options: [
+          { t: "Recojo las ideas principales y dejo una pregunta para reflexionar.", ok: true },
+          { t: "Anuncio quién ganó la discusión del día.", ok: false },
+          { t: "Termino sin conclusiones porque ya es tarde.", ok: false },
+        ],
+        explica: "El cierre retoma las ideas destacadas y sugiere terminar con una pregunta que invite a reflexionar.",
+      },
+    ],
+  },
+  {
+    id: "amigos",
+    title: "¿Cómo nos entendemos hablando lenguas distintas?",
+    participants: ["🧑‍🎓", "🧒", "👩‍🏫"],
+    phases: [
+      {
+        fase: "Presentación",
+        narr: "Un compañero nuevo habla shuar y vas a abrir el coloquio. ¿Cómo empiezas?",
+        options: [
+          { t: "Presento el tema y doy la bienvenida a cada participante.", ok: true },
+          { t: "Pido que cada uno defienda su lengua para ver cuál es mejor.", ok: false },
+          { t: "Empiezo dando mi opinión para convencer a la clase.", ok: false },
+        ],
+        explica: "El coloquio inicia con la introducción del tema y la presentación de los participantes; ninguna lengua compite contra otra.",
+      },
+      {
+        fase: "Desarrollo",
+        narr: "Tu compañero quiere enseñar unas palabras en su lengua. ¿Qué haces?",
+        options: [
+          { t: "Le doy la palabra para que comparta su lengua con todos.", ok: true },
+          { t: "Lo interrumpo para imponer mi punto de vista.", ok: false },
+          { t: "Le pido que compita con otro a ver quién habla mejor.", ok: false },
+        ],
+        explica: "En el desarrollo los participantes comparten e intercambian conocimientos; el coloquio informa, no enfrenta.",
+      },
+      {
+        fase: "Cierre",
+        narr: "Suena el timbre y hay que cerrar el coloquio. ¿Cómo lo haces?",
+        options: [
+          { t: "Resumo las ideas clave y dejo una pregunta para pensar.", ok: true },
+          { t: "Declaro qué lengua resultó ganadora.", ok: false },
+          { t: "Corto de golpe sin agradecer a nadie.", ok: false },
+        ],
+        explica: "El cierre reformula las ideas más destacadas y propone una pregunta de reflexión, agradeciendo a los participantes.",
+      },
+    ],
+  },
+  {
+    id: "radio",
+    title: "¿Por qué tener radios en nuestras lenguas?",
+    participants: ["🧑‍🏫", "🧑‍🎤", "👵"],
+    phases: [
+      {
+        fase: "Presentación",
+        narr: "Inauguras un coloquio en la radio comunitaria. ¿Cómo lo abres?",
+        options: [
+          { t: "Introduzco el tema y presento a cada invitado al aire.", ok: true },
+          { t: "Aviso que al final habrá un ganador del programa.", ok: false },
+          { t: "Empiezo defendiendo mi postura para convencer a la audiencia.", ok: false },
+        ],
+        explica: "Todo coloquio abre con la introducción del tema y la presentación de los invitados; no se busca un ganador.",
+      },
+      {
+        fase: "Desarrollo",
+        narr: "Una locutora que transmite en tsafiki pide la palabra. ¿Qué haces?",
+        options: [
+          { t: "Le doy la palabra para que comparta su experiencia al aire.", ok: true },
+          { t: "La interrumpo porque el programa va con prisa.", ok: false },
+          { t: "Le pido que rebata a otro invitado para generar polémica.", ok: false },
+        ],
+        explica: "En el desarrollo se da la palabra a los participantes para intercambiar ideas; prima la función informativa, no la polémica.",
+      },
+      {
+        fase: "Cierre",
+        narr: "El programa llega a su fin. ¿Cómo cierras el coloquio?",
+        options: [
+          { t: "Reformulo las ideas principales y dejo una pregunta para reflexionar.", ok: true },
+          { t: "Declaro un ganador del debate radial.", ok: false },
+          { t: "Corto la transmisión sin despedirme.", ok: false },
+        ],
+        explica: "El cierre reformula las ideas destacadas y sugiere terminar con una pregunta que motive la reflexión.",
+      },
+    ],
+  },
 ];
 
 // R3 — MEMORIA. Tablero de cartas boca abajo. El niño voltea dos y busca

@@ -1581,7 +1581,7 @@ function CSZGame({ app, setApp, go, onRestart }) {
           }}>
             {ronda === 0 && hintMsg}
             {ronda === 1 && <>Solo una está<br/>bien escrita.</>}
-            {ronda === 2 && <>Caza solo las<br/>palabras mal escritas.</>}
+            {ronda === 2 && <>No las toques todas:<br/>solo las que estén mal.</>}
             <div style={{
               position: "absolute", bottom: -10, left: "50%", transform: "translateX(-50%)",
               width: 0, height: 0,
@@ -1655,28 +1655,8 @@ function CSZGame({ app, setApp, go, onRestart }) {
         position: "absolute", right: 18, top: "50%", transform: "translateY(-50%)",
         display: "flex", flexDirection: "column", gap: 12, width: 150,
       }}>
-        {/* R1 (trivia, TOCA 1 OPCIÓN) es AUTO-EVALUADA → sin VERIFICAR/BORRAR.
-            R2 (shooter) ya era auto. Solo R0 (componer palabra) los muestra. */}
-        {ronda === 0 && (
-          <button className="ed-btn ed-btn-verify"
-            onClick={() => { if (verifyReady && verifyRef.current) verifyRef.current(); }}
-            disabled={!verifyReady}
-            style={{
-              fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em",
-              opacity: verifyReady ? 1 : 0.45,
-              cursor: verifyReady ? "pointer" : "not-allowed",
-            }}>¡VERIFICAR!</button>
-        )}
-        {ronda === 0 && (
-          <button className="ed-btn ed-btn-erase"
-            onClick={() => { if (clearReady && clearRef.current) clearRef.current(); }}
-            disabled={!clearReady}
-            style={{
-              fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em",
-              opacity: clearReady ? 1 : 0.45,
-              cursor: clearReady ? "pointer" : "not-allowed",
-            }}>BORRAR</button>
-        )}
+        {/* Las 3 rondas del nivel CSZ son AUTO-EVALUADAS (TOCA 1 OPCIÓN) →
+            ninguna muestra VERIFICAR/BORRAR. */}
         <button className="ed-btn ed-btn-restart" onClick={() => setConfirmingExit(true)}
           style={{ fontSize: 15, padding: "0 10px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}>REINICIAR</button>
         <button className="ed-btn ed-btn-ghost" onClick={() => setConfirmingHomeExit(true)}
@@ -1709,23 +1689,32 @@ function CSZ_CompletaCard({ onAnswer, verifyRef, setVerifyReady, clearRef, setCl
     return pick;
   }, []);
   const [picked, setPicked] = useStateG(null);
+  // Fase "reveal": al fallar, ANTES del overlay "¡UPS!" el hueco muestra la
+  // letra correcta en verde (y la bandeja la marca con ✓). Bloquea entradas.
+  const [reveal, setReveal] = useStateG(false);
+  const REVEAL_MS = 2400;
+
+  // AUTO-EVALUADA: al tocar una letra se califica sola (sin VERIFICAR/BORRAR),
+  // igual que la R1. Si falla, revela la correcta en verde antes del "¡UPS!".
+  const lockedRef = useRefG(false);
+  const autoRef = useRefG(null);
+  useEffectG(() => () => clearTimeout(autoRef.current), []);
 
   useEffectG(() => { if (setHintMsg) setHintMsg(problem.rule); }, [problem.id]);
 
-  useEffectG(() => {
-    if (verifyRef) verifyRef.current = () => { if (picked) onAnswer(picked, problem); };
-  }, [picked]);
+  // Esta ronda ya no usa VERIFICAR/BORRAR.
+  useEffectG(() => { if (setVerifyReady) setVerifyReady(false); }, []);
+  useEffectG(() => { if (setClearReady) setClearReady(false); }, []);
 
-  useEffectG(() => {
-    if (setVerifyReady) setVerifyReady(picked !== null);
-  }, [picked]);
-
-  useEffectG(() => {
-    if (clearRef) clearRef.current = () => setPicked(null);
-  });
-  useEffectG(() => {
-    if (setClearReady) setClearReady(picked !== null);
-  }, [picked]);
+  function grade(letter) {
+    if (lockedRef.current) return;
+    lockedRef.current = true;
+    if (letter === problem.correct) { onAnswer(letter, problem); return; }
+    // Incorrecto: revelar la letra correcta y, tras REVEAL_MS, avisar al padre.
+    setReveal(true);
+    clearTimeout(autoRef.current);
+    autoRef.current = setTimeout(() => onAnswer(letter, problem), REVEAL_MS);
+  }
 
   // Renderiza la palabra con un hueco visual en hideIdx.
   const before = problem.word.slice(0, problem.hideIdx);
@@ -1735,7 +1724,7 @@ function CSZ_CompletaCard({ onAnswer, verifyRef, setVerifyReady, clearRef, setCl
     <div style={{
       position: "relative", width: "100%", height: "100%",
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-      gap: 14,
+      gap: 22,
     }}>
       {/* Emoji grande */}
       <div style={{
@@ -1752,51 +1741,81 @@ function CSZ_CompletaCard({ onAnswer, verifyRef, setVerifyReady, clearRef, setCl
 
       {/* Palabra con hueco */}
       <div style={{
-        display: "flex", alignItems: "baseline", justifyContent: "center",
+        display: "flex", alignItems: "center", justifyContent: "center",
         fontFamily: "var(--ed-font-display)", fontWeight: 700,
         color: "#fff", textShadow: "0 2px 6px rgba(0,0,0,0.5)",
-        gap: 3, padding: "0 6px",
+        gap: 6, padding: "0 6px",
       }}>
         <span style={{ fontSize: 38 }}>{before}</span>
         <span
-          onClick={() => { if (picked) setPicked(null); }}
           style={{
             display: "inline-block",
             minWidth: 52, padding: "2px 8px",
             borderRadius: 10,
-            background: picked ? "linear-gradient(180deg, #ffe97a, #d7b12a)" : "rgba(255,255,255,0.12)",
-            border: "3px solid #f2c260",
-            color: picked ? "#3a2608" : "rgba(255,255,255,0.4)",
+            background: reveal
+              ? "linear-gradient(180deg, #2ecc8f, #22a06c)"
+              : picked ? "linear-gradient(180deg, #ffe97a, #d7b12a)" : "rgba(255,255,255,0.12)",
+            border: `3px solid ${reveal ? "#2ecc8f" : "#f2c260"}`,
+            color: reveal ? "#06381f" : picked ? "#3a2608" : "rgba(255,255,255,0.4)",
             fontSize: 38, fontWeight: 700,
             textAlign: "center",
-            cursor: picked ? "pointer" : "default",
+            cursor: "default",
             transition: "all 0.15s ease",
-            boxShadow: picked ? "0 0 0 4px rgba(252,233,168,0.4), inset 0 1px 0 rgba(255,255,255,0.5)" : "none",
-          }}>{picked || "_"}</span>
+            boxShadow: reveal
+              ? "0 0 18px rgba(46,204,143,0.65), inset 0 1px 0 rgba(255,255,255,0.4)"
+              : picked ? "0 0 0 4px rgba(252,233,168,0.4), inset 0 1px 0 rgba(255,255,255,0.5)" : "none",
+          }}>{reveal ? problem.correct : (picked || "_")}</span>
         <span style={{ fontSize: 38 }}>{after}</span>
       </div>
 
       {/* Bandeja C/S/Z */}
-      <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 2 }}>
+      <div style={{ display: "flex", gap: 18, justifyContent: "center", marginTop: 14 }}>
         {["C", "S", "Z"].map((l) => {
           const isPicked = picked === l;
+          // Durante el revelado: la letra correcta se marca en verde con ✓,
+          // la equivocada (la que tocó el niño) en rojo.
+          const isRevealCorrect = reveal && l === problem.correct;
+          const isRevealWrong = reveal && isPicked && l !== problem.correct;
           return (
-            <button key={l} onClick={() => setPicked(l)}
+            <button key={l} onClick={() => {
+                if (reveal || lockedRef.current) return;
+                setPicked(l);
+                // Resalta y, si no cambia de idea en ~700 ms, califica sola.
+                clearTimeout(autoRef.current);
+                autoRef.current = setTimeout(() => grade(l), 700);
+              }}
               style={{
+                position: "relative",
                 width: 76, height: 76, borderRadius: 16,
-                background: isPicked
+                background: isRevealCorrect
+                  ? "linear-gradient(180deg, #2ecc8f, #22a06c)"
+                  : isRevealWrong
+                  ? "linear-gradient(180deg, #ff8b8b, #dc5050)"
+                  : isPicked
                   ? "linear-gradient(180deg, #ffd84b, #c0850c)"
                   : "linear-gradient(180deg, #ffe97a, #d7b12a)",
-                color: "#3a2608",
+                color: isRevealCorrect || isRevealWrong ? "#fff" : "#3a2608",
                 fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 38,
-                border: isPicked ? "3px solid #fce9a8" : "none",
-                boxShadow: isPicked
+                border: isRevealCorrect ? "3px solid #2ecc8f" : isPicked ? "3px solid #fce9a8" : "none",
+                boxShadow: isRevealCorrect
+                  ? "0 0 0 4px rgba(255,255,255,0.9), 0 0 22px rgba(46,204,143,0.8)"
+                  : isPicked
                   ? "0 0 0 4px rgba(255,255,255,1), 0 0 22px rgba(252,233,168,0.8), inset 0 1px 0 rgba(255,255,255,0.5)"
                   : "inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.18), 0 4px 10px -2px rgba(0,0,0,0.45)",
-                transform: isPicked ? "translateY(-3px) scale(1.05)" : "none",
+                transform: (isPicked && !reveal) || isRevealCorrect ? "translateY(-3px) scale(1.05)" : "none",
                 transition: "all 0.15s ease",
-                cursor: "pointer",
-              }}>{l}</button>
+                cursor: reveal ? "default" : "pointer",
+              }}>
+              {l}
+              {isRevealCorrect && (
+                <span style={{
+                  position: "absolute", top: -8, right: -8, width: 24, height: 24, borderRadius: "50%",
+                  background: "#2ecc8f", color: "#fff", fontSize: 14, fontWeight: 900,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  border: "2px solid #fff", boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
+                }}>✓</span>
+              )}
+            </button>
           );
         })}
       </div>
@@ -1829,6 +1848,8 @@ function CSZ_TriviaCard({ onAnswer, verifyRef, setVerifyReady, clearRef, setClea
     return pick;
   }, []);
   const [picked, setPicked] = useStateG(null);
+  const [revealed, setRevealed] = useStateG(false);
+  const REVEAL_MS = 2400;
 
   // Comportamiento B (AUTO-EVALUADA): esta ronda de "TOCA 1 OPCIÓN" se califica
   // sola al tocar una carta. No hay VERIFICAR/BORRAR — por eso no se registran
@@ -1841,10 +1862,14 @@ function CSZ_TriviaCard({ onAnswer, verifyRef, setVerifyReady, clearRef, setClea
   useEffectG(() => { if (setClearReady) setClearReady(false); }, []);
 
   // Califica la R2 con la carta tocada (mismo flujo que tenía VERIFICAR).
+  // Si falla, revela primero la correcta (verde ✓) antes del "¡UPS!".
   function gradeR2(idx) {
     if (lockedRef.current) return;
     lockedRef.current = true;
-    onAnswer(idx, problem);
+    const isCorrect = idx === problem.correctIdx;
+    setRevealed(true);
+    clearTimeout(autoRef.current);
+    autoRef.current = setTimeout(() => onAnswer(idx, problem), isCorrect ? 460 : REVEAL_MS);
   }
 
   return (
@@ -1871,6 +1896,30 @@ function CSZ_TriviaCard({ onAnswer, verifyRef, setVerifyReady, clearRef, setClea
       <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
         {problem.opciones.map((opt, i) => {
           const isPicked = picked === i;
+          const isCorrectOpt = i === problem.correctIdx;
+          // Durante el revelado: la correcta en verde (✓), la mal elegida en rojo,
+          // las demás atenuadas. Antes del revelado: estilo amarillo normal.
+          let bg, border, boxShadow, color = "#3a2608", mark = "";
+          if (revealed && isCorrectOpt) {
+            bg = "linear-gradient(180deg, #9bf2c6, #2ecc8f)";
+            border = "3px solid #d6fff0"; color = "#0b3a28"; mark = "✓ ";
+            boxShadow = "0 0 0 4px rgba(255,255,255,0.9), 0 0 26px rgba(46,204,143,0.85), inset 0 1px 0 rgba(255,255,255,0.5)";
+          } else if (revealed && isPicked) {
+            bg = "linear-gradient(180deg, #ff9a9a, #ff6b6b)";
+            border = "3px solid #ffd6d6"; color = "#5a0d0d";
+            boxShadow = "0 0 0 4px rgba(255,255,255,0.7), 0 0 22px rgba(255,107,107,0.7), inset 0 1px 0 rgba(255,255,255,0.4)";
+          } else if (revealed) {
+            bg = "linear-gradient(180deg, #ffe97a, #d7b12a)"; border = "none";
+            boxShadow = "inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.18), 0 6px 14px -4px rgba(0,0,0,0.45)";
+          } else {
+            bg = isPicked ? "linear-gradient(180deg, #ffd84b, #c0850c)" : "linear-gradient(180deg, #ffe97a, #d7b12a)";
+            border = isPicked ? "3px solid #fce9a8" : "none";
+            boxShadow = isPicked
+              ? "0 0 0 4px rgba(255,255,255,1), 0 0 0 8px rgba(252,233,168,0.65), 0 0 38px rgba(252,233,168,0.9), inset 0 1px 0 rgba(255,255,255,0.5)"
+              : "inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.18), 0 6px 14px -4px rgba(0,0,0,0.45)";
+          }
+          const lifted = (!revealed && isPicked) || (revealed && isCorrectOpt);
+          const dimmed = revealed && !isCorrectOpt && !isPicked;
           return (
             <button key={i} onClick={() => {
                 if (lockedRef.current) return;
@@ -1881,19 +1930,14 @@ function CSZ_TriviaCard({ onAnswer, verifyRef, setVerifyReady, clearRef, setClea
               }}
               style={{
                 minWidth: 150, minHeight: 75, padding: "18px 16px", borderRadius: 16,
-                background: isPicked
-                  ? "linear-gradient(180deg, #ffd84b, #c0850c)"
-                  : "linear-gradient(180deg, #ffe97a, #d7b12a)",
-                color: "#3a2608",
+                background: bg, color,
                 fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 24,
-                border: isPicked ? "3px solid #fce9a8" : "none",
-                boxShadow: isPicked
-                  ? "0 0 0 4px rgba(255,255,255,1), 0 0 0 8px rgba(252,233,168,0.65), 0 0 38px rgba(252,233,168,0.9), inset 0 1px 0 rgba(255,255,255,0.5)"
-                  : "inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.18), 0 6px 14px -4px rgba(0,0,0,0.45)",
-                transform: isPicked ? "translateY(-4px) scale(1.04)" : "none",
+                border, boxShadow,
+                opacity: dimmed ? 0.5 : 1,
+                transform: lifted ? "translateY(-4px) scale(1.04)" : "none",
                 transition: "all 0.15s ease",
                 cursor: "pointer", letterSpacing: "0.02em",
-              }}>{opt}</button>
+              }}>{mark}{opt}</button>
           );
         })}
       </div>
@@ -1960,13 +2004,23 @@ function CSZ_ShooterCard({ onFinish }) {
       setBubbles((bs) => [...bs, { id, word, isMal: useMal, x, y: -50, vy: 0.55 + Math.random() * 0.3 }]);
     }, 1100);
 
-    const tick = setInterval(() => {
+    // Movimiento por requestAnimationFrame (~60 fps) con delta-time, en vez de
+    // un setInterval a 40 ms (25 fps, se veía a saltos). La velocidad vy está
+    // normalizada a px/seg para que sea igual de rápido independiente del fps.
+    let rafId = 0;
+    let lastTs = 0;
+    const step = (ts) => {
       if (finishedRef.current) return;
+      if (!lastTs) lastTs = ts;
+      // dt en segundos, acotado para evitar saltos tras un frame perdido.
+      const dt = Math.min((ts - lastTs) / 1000, 0.05);
+      lastTs = ts;
       setBubbles((bs) => {
         const next = [];
         let perdidasDelta = 0;
         for (const b of bs) {
-          const newY = b.y + b.vy * 2.4;
+          // vy*60 px/seg (equivale al ritmo previo de vy*2.4 cada 40 ms).
+          const newY = b.y + b.vy * 60 * dt;
           if (newY > 320) {
             if (b.isMal) perdidasDelta++;
           } else {
@@ -1978,14 +2032,16 @@ function CSZ_ShooterCard({ onFinish }) {
         }
         return next;
       });
-    }, 40);
+      rafId = requestAnimationFrame(step);
+    };
+    rafId = requestAnimationFrame(step);
 
     const countdown = setInterval(() => {
       setTimeLeft((t) => {
         if (t <= 1) {
           clearInterval(countdown);
           clearInterval(spawn);
-          clearInterval(tick);
+          cancelAnimationFrame(rafId);
           finishedRef.current = true;
           return 0;
         }
@@ -1995,7 +2051,7 @@ function CSZ_ShooterCard({ onFinish }) {
 
     return () => {
       clearInterval(spawn);
-      clearInterval(tick);
+      cancelAnimationFrame(rafId);
       clearInterval(countdown);
     };
   }, []);
@@ -2034,7 +2090,8 @@ function CSZ_ShooterCard({ onFinish }) {
       {bubbles.map((b) => (
         <button key={b.id} onClick={() => handleTap(b)}
           style={{
-            position: "absolute", left: b.x, top: b.y,
+            position: "absolute", left: b.x, top: 0,
+            transform: `translateY(${b.y}px)`, willChange: "transform",
             padding: "10px 16px", borderRadius: 999,
             background: "rgba(255,255,255,0.96)",
             border: "2px solid #f2c260",

@@ -2349,8 +2349,8 @@ function PintorDeterminantesCard({ pick, colors, locked, onCycle }) {
                 }}>
                 {tk.d}
                 {(isWrong || isEmpty) && correctTipo && (
-                  <sup style={{ fontSize: 9, color: "#c33b3b", marginLeft: 2, fontWeight: 800 }}>
-                    ✗ {correctTipo.label.charAt(0)}
+                  <sup style={{ fontSize: 9.5, color: "#1e8a5d", marginLeft: 3, fontWeight: 800, whiteSpace: "nowrap" }}>
+                    ✓ {correctTipo.label}
                   </sup>
                 )}
               </span>
@@ -2836,12 +2836,12 @@ function PartesResenaCard({ pick, parrafos, assigned, selectedBin, locked, onSel
                       {isWrong && correctBin && (
                         <div style={{
                           marginTop: 3, fontSize: 8.5, fontWeight: 800,
-                          color: "#c33b3b",
-                          background: "rgba(255,107,107,0.18)",
+                          color: "#1e8a5d",
+                          background: "rgba(46,204,143,0.18)",
                           padding: "1px 4px", borderRadius: 4,
                           letterSpacing: "0.04em",
                         }}>
-                          ✗ Era: {correctBin.label}
+                          ✓ Va en: {correctBin.label}
                         </div>
                       )}
                     </div>

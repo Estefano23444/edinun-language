@@ -1138,6 +1138,9 @@ function TecnicismoBins({ pick, placed, setPlaced, locked }) {
               )}
               {inside.map((f) => {
                 const ok = locked ? f.tipo === bin.id : null;
+                // Al fallar, revelamos a qué materia pertenecía realmente la
+                // ficha ("→ Matemática"), no solo que estaba mal ubicada.
+                const correctBin = (locked && ok === false) ? bins.find((b) => b.id === f.tipo) : null;
                 return (
                   <div key={f.id}
                     className={locked ? "" : "ed-draggable"}
@@ -1155,6 +1158,12 @@ function TecnicismoBins({ pick, placed, setPlaced, locked }) {
                     }}
                     title={locked ? "" : "Arrástralo a otra caja o a la bandeja"}>
                     {locked ? (ok ? "✓ " : "✗ ") : ""}{f.text}
+                    {correctBin && (
+                      <span style={{
+                        display: "block", marginTop: 3,
+                        fontSize: 11, fontWeight: 800, color: "#eafff4", letterSpacing: "0.02em",
+                      }}>→ {correctBin.emoji} {correctBin.label}</span>
+                    )}
                   </div>
                 );
               })}

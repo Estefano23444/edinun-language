@@ -861,6 +861,12 @@ const R2_BANK = [
   { base: "golpe",   verb: "golpear" },
   { base: "pata",    verb: "patear" },
   { base: "sal",     verb: "salar" },
+  { base: "salto",   verb: "saltar" },
+  { base: "grito",   verb: "gritar" },
+  { base: "baile",   verb: "bailar" },
+  { base: "abrazo",  verb: "abrazar" },
+  { base: "saludo",  verb: "saludar" },
+  { base: "dibujo",  verb: "dibujar" },
 ];
 
 // R3 — Clasificar: verbos formados con prefijo a- o en-. Cada verbo
@@ -898,9 +904,12 @@ function makeProblemR1() {
 }
 
 function makeProblemR2() {
-  // 3 parejas frescas (FIFO por verbo) → 6 cartas (base + verbo), tablero 3×2.
-  const recent = new Set(getRecent());
-  let pool = R2_BANK.filter((p) => !recent.has("mem:" + p.verb));
+  // 3 parejas frescas (FIFO por verbo, ventana floor(N/2) como R3) → 6 cartas
+  // (base + verbo), tablero 3×2. Con 14 parejas bloquea las ~7 más recientes,
+  // dejando pool fresco amplio para que recargar varíe las parejas.
+  const recentW = getRecent().filter((k) => k.startsWith("mem:")).map((k) => k.slice("mem:".length));
+  const blocked = new Set(recentW.slice(0, Math.floor(R2_BANK.length / 2)));
+  let pool = R2_BANK.filter((p) => !blocked.has(p.verb));
   if (pool.length < 3) pool = R2_BANK;
   const picks = shuffle(pool).slice(0, 3);
   for (const p of picks) pushRecent("mem:" + p.verb);
@@ -1300,7 +1309,8 @@ function ReportajeGame({ app, setApp, go, onRestart }) {
       }
       const userText = r3Pick.words.map((w) => `${w}→${r3Placed[w] || "?"}`).join(" · ");
       const correctText = r3Pick.words.map((w) => `${w}→${r3Pick.wordGroup[w]}`).join(" · ");
-      setTimeout(() => answer(correct, userText, correctText, "🫙", "prefijo a / en"), 380);
+      // Al fallar, tablero visible más tiempo (con "→ caja correcta") antes del "¡UPS!".
+      setTimeout(() => answer(correct, userText, correctText, "🫙", "prefijo a / en"), correct ? 380 : 2200);
     }
   }
 
@@ -1335,7 +1345,7 @@ function ReportajeGame({ app, setApp, go, onRestart }) {
     setStarsSession(newStarsSession);
     setLog(newLog);
 
-    const wait = isCorrect ? 1000 : 1450;
+    const wait = isCorrect ? 1000 : 1100;
     setTimeout(() => {
       setFeedback(null);
       setFeedbackMsg("");
@@ -1742,6 +1752,8 @@ function ClasificaCard({ enunciado, pick, placed, selected, locked, onSelect, on
               <div style={{ display: "flex", flexDirection: "column", gap: 5, width: "100%", alignItems: "center" }}>
                 {inside.map((w) => {
                   const ok = locked ? pick.wordGroup[w] === g : null;
+                  // Al fallar, revelamos a qué caja pertenecía realmente.
+                  const correctBin = (locked && ok === false) ? pick.wordGroup[w] : null;
                   // Ficha ya colocada: arrástrala a la otra caja para corregir,
                   // o tócala para devolverla a la bandeja.
                   const handler = locked ? undefined : makeDragHandler({
@@ -1767,6 +1779,9 @@ function ClasificaCard({ enunciado, pick, placed, selected, locked, onSelect, on
                       }}
                       title={locked ? "" : "Arrástralo a la otra caja o tócalo para sacarlo"}>
                       {locked ? (ok ? "✓ " : "✗ ") : ""}{w}
+                      {correctBin && (
+                        <span style={{ display: "block", marginTop: 2, fontSize: 11, fontWeight: 800, color: "#eafff4" }}>→ {correctBin}</span>
+                      )}
                     </div>
                   );
                 })}

@@ -558,6 +558,11 @@ function LetraCQGame({ app, setApp, go, onRestart }) {
   const [confirmingHomeExit, setConfirmingHomeExit] = useStateG(false);
   const [log, setLog] = useStateG([]);
   const [wrongSlots, setWrongSlots] = useStateG([]); // huecos con error tras verificar
+  // Fase "reveal": al fallar, ANTES del overlay "¡UPS!" cada hueco muestra su
+  // sílaba correcta en verde para que el niño vea cuál era. Mismo mecanismo
+  // que los demás juegos de completar.
+  const [reveal, setReveal] = useStateG(false);
+  const REVEAL_MS = 2800;
 
   const started = useRefG(Date.now());
   const exerciseStart = useRefG(Date.now());
@@ -639,21 +644,34 @@ function LetraCQGame({ app, setApp, go, onRestart }) {
     const exerciseSec = Math.max(0, Math.floor((Date.now() - exerciseStart.current) / 1000));
     const earned = calcStars(isCorrect, exerciseSec);
 
-    const newAttempted = attempted + 1;
-    const newSolved = solved + (isCorrect ? 1 : 0);
-    const newStarsTotal = stars + earned;
-    const newStarsSession = starsSession + earned;
-
     const entry = {
-      idx: newAttempted,
       a: problem.word,
       b: userWord,
       op: "🔤",
       correctAnswer: problem.word,
       userAnswer: userWord,
-      isCorrect, time: exerciseSec, earned,
+      time: exerciseSec, earned,
       emoji: problem.emoji,
     };
+
+    if (!isCorrect) {
+      // Revelar las sílabas correctas (en verde sobre cada hueco) ANTES del
+      // overlay "¡UPS!". Toda interacción queda bloqueada (lockedRef ya true).
+      setReveal(true);
+      setTimeout(() => { setReveal(false); finalize(false, entry); }, REVEAL_MS);
+      return;
+    }
+    finalize(true, entry);
+  }
+
+  function finalize(isCorrect, partialEntry) {
+    const earned = isCorrect ? partialEntry.earned : 0;
+    const newAttempted = attempted + 1;
+    const newSolved = solved + (isCorrect ? 1 : 0);
+    const newStarsTotal = stars + earned;
+    const newStarsSession = starsSession + earned;
+
+    const entry = { idx: newAttempted, ...partialEntry, isCorrect };
     const newLog = [...log, entry];
 
     setFeedback(isCorrect ? "ok" : "err");
@@ -664,7 +682,8 @@ function LetraCQGame({ app, setApp, go, onRestart }) {
     setStarsSession(newStarsSession);
     setLog(newLog);
 
-    const wait = isCorrect ? 950 : 1500;
+    // El revelado ya cumplió el rol educativo → el "¡UPS!" va corto.
+    const wait = isCorrect ? 950 : 1100;
     setTimeout(() => {
       setFeedback(null);
       setFeedbackMsg("");
@@ -807,29 +826,36 @@ function LetraCQGame({ app, setApp, go, onRestart }) {
               const isActive = hIdx === activeIdx;
               const isWrong = wrongSlots.includes(hIdx);
               const SLOT_W = (seg.h.length) * (SLOT_H * 0.46) + 12;
+              // Durante el revelado el hueco muestra la sílaba CORRECTA en
+              // verde (no la que puso el niño).
+              const correctSyl = problem.hidden[hIdx].correct;
               return (
                 <button key={`h-${sIdx}`} onClick={() => { if (isFilled && !lockedRef.current) eraseSlot(hIdx); }}
                   style={{
                     width: SLOT_W, height: SLOT_H, borderRadius: 12,
-                    border: `2.5px solid ${feedback === "ok" ? "#2ecc8f" : isWrong ? "#ff6b6b" : isActive ? "#fce9a8" : "rgba(242,194,96,0.55)"}`,
-                    background: isFilled
+                    border: `2.5px solid ${reveal ? "#2ecc8f" : feedback === "ok" ? "#2ecc8f" : isWrong ? "#ff6b6b" : isActive ? "#fce9a8" : "rgba(242,194,96,0.55)"}`,
+                    background: reveal
+                      ? "linear-gradient(180deg, rgba(46,204,143,0.95), rgba(34,160,108,0.9))"
+                      : isFilled
                       ? (isWrong ? "linear-gradient(180deg, rgba(255,150,150,0.95), rgba(220,80,80,0.85))" : "linear-gradient(180deg, rgba(252,233,168,0.95), rgba(217,164,65,0.85))")
                       : "rgba(10,6,35,0.55)",
-                    color: isFilled ? "#3a2608" : "rgba(252,233,168,0.5)",
+                    color: reveal ? "#06381f" : isFilled ? "#3a2608" : "rgba(252,233,168,0.5)",
                     fontFamily: "var(--ed-font-display)", fontWeight: 800,
                     fontSize: SLOT_H * 0.42,
                     cursor: isFilled && !lockedRef.current ? "pointer" : "default",
-                    boxShadow: isWrong
+                    boxShadow: reveal
+                      ? "0 0 16px rgba(46,204,143,0.6)"
+                      : isWrong
                       ? "0 0 16px rgba(255,107,107,0.6)"
                       : isActive
                         ? "0 0 14px rgba(252,233,168,0.5)"
                         : isFilled ? "0 4px 10px rgba(0,0,0,0.35)" : "inset 0 1px 0 rgba(255,255,255,0.08)",
                     transition: "all 0.15s ease",
-                    animation: isWrong ? "ed-shake 0.4s" : "none",
+                    animation: isWrong && !reveal ? "ed-shake 0.4s" : "none",
                   }}
                   title={isFilled ? "Toca para borrar" : "Toca una sílaba abajo"}
                 >
-                  {isFilled ? f : "_"}
+                  {reveal ? correctSyl : (isFilled ? f : "_")}
                 </button>
               );
             });
@@ -1045,7 +1071,7 @@ function ElementosTextoGame({ app, setApp, go, onRestart }) {
             color: "#fce9a8", textAlign: "center",
             boxShadow: "0 10px 24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08)",
           }}>
-            {ronda === 0 && <>Tienes 30 segundos.<br/>¡Lee y toca rápido!</>}
+            {ronda === 0 && <>Tienes 12 segundos.<br/>¡Lee y toca rápido!</>}
             {ronda === 1 && <>Toca un texto y<br/>luego elige su tono.</>}
             {ronda === 2 && <>Lee con calma y<br/>fíjate en las pistas.</>}
             <div style={{
@@ -1154,10 +1180,10 @@ function ElementosTextoGame({ app, setApp, go, onRestart }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// R0 — SpeedQuizCard: 30s, varios textos seguidos, tap chip rápido
+// R0 — SpeedQuizCard: 12s, varios textos seguidos, tap chip rápido
 // ─────────────────────────────────────────────────────────────
 function SpeedQuizCard({ pool, chips, onFinish, verifyRef, setVerifyReady }) {
-  const SESSION_DURATION = 30;
+  const SESSION_DURATION = 12;
   const [timeLeft, setTimeLeft] = useStateG(SESSION_DURATION);
   const [stats, setStats] = useStateG({ aciertos: 0, errores: 0 });
   const [selectedChip, setSelectedChip] = useStateG(null);
@@ -1166,7 +1192,10 @@ function SpeedQuizCard({ pool, chips, onFinish, verifyRef, setVerifyReady }) {
   // Cola de textos: pool barajado al inicio. Cuando se agota, rebarajamos.
   const queueRef = useRefG(shuffle(pool));
   const [current, setCurrent] = useStateG(() => queueRef.current.shift());
-  const [shake, setShake] = useStateG(null);
+  // Resultado del tap verificado: pinta la opción correcta en verde (✓) y la
+  // equivocada en rojo durante un instante antes de pasar al siguiente texto.
+  // `{ picked, correct }`.
+  const [result, setResult] = useStateG(null);
 
   useEffectG(() => {
     const id = setInterval(() => {
@@ -1208,28 +1237,27 @@ function SpeedQuizCard({ pool, chips, onFinish, verifyRef, setVerifyReady }) {
   }
 
   function tap(chip) {
-    if (finishedRef.current || !current) return;
+    if (finishedRef.current || !current || result) return;
     // Tap selecciona el chip (toggle si tap mismo). NO verifica.
     setSelectedChip((prev) => (prev === chip ? null : chip));
   }
 
   function confirmSelection() {
-    if (finishedRef.current || !current || !selectedChip) return;
-    if (selectedChip === current.correct) {
-      setStats((s) => ({ ...s, aciertos: s.aciertos + 1 }));
-      pushRecent("elementos_r1", current.id);
+    if (finishedRef.current || !current || !selectedChip || result) return;
+    const isCorrect = selectedChip === current.correct;
+    setStats((s) => isCorrect
+      ? { ...s, aciertos: s.aciertos + 1 }
+      : { ...s, errores: s.errores + 1 });
+    pushRecent("elementos_r1", current.id);
+    // Pintar: la correcta en verde (✓), la elegida equivocada en rojo. Si
+    // acertó, hold corto; si falló, un poco más para que vea la respuesta.
+    setResult({ picked: selectedChip, correct: current.correct });
+    if (setVerifyReady) setVerifyReady(false);
+    setTimeout(() => {
+      setResult(null);
       setSelectedChip(null);
       nextText();
-    } else {
-      setStats((s) => ({ ...s, errores: s.errores + 1 }));
-      setShake(selectedChip);
-      pushRecent("elementos_r1", current.id);
-      setTimeout(() => {
-        setShake(null);
-        setSelectedChip(null);
-        nextText();
-      }, 450);
-    }
+    }, isCorrect ? 650 : 1100);
   }
 
   return (
@@ -1279,25 +1307,46 @@ function SpeedQuizCard({ pool, chips, onFinish, verifyRef, setVerifyReady }) {
       }}>
         {chips.map((c) => {
           const isSelected = selectedChip === c;
+          // Pintado tras verificar: verde la correcta (con ✓), rojo la elegida
+          // equivocada.
+          const isResCorrect = result && c === result.correct;
+          const isResWrong = result && c === result.picked && result.picked !== result.correct;
           return (
-            <button key={c} onClick={() => tap(c)} disabled={finishedRef.current}
+            <button key={c} onClick={() => tap(c)} disabled={finishedRef.current || !!result}
               style={{
+                position: "relative",
                 padding: "10px 6px", borderRadius: 12,
-                background: isSelected
+                background: isResCorrect
+                  ? "linear-gradient(180deg, #2ecc8f, #22a06c)"
+                  : isResWrong
+                  ? "linear-gradient(180deg, #ff8b8b, #dc5050)"
+                  : isSelected
                   ? "linear-gradient(180deg, #ffd84b, #c0850c)"
                   : "linear-gradient(180deg, #ffe97a, #d7b12a)",
-                color: "#3a2608",
+                color: isResCorrect || isResWrong ? "#fff" : "#3a2608",
                 fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 15,
-                border: isSelected ? "2.5px solid #fce9a8" : "none",
-                boxShadow: isSelected
+                border: isResCorrect ? "2.5px solid #2ecc8f" : isSelected ? "2.5px solid #fce9a8" : "none",
+                boxShadow: isResCorrect
+                  ? "0 0 0 4px rgba(255,255,255,0.9), 0 0 26px rgba(46,204,143,0.85)"
+                  : isSelected
                   ? "0 0 0 4px rgba(255,255,255,1), 0 0 0 8px rgba(252,233,168,0.65), 0 0 38px rgba(252,233,168,0.9), inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -3px 0 rgba(0,0,0,0.2), 0 8px 22px -4px rgba(0,0,0,0.55)"
                   : "inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.18), 0 4px 10px -2px rgba(0,0,0,0.45)",
-                cursor: finishedRef.current ? "default" : "pointer", letterSpacing: "0.02em",
+                cursor: finishedRef.current || result ? "default" : "pointer", letterSpacing: "0.02em",
                 opacity: finishedRef.current ? 0.5 : 1,
-                transform: isSelected ? "translateY(-4px) scale(1.04)" : "none",
+                transform: (isSelected && !result) || isResCorrect ? "translateY(-4px) scale(1.04)" : "none",
                 transition: "all 0.15s ease",
-                animation: shake === c ? "ed-shake 0.35s" : "none",
-              }}>{c}</button>
+                animation: isResWrong ? "ed-shake 0.35s" : "none",
+              }}>
+              {c}
+              {isResCorrect && (
+                <span style={{
+                  position: "absolute", top: -8, right: -8, width: 22, height: 22, borderRadius: "50%",
+                  background: "#2ecc8f", color: "#fff", fontSize: 13, fontWeight: 900,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  border: "2px solid #fff", boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
+                }}>✓</span>
+              )}
+            </button>
           );
         })}
       </div>

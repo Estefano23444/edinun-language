@@ -148,6 +148,45 @@ const POEMAS_BANK = [
       { p: "y" }, { p: "la" }, { p: "noche" }, { p: "se" }, { p: "queda" }, { p: "en" }, { p: "calma." },
     ],
   },
+  {
+    id: "mar",
+    titulo: "Cerca del mar",
+    tokens: [
+      { p: "El" }, { p: "barco" }, { p: "azul" }, { p: "navega" }, { p: "veloz," },
+      { br: true },
+      { p: "el" }, { p: "capitan", err: true, ok: "capitán" }, { p: "saluda" }, { p: "al" }, { p: "sol." },
+      { br: true },
+      { p: "Una" }, { p: "gaviota" }, { p: "vuela" }, { p: "tambien,", err: true, ok: "también," },
+      { br: true },
+      { p: "y" }, { p: "el" }, { p: "mar" }, { p: "canta" }, { p: "una" }, { p: "cancion.", err: true, ok: "canción." },
+    ],
+  },
+  {
+    id: "cocina",
+    titulo: "En la cocina",
+    tokens: [
+      { p: "Mi" }, { p: "abuela" }, { p: "hace" }, { p: "rico" }, { p: "pan," },
+      { br: true },
+      { p: "el" }, { p: "azucar", err: true, ok: "azúcar" }, { p: "brilla" }, { p: "en" }, { p: "el" }, { p: "tazon,", err: true, ok: "tazón," },
+      { br: true },
+      { p: "huele" }, { p: "dulce" }, { p: "la" }, { p: "cocina," },
+      { br: true },
+      { p: "y" }, { p: "el" }, { p: "cafe", err: true, ok: "café" }, { p: "espera" }, { p: "ya." },
+    ],
+  },
+  {
+    id: "lluvia",
+    titulo: "Día de lluvia",
+    tokens: [
+      { p: "La" }, { p: "lluvia" }, { p: "cae" }, { p: "sobre" }, { p: "el" }, { p: "techo," },
+      { br: true },
+      { p: "el" }, { p: "paraguas" }, { p: "se" }, { p: "abre" }, { p: "veloz." },
+      { br: true },
+      { p: "Un" }, { p: "relampago", err: true, ok: "relámpago" }, { p: "cruza" }, { p: "el" }, { p: "cielo," },
+      { br: true },
+      { p: "el" }, { p: "arbol", err: true, ok: "árbol" }, { p: "baila" }, { p: "y" }, { p: "el" }, { p: "rio", err: true, ok: "río" }, { p: "crece." },
+    ],
+  },
 ];
 
 // R3 — Memoria de parejas: pool de pares masc/fem. Cada partida toma 3 al azar.
@@ -213,6 +252,39 @@ const KICHWA_SETS = [
       { es: "HIJO",   kichwa: "churi",      emoji: "🧒" },
     ],
   },
+  {
+    id: "padres-hijos", titulo: "Padres e hijos",
+    miembros: [
+      { es: "MADRE",  kichwa: "mama",       emoji: "👩" },
+      { es: "PADRE",  kichwa: "yaya",       emoji: "👨" },
+      { es: "HIJO",   kichwa: "churi",      emoji: "🧒" },
+      { es: "HIJA",   kichwa: "ushushi",    emoji: "👧" },
+      { es: "NIÑO",   kichwa: "wawa",       emoji: "👶" },
+      { es: "ABUELA", kichwa: "hatunmama",  emoji: "👵" },
+    ],
+  },
+  {
+    id: "casa", titulo: "En casa",
+    miembros: [
+      { es: "PADRE",  kichwa: "yaya",       emoji: "👨" },
+      { es: "MADRE",  kichwa: "mama",       emoji: "👩" },
+      { es: "ABUELO", kichwa: "hatunyaya",  emoji: "👴" },
+      { es: "TÍO",    kichwa: "tiyu yaya",  emoji: "🕺" },
+      { es: "TÍA",    kichwa: "tiya mama",  emoji: "💃" },
+      { es: "NIÑO",   kichwa: "wawa",       emoji: "👶" },
+    ],
+  },
+  {
+    id: "tres-generaciones", titulo: "Tres generaciones",
+    miembros: [
+      { es: "ABUELA", kichwa: "hatunmama",  emoji: "👵" },
+      { es: "ABUELO", kichwa: "hatunyaya",  emoji: "👴" },
+      { es: "MADRE",  kichwa: "mama",       emoji: "👩" },
+      { es: "PADRE",  kichwa: "yaya",       emoji: "👨" },
+      { es: "HIJA",   kichwa: "ushushi",    emoji: "👧" },
+      { es: "NIÑO",   kichwa: "wawa",       emoji: "👶" },
+    ],
+  },
 ];
 
 // R2 — Ordena la receta (5 pasos)
@@ -248,6 +320,39 @@ const RECETAS_BANK = [
       { n: 3, emoji: "📃", texto: "Doblar las puntas hacia el centro." },
       { n: 4, emoji: "🛩", texto: "Plegar las alas hacia los lados." },
       { n: 5, emoji: "🚀", texto: "Lanzar suavemente al aire." },
+    ],
+  },
+  {
+    id: "limonada",
+    titulo: "Limonada bien fría",
+    pasos: [
+      { n: 1, emoji: "🍋", texto: "Exprimir los limones en un jarro." },
+      { n: 2, emoji: "💧", texto: "Agregar agua fresca al jarro." },
+      { n: 3, emoji: "🍯", texto: "Añadir azúcar y revolver bien." },
+      { n: 4, emoji: "🧊", texto: "Poner unos cubos de hielo." },
+      { n: 5, emoji: "🥤", texto: "Servir en vasos y disfrutar." },
+    ],
+  },
+  {
+    id: "ensalada",
+    titulo: "Ensalada de frutas",
+    pasos: [
+      { n: 1, emoji: "🍎", texto: "Lavar todas las frutas con agua." },
+      { n: 2, emoji: "🔪", texto: "Pelar las frutas con cuidado." },
+      { n: 3, emoji: "🍌", texto: "Cortar las frutas en trocitos." },
+      { n: 4, emoji: "🥣", texto: "Mezclar todo en un tazón grande." },
+      { n: 5, emoji: "🥄", texto: "Servir en platos para compartir." },
+    ],
+  },
+  {
+    id: "sanduche",
+    titulo: "Sánduche de queso",
+    pasos: [
+      { n: 1, emoji: "🍞", texto: "Tomar dos rebanadas de pan." },
+      { n: 2, emoji: "🧈", texto: "Untar mantequilla en el pan." },
+      { n: 3, emoji: "🧀", texto: "Colocar una lámina de queso." },
+      { n: 4, emoji: "🥪", texto: "Tapar con la otra rebanada de pan." },
+      { n: 5, emoji: "🍽", texto: "Cortar por la mitad y comer." },
     ],
   },
 ];
@@ -806,7 +911,7 @@ function TextoPoeticoGame({ app, setApp, go, onRestart }) {
     // de mostrar el overlay "¡UPS!". Al acertar mostramos overlay enseguida.
     const okMsg = `+${earned} ⭐`;
     const errMsg = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
-    const revealDelay = isCorrect ? 0 : 1200;
+    const revealDelay = isCorrect ? 0 : 3000;
     const overlayTime = isCorrect ? 950 : 1300;
     const totalTime   = revealDelay + overlayTime;
 
@@ -969,10 +1074,11 @@ function CofresMagicosCard({ pick, selected, locked, onSelect }) {
       <div style={{ display: "flex", gap: 18, justifyContent: "center", width: "100%" }}>
         {COFRES.map((c) => {
           const isSelected = selected === c.id;
-          const isCorrect = locked && isSelected && pick.tipo === c.id;
-          const isWrong   = locked && isSelected && pick.tipo !== c.id;
-          const showAnswer = locked && pick.tipo === c.id && !isSelected;
-          const isOpen = isCorrect || showAnswer;
+          // El cofre CORRECTO (lo haya elegido el niño o no) siempre se marca en
+          // verde con ✓. El cofre que el niño eligió MAL se marca en rojo con ✗.
+          const isCorrectChest = locked && pick.tipo === c.id;
+          const isWrong        = locked && isSelected && pick.tipo !== c.id;
+          const isOpen = isCorrectChest;
           return (
             <button key={c.id}
               onClick={() => onSelect(c.id)}
@@ -989,18 +1095,19 @@ function CofresMagicosCard({ pick, selected, locked, onSelect }) {
                   ? "translateY(-6px) scale(1.04)"
                   : isWrong ? "translateY(2px)" : "none",
                 transition: "transform 0.2s ease",
-                opacity: locked && !isSelected && !showAnswer ? 0.5 : 1,
+                // Atenúa solo los cofres que no son ni el correcto ni tu error.
+                opacity: locked && !isCorrectChest && !isWrong ? 0.45 : 1,
               }}>
               {/* Tapa del cofre */}
               <div style={{
                 position: "absolute", left: 8, top: 24, width: 114, height: 32,
-                background: isCorrect
-                  ? "linear-gradient(180deg, #ffe27a, #d9a441)"
+                background: isCorrectChest
+                  ? "linear-gradient(180deg, #7ef0bd, #2ecc8f)"
                   : isWrong
                   ? "linear-gradient(180deg, #ff9a9a, #c33b3b)"
                   : "linear-gradient(180deg, #d9a441, #8b5510)",
                 borderRadius: "60% 60% 10% 10% / 90% 90% 10% 10%",
-                border: `3px solid ${c.trim}`,
+                border: `3px solid ${isCorrectChest ? "#2ecc8f" : isWrong ? "#ff6b6b" : c.trim}`,
                 borderBottom: "none",
                 transformOrigin: "50% 100%",
                 transform: isOpen ? "translateY(-16px) rotate(-22deg)" : "rotate(0deg)",
@@ -1011,7 +1118,7 @@ function CofresMagicosCard({ pick, selected, locked, onSelect }) {
                 <div style={{
                   position: "absolute", left: "50%", top: 6, transform: "translateX(-50%)",
                   width: 20, height: 18,
-                  background: c.trim,
+                  background: isCorrectChest ? "#2ecc8f" : isWrong ? "#ff6b6b" : c.trim,
                   borderRadius: "50%",
                   border: "2px solid #fce9a8",
                 }} />
@@ -1020,50 +1127,64 @@ function CofresMagicosCard({ pick, selected, locked, onSelect }) {
               {/* Cuerpo del cofre */}
               <div style={{
                 position: "absolute", left: 8, top: 56, width: 114, height: 84,
-                background: isCorrect
-                  ? "linear-gradient(180deg, #fce9a8, #d9a441)"
+                background: isCorrectChest
+                  ? "linear-gradient(180deg, #c6f7e2, #2ecc8f)"
                   : isWrong
                   ? "linear-gradient(180deg, #ffb0b0, #c33b3b)"
                   : "linear-gradient(180deg, #c79030, #8b5510)",
                 borderRadius: "8px 8px 12px 12px",
-                border: `3px solid ${c.trim}`,
-                boxShadow: isSelected
+                border: `3px solid ${isCorrectChest ? "#2ecc8f" : isWrong ? "#ff6b6b" : c.trim}`,
+                boxShadow: isCorrectChest
+                  ? "0 0 22px rgba(46,204,143,0.7), 0 6px 14px rgba(0,0,0,0.5)"
+                  : isSelected
                   ? `0 0 22px ${c.glow}, 0 6px 14px rgba(0,0,0,0.5)`
                   : "0 6px 14px rgba(0,0,0,0.5)",
                 display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
                 gap: 4,
                 color: "#fce9a8",
               }}>
-                {/* Cerradura o gema (cambia al abrir) */}
+                {/* Cerradura / gema / marca según estado */}
                 <div style={{
-                  fontSize: 28,
-                  filter: isOpen ? "drop-shadow(0 0 8px rgba(252,233,168,0.9))" : "none",
+                  fontSize: 30, fontWeight: 900,
+                  color: isCorrectChest ? "#06381f" : isWrong ? "#fff" : "#fce9a8",
+                  filter: isOpen ? "drop-shadow(0 0 8px rgba(255,255,255,0.9))" : "none",
                 }}>
-                  {isOpen ? c.emoji : (isWrong ? "✕" : "🔒")}
+                  {isCorrectChest ? "✓" : isWrong ? "✗" : "🔒"}
                 </div>
               </div>
 
-              {/* Etiqueta (label tipo chip dorado debajo) */}
+              {/* Etiqueta (label tipo chip debajo) */}
               <div style={{
                 position: "absolute", left: 0, right: 0, bottom: 0,
-                background: isCorrect
+                background: isCorrectChest
                   ? "linear-gradient(180deg, #2ecc8f, #15a06a)"
                   : isWrong
                   ? "linear-gradient(180deg, #ff6b6b, #c33b3b)"
                   : `linear-gradient(180deg, ${c.trim}, ${c.trim})`,
                 color: "#fff",
-                border: `2px solid ${isSelected ? "#fce9a8" : "rgba(255,255,255,0.7)"}`,
+                border: `2px solid ${isCorrectChest ? "#d6fff0" : isWrong ? "#ffd6d6" : isSelected ? "#fce9a8" : "rgba(255,255,255,0.7)"}`,
                 borderRadius: 10,
                 padding: "5px 6px",
                 fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11.5, letterSpacing: "0.04em",
                 textAlign: "center",
                 textShadow: "0 1px 2px rgba(0,0,0,0.3)",
               }}>
-                {c.label}
+                {isCorrectChest ? "✓ " : isWrong ? "✗ " : ""}{c.label}
               </div>
 
-              {/* Chispas cuando se abre correcto */}
-              {isCorrect && (
+              {/* Etiqueta flotante "TU ELECCIÓN" sobre el cofre que el niño marcó mal */}
+              {isWrong && (
+                <div style={{
+                  position: "absolute", top: -2, left: "50%", transform: "translateX(-50%)",
+                  background: "#c33b3b", color: "#fff",
+                  fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 9.5, letterSpacing: "0.05em",
+                  padding: "3px 8px", borderRadius: 999, border: "1.5px solid #ffd6d6",
+                  whiteSpace: "nowrap", boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
+                }}>TU ELECCIÓN</div>
+              )}
+
+              {/* Chispas cuando se abre el cofre correcto */}
+              {isCorrectChest && (
                 <>
                   <div style={{ position: "absolute", left: 20, top: 6, fontSize: 18, animation: "ed-pop-in 0.4s" }}>✨</div>
                   <div style={{ position: "absolute", right: 18, top: 12, fontSize: 16, animation: "ed-pop-in 0.5s" }}>⭐</div>
@@ -1400,7 +1521,7 @@ function TextoInstructivoGame({ app, setApp, go, onRestart }) {
     // marcas) antes de mostrar el overlay "¡UPS!". Al acertar va enseguida.
     const okMsg = `+${earned} ⭐`;
     const errMsg = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
-    const revealDelay = isCorrect ? 0 : 1200;
+    const revealDelay = isCorrect ? 0 : 3000;
     const overlayTime = isCorrect ? 950 : 1300;
     const totalTime   = revealDelay + overlayTime;
 
@@ -1487,6 +1608,13 @@ function TextoInstructivoGame({ app, setApp, go, onRestart }) {
               next[memberEs] = labelToPlace;
               setR1Placed(next); setR1Picked(null);
             }}
+            onUnplace={(k) => {
+              // Devolver a la bandeja una palabra ya colocada (drop sobre bandeja).
+              if (r1Locked || !k) return;
+              const next = { ...r1Placed };
+              for (const key of Object.keys(next)) if (next[key] === k) delete next[key];
+              setR1Placed(next); setR1Picked(null);
+            }}
           />
         )}
         {ronda === 1 && r2Order.length > 0 && (
@@ -1536,7 +1664,7 @@ function TextoInstructivoGame({ app, setApp, go, onRestart }) {
 // ─────────────────────────────────────────────────────────────
 // R1 · Kichwa árbol — 6 miembros con slots; bandeja con etiquetas kichwa
 // ─────────────────────────────────────────────────────────────
-function KichwaArbolCard({ set, placed, picked, locked, onPickLabel, onPlaceIn }) {
+function KichwaArbolCard({ set, placed, picked, locked, onPickLabel, onPlaceIn, onUnplace }) {
   const usedLabels = new Set(Object.values(placed));
   const [dragLabel, setDragLabel] = React.useState(null);
   const [dragOverMember, setDragOverMember] = React.useState(null);
@@ -1564,17 +1692,10 @@ function KichwaArbolCard({ set, placed, picked, locked, onPickLabel, onPlaceIn }
             const wasCorrect = locked && userKichwa === correctKichwa;
             const wasWrong   = locked && userKichwa && userKichwa !== correctKichwa;
             const wasEmpty   = locked && !userKichwa;
-            // Cuando se bloquea tras verificar: siempre mostramos la
-            // respuesta correcta en el slot, con marco verde si el niño
-            // acertó o rojo si se equivocó/lo dejó vacío.
-            const slotText = locked ? correctKichwa : (userKichwa || "?");
-            const slotBg = wasCorrect ? "rgba(46,204,143,0.9)"
-              : wasWrong || wasEmpty ? "rgba(255,107,107,0.85)"
-              : userKichwa ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.1)";
-            const slotColor = (wasCorrect || wasWrong || wasEmpty) ? "#fff" : (userKichwa ? "#3a2608" : "rgba(252,233,168,0.5)");
-            const slotBorder = wasCorrect ? "1.5px solid #2ecc8f"
-              : wasWrong || wasEmpty ? "1.5px solid #ff6b6b"
-              : userKichwa ? "1.5px solid #d9a441" : "1.5px dashed rgba(252,233,168,0.5)";
+            // Estilo del slot SIN bloquear (mientras el niño juega).
+            const slotBg = userKichwa ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.1)";
+            const slotColor = userKichwa ? "#3a2608" : "rgba(252,233,168,0.5)";
+            const slotBorder = userKichwa ? "1.5px solid #d9a441" : "1.5px dashed rgba(252,233,168,0.5)";
             return (
               <div key={m.es}
                 onClick={() => onPlaceIn(m.es)}
@@ -1609,25 +1730,79 @@ function KichwaArbolCard({ set, placed, picked, locked, onPickLabel, onPlaceIn }
                 <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11, color: locked || userKichwa ? "#3a2608" : "#fce9a8", letterSpacing: "0.04em" }}>
                   {m.es}
                 </div>
-                <div style={{
-                  minHeight: 26, width: "100%",
-                  fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12.5,
-                  background: slotBg,
-                  border: slotBorder,
-                  borderRadius: 8, padding: "4px 4px",
-                  color: slotColor,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  {slotText}
-                </div>
+                {!locked ? (
+                  <div
+                    draggable={!!userKichwa}
+                    onDragStart={(e) => {
+                      if (!userKichwa) return;
+                      e.stopPropagation();
+                      e.dataTransfer.effectAllowed = "move";
+                      e.dataTransfer.setData("text/plain", userKichwa);
+                      setDragLabel(userKichwa);
+                    }}
+                    onDragEnd={() => { setDragLabel(null); setDragOverMember(null); }}
+                    onClick={(e) => { e.stopPropagation(); onPlaceIn(m.es); }}
+                    style={{
+                    minHeight: 26, width: "100%",
+                    fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12.5,
+                    background: slotBg, border: slotBorder,
+                    borderRadius: 8, padding: "4px 4px", color: slotColor,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    cursor: userKichwa ? "grab" : "default",
+                  }}>
+                    {userKichwa || "?"}
+                  </div>
+                ) : wasCorrect ? (
+                  <div style={{
+                    minHeight: 26, width: "100%",
+                    fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12.5,
+                    background: "rgba(46,204,143,0.9)", border: "1.5px solid #2ecc8f",
+                    borderRadius: 8, padding: "4px 4px", color: "#fff",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    ✓ {correctKichwa}
+                  </div>
+                ) : (
+                  /* Falló o lo dejó vacío: mostramos AMBAS — tu elección (rojo)
+                     y la correcta (verde). */
+                  <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 3 }}>
+                    <div style={{
+                      fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 11,
+                      background: "rgba(255,107,107,0.9)", border: "1.5px solid #ff6b6b",
+                      borderRadius: 7, padding: "3px 4px", color: "#fff",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      textDecoration: wasWrong ? "line-through" : "none",
+                    }}>
+                      ✗ {userKichwa || "(vacío)"}
+                    </div>
+                    <div style={{
+                      fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11.5,
+                      background: "rgba(46,204,143,0.9)", border: "1.5px solid #2ecc8f",
+                      borderRadius: 7, padding: "3px 4px", color: "#fff",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                      ✓ {correctKichwa}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* Bandeja con etiquetas kichwa — arrastrables o con tap */}
-      <div data-qa="bandeja" style={{
+      {/* Bandeja con etiquetas kichwa — arrastrables o con tap. También acepta
+          que sueltes aquí una palabra ya colocada para devolverla. */}
+      <div data-qa="bandeja"
+        onDragOver={(e) => { if (!locked) e.preventDefault(); }}
+        onDrop={(e) => {
+          if (locked) return;
+          e.preventDefault();
+          const k = e.dataTransfer.getData("text/plain");
+          setDragLabel(null); setDragOverMember(null);
+          if (k && onUnplace) onUnplace(k);
+        }}
+        style={{
         width: "100%", maxWidth: 480,
         background: "rgba(10,6,35,0.55)",
         border: "1px dashed rgba(252,233,168,0.35)",
@@ -1685,16 +1860,9 @@ function OrdenaRecetaCard({ receta, order, selected, locked, onTap, onSwap }) {
   const showCorrectOrder = locked && !allCorrect;
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
-      <div style={{
-        fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13.5, color: "#fce9a8", textAlign: "center",
-        background: "rgba(10,6,35,0.55)",
-        border: "1px solid rgba(242,194,96,0.45)",
-        borderRadius: 999,
-        padding: "5px 18px",
-      }}>
-        🍓 {receta.titulo}
-      </div>
+    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 9 }}>
+      {/* El título de la receta ya aparece en el enunciado central → no se
+          repite aquí (antes un chip se enciamaba con el enunciado). */}
       <div style={{ display: "flex", flexDirection: "column", gap: 7, width: "100%", maxWidth: 480 }}>
         {order.map((paso, i) => {
           const isSelected = selected === i;
@@ -1765,33 +1933,37 @@ function OrdenaRecetaCard({ receta, order, selected, locked, onTap, onSwap }) {
         })}
       </div>
 
-      {/* Orden correcto — solo cuando el niño se equivocó */}
+      {/* Orden correcto — solo cuando el niño se equivocó. Etiqueta en su
+          propia línea y la secuencia en UNA sola fila, para que quepa completo
+          sin desbordar el lienzo. */}
       {showCorrectOrder && (
         <div style={{
           background: "linear-gradient(180deg, rgba(46,204,143,0.18), rgba(10,6,35,0.7))",
           border: "2px solid #2ecc8f",
           borderRadius: 12,
-          padding: "8px 14px",
-          display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "center",
+          padding: "6px 12px",
+          display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
           color: "#fff",
-          fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12.5,
+          fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12,
           maxWidth: 480,
         }}>
-          <span style={{ color: "#a8f3c8" }}>✓ Orden correcto:</span>
-          {receta.pasos.map((p, i) => (
-            <span key={p.n} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-              <span style={{
-                background: "linear-gradient(180deg, #f2c260, #d9a441)",
-                color: "#3a2608",
-                borderRadius: "50%", width: 22, height: 22,
-                display: "inline-flex", alignItems: "center", justifyContent: "center",
-                fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
-                border: "1.5px solid rgba(255,255,255,0.85)",
-              }}>{i + 1}</span>
-              <span style={{ fontSize: 18 }}>{p.emoji}</span>
-              {i < receta.pasos.length - 1 && <span style={{ color: "#fce9a8" }}>→</span>}
-            </span>
-          ))}
+          <span style={{ color: "#a8f3c8", letterSpacing: "0.02em" }}>✓ Orden correcto</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 5, justifyContent: "center", flexWrap: "nowrap" }}>
+            {receta.pasos.map((p, i) => (
+              <span key={p.n} style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+                <span style={{
+                  background: "linear-gradient(180deg, #f2c260, #d9a441)",
+                  color: "#3a2608",
+                  borderRadius: "50%", width: 20, height: 20,
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11,
+                  border: "1.5px solid rgba(255,255,255,0.85)", flexShrink: 0,
+                }}>{i + 1}</span>
+                <span style={{ fontSize: 16 }}>{p.emoji}</span>
+                {i < receta.pasos.length - 1 && <span style={{ color: "#fce9a8", fontSize: 12 }}>→</span>}
+              </span>
+            ))}
+          </div>
         </div>
       )}
     </div>

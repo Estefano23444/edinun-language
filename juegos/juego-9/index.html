@@ -868,6 +868,12 @@ function GameScreen({ app, setApp, go }) {
   const [starsSession, setStarsSession] = useStateG(0);
   const [feedback, setFeedback] = useStateG(null);
   const [feedbackMsg, setFeedbackMsg] = useStateG("");
+  // Fase "reveal": al fallar, ANTES del overlay "¡UPS!" se revela la sílaba
+  // correcta — la bandeja la marca en verde con ✓, la ficha equivocada en
+  // rojo, y aparece un cartel "Correcta: ✓ XX". Bloquea toda entrada.
+  // `{ cluster: "PR" }`. Mismo mecanismo que juego-1.
+  const [reveal, setReveal] = useStateG(null);
+  const REVEAL_MS = 2800;
   const [confirmingExit, setConfirmingExit] = useStateG(false);
   const [confirmingRestart, setConfirmingRestart] = useStateG(false);
   const [log, setLog] = useStateG([]);
@@ -883,10 +889,12 @@ function GameScreen({ app, setApp, go }) {
   }, []);
 
   function pressCluster(cluster) {
+    if (reveal) return;
     setPicked(cluster);
   }
 
   function erase() {
+    if (reveal) return;
     setPicked(null);
   }
 
@@ -900,6 +908,7 @@ function GameScreen({ app, setApp, go }) {
   }
 
   function verify() {
+    if (reveal) return;
     if (!picked) {
       setFeedback("err");
       setFeedbackMsg("Toca una sílaba primero");
@@ -912,23 +921,35 @@ function GameScreen({ app, setApp, go }) {
     const exerciseSec = Math.max(0, Math.floor((Date.now() - exerciseStart.current) / 1000));
     const earned = calcStars(isCorrect, exerciseSec);
 
-    const newAttempted = attempted + 1;
-    const newSolved = solved + (isCorrect ? 1 : 0);
-    const newStarsSession = starsSession + earned;
-    const newStarsTotal = stars + earned;
-
     const entry = {
-      idx: newAttempted,
       a: problem.word,                  // palabra completa
       b: picked,                        // sílaba elegida (minúsculas)
       op: "🃏",
       correctAnswer: problem.cluster,
       userAnswer: picked,
-      isCorrect,
       time: exerciseSec,
       earned,
       emoji: problem.emoji,
     };
+
+    if (!isCorrect) {
+      // Revelar la sílaba correcta ANTES del overlay "¡UPS!": la bandeja la
+      // marca en verde con ✓ y la ficha equivocada en rojo. Bloquea entradas.
+      setReveal({ cluster: problem.cluster });
+      setTimeout(() => { setReveal(null); finalize(false, entry); }, REVEAL_MS);
+      return;
+    }
+    finalize(true, entry);
+  }
+
+  function finalize(isCorrect, partialEntry) {
+    const earned = isCorrect ? partialEntry.earned : 0;
+    const newAttempted = attempted + 1;
+    const newSolved = solved + (isCorrect ? 1 : 0);
+    const newStarsSession = starsSession + earned;
+    const newStarsTotal = stars + earned;
+
+    const entry = { idx: newAttempted, ...partialEntry, isCorrect };
     const newLog = [...log, entry];
 
     setFeedback(isCorrect ? "ok" : "err");
@@ -942,7 +963,9 @@ function GameScreen({ app, setApp, go }) {
     setStarsSession(newStarsSession);
     setLog(newLog);
 
-    const wait = isCorrect ? 950 : 1200;
+    // El revelado ya cumplió el rol educativo del fallo → el overlay "¡UPS!"
+    // va corto, igual que el de acierto.
+    const wait = isCorrect ? 950 : 1100;
     setTimeout(() => {
       setFeedback(null);
       setFeedbackMsg("");
@@ -1128,23 +1151,28 @@ function GameScreen({ app, setApp, go }) {
         }}>
           {/* Slot del cluster — el doble de ancho que una letra normal */}
           <button
-            onClick={() => { if (picked) erase(); }}
+            onClick={() => { if (picked && !reveal) erase(); }}
             style={{
               width: SLOT_W * 1.6, height: SLOT_H,
               borderRadius: 12,
               border: `2.5px solid ${
+                reveal ? "#2ecc8f" :
                 feedback === "ok" ? "#2ecc8f" :
                 feedback === "err" ? "#ff6b6b" :
                 picked ? "#fce9a8" : "rgba(242,194,96,0.55)"
               }`,
-              background: picked
+              background: reveal
+                ? "linear-gradient(180deg, rgba(46,204,143,0.95), rgba(34,160,108,0.9))"
+                : picked
                 ? "linear-gradient(180deg, rgba(252,233,168,0.95), rgba(217,164,65,0.85))"
                 : "rgba(10,6,35,0.55)",
-              color: picked ? "#3a2608" : "rgba(252,233,168,0.5)",
+              color: reveal ? "#06381f" : picked ? "#3a2608" : "rgba(252,233,168,0.5)",
               fontFamily: "var(--ed-font-display)", fontWeight: 800,
               fontSize: SLOT_H * 0.55,
-              cursor: picked ? "pointer" : "default",
-              boxShadow: picked
+              cursor: picked && !reveal ? "pointer" : "default",
+              boxShadow: reveal
+                ? "0 0 16px rgba(46,204,143,0.6), inset 0 1px 0 rgba(255,255,255,0.3)"
+                : picked
                 ? "0 4px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.4)"
                 : "0 0 14px rgba(252,233,168,0.3), inset 0 1px 0 rgba(255,255,255,0.08)",
               transition: "all 0.15s ease",
@@ -1152,7 +1180,7 @@ function GameScreen({ app, setApp, go }) {
             }}
             title={picked ? "Toca para borrar" : "Toca una sílaba de abajo"}
           >
-            {picked || "__"}
+            {reveal ? reveal.cluster : (picked || "__")}
           </button>
 
           {/* Letras restantes — fijas, visibles, en blanco. */}
@@ -1183,31 +1211,53 @@ function GameScreen({ app, setApp, go }) {
         {problem.trayClusters.map((cluster, trayIdx) => {
           const color = ["#ef5a5a","#4fa0ff","#2ecc8f"][trayIdx % 3];
           const isPicked = picked === cluster;
+          // Durante el revelado: la sílaba correcta se marca en verde con ✓,
+          // la equivocada (la que tocó el niño) en rojo.
+          const isRevealCorrect = reveal && cluster === reveal.cluster;
+          const isRevealWrong = reveal && isPicked && cluster !== reveal.cluster;
           return (
             <button
               key={trayIdx}
               className="ed-numpad-key"
               onClick={() => pressCluster(cluster)}
               style={{
+                position: "relative",
                 width: 92, height: 72, fontSize: 28,
-                borderColor: isPicked ? "#fce9a8" : color,
-                borderWidth: isPicked ? 3 : 2,
+                borderColor: isRevealCorrect ? "#2ecc8f" : isRevealWrong ? "#ff6b6b" : isPicked ? "#fce9a8" : color,
+                borderWidth: isPicked || isRevealCorrect ? 3 : 2,
                 borderStyle: "solid",
-                cursor: "pointer",
+                cursor: reveal ? "default" : "pointer",
                 fontWeight: 800,
                 letterSpacing: "0.04em",
-                background: isPicked
+                color: isRevealCorrect ? "#06381f" : undefined,
+                background: isRevealCorrect
+                  ? "linear-gradient(180deg, rgba(46,204,143,0.95), rgba(34,160,108,0.9))"
+                  : isRevealWrong
+                  ? "linear-gradient(180deg, rgba(255,107,107,0.25), rgba(220,80,80,0.18))"
+                  : isPicked
                   ? "linear-gradient(180deg, rgba(252,233,168,0.25), rgba(217,164,65,0.18))"
                   : undefined,
-                boxShadow: isPicked
+                boxShadow: isRevealCorrect
+                  ? "0 0 18px rgba(46,204,143,0.6), inset 0 1px 0 rgba(255,255,255,0.25)"
+                  : isPicked
                   ? "0 0 18px rgba(252,233,168,0.55), inset 0 1px 0 rgba(255,255,255,0.2)"
                   : undefined,
-                transform: isPicked ? "translateY(-2px)" : "none",
+                transform: isPicked || isRevealCorrect ? "translateY(-2px)" : "none",
                 transition: "all 0.15s ease",
               }}
               title="Toca para elegir"
             >
               {cluster}
+              {isRevealCorrect && (
+                <span style={{
+                  position: "absolute", top: -8, right: -8,
+                  width: 24, height: 24, borderRadius: "50%",
+                  background: "#2ecc8f", color: "#fff",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 14, fontWeight: 900,
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+                }}>✓</span>
+              )}
             </button>
           );
         })}

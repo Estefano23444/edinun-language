@@ -234,6 +234,30 @@ const R2_BANK = [
       "Cada vuelta del reloj devolvía un minuto al pasado.",
       "Tomás detuvo el reloj y el faro se apagó.",
     ] },
+  { id: "semilla", title: "La semilla",
+    scenes: [
+      "Camila plantó una semilla gris que le regaló su abuela.",
+      "Esa misma tarde brotó un árbol más alto que la casa.",
+      "Entre las ramas crecían estrellas en vez de frutos.",
+      "Camila tomó una estrella y la guardó en su bolsillo.",
+      "Por la noche, su cuarto se llenó de luz propia.",
+    ] },
+  { id: "espejo", title: "El espejo del desván",
+    scenes: [
+      "Andrés halló un espejo cubierto de polvo en el desván.",
+      "Al limpiarlo, vio en él un jardín que no era su casa.",
+      "Estiró la mano y sus dedos atravesaron el cristal.",
+      "Caminó entre flores que cantaban con voz suave.",
+      "Al volver, el espejo solo reflejaba el desván vacío.",
+    ] },
+  { id: "carta", title: "La carta sin sello",
+    scenes: [
+      "Una carta sin sello apareció bajo la puerta de Lucía.",
+      "Al abrirla, las palabras se movían como hormigas.",
+      "Las letras formaron un mapa hacia el viejo molino.",
+      "Lucía siguió el mapa y encontró una llave de plata.",
+      "La llave abrió una puerta que el molino jamás tuvo.",
+    ] },
 ];
 
 // R3 — Rueda de atributos. correct = los 4 RASGOS que resumen el concepto;
@@ -249,6 +273,15 @@ const R3_BANK = [
   { id: "resumen", concept: "El resumen",
     correct: ["Toma las ideas clave", "Descarta los detalles", "Es más breve", "Guarda el sentido"],
     distract: ["Va en tinta azul", "Lleva título subrayado", "Ocupa media página"] },
+  { id: "extrano", concept: "Lo extraño",
+    correct: ["Algo raro al inicio", "Crea misterio", "Pasa en lo real", "Se explica al final"],
+    distract: ["El gato es negro", "Sucede en otoño", "Llueve toda la tarde"] },
+  { id: "fantastico", concept: "Lo fantástico",
+    correct: ["Mezcla real y mágico", "Algo imposible irrumpe", "Siembra la duda", "Queda sin explicación"],
+    distract: ["La casa es azul", "El reloj es antiguo", "Ocurre en domingo"] },
+  { id: "narrador", concept: "El narrador",
+    correct: ["Cuenta la historia", "Da una voz al relato", "Guía al lector", "Ordena los hechos"],
+    distract: ["Usa lentes redondos", "Habla en voz baja", "Vive junto al río"] },
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -1019,6 +1052,12 @@ function RuedaCard({ enunciado, pick, slots, setSlots, locked }) {
 
   const bank = pick.tray.filter((w) => !slots.includes(w));
 
+  // ¿Acertó? Las 4 ranuras llenas y todas con rasgo correcto (misma regla que
+  // el scoring de R3). Si NO, al bloquear revelamos los 4 rasgos correctos en
+  // un cartel verde "✓" — mismo look que el "✓ Aquí va" de R2 — para que la
+  // respuesta quede clara aunque las fichas correctas hayan quedado en el banco.
+  const acerto = slots.every((w) => w && pick.correctSet.has(w));
+
   // Posiciones de las 4 ranuras alrededor del centro (N, E, S, O).
   // Ancho 420 → la ranura Oeste (x≈240) despeja el bocadillo/cuerpo de Rolli.
   const W = 420, H = 232;
@@ -1109,6 +1148,27 @@ function RuedaCard({ enunciado, pick, slots, setSlots, locked }) {
           );
         })}
       </div>
+
+      {/* Revelación: al fallar, mostramos los 4 rasgos correctos en verde
+          (mismo "✓ verde" de R1/R2) para que la respuesta quede explícita. */}
+      {locked && !acerto && (
+        <div data-qa="revela-correcta" style={{
+          width: 420, borderRadius: 12, padding: "8px 12px",
+          background: "rgba(46,204,143,0.16)", border: "1.5px solid #2ecc8f",
+          display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", alignItems: "center",
+        }}>
+          <span style={{ fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12.5, color: "#7dffc4" }}>
+            Correctos:
+          </span>
+          {pick.correct.map((attr) => (
+            <span key={attr} style={{
+              fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12,
+              color: "#fff", background: "linear-gradient(180deg,#2ecc8f,#22a06c)",
+              borderRadius: 8, padding: "3px 9px",
+            }}>✓ {attr}</span>
+          ))}
+        </div>
+      )}
 
       {/* Banco de fichas (también zona para devolver). Ancho 420 + caja
           translúcida → despeja a Rolli a la izquierda. */}
