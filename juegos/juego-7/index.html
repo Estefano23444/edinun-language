@@ -693,8 +693,8 @@ function CharacterScreen({ app, setApp, go }) {
 Object.assign(window, { HomeScreen, CharacterScreen, CosmosBg, incrementGamesCompleted, useVisitorCount, markFirstAttempt, LEVELS_CFG });
 
 // game-screens.jsx — Juego 7. Dos niveles de lenguaje con mecánicas distintas:
-//   1. La reseña             (8 años)  — ficha del libro / partes de la reseña / ordena el cuento
-//   2. Aprendiendo a escribir (10 años) — pronombre detective / laboratorio verboides / pintor de verbos
+//   1. La reseña             (8 años)  — partes de la reseña / pintor de determinantes / tabla del verbo
+//   2. Aprendiendo a escribir (10 años) — pronombre detective / laboratorio verboides / detective G-J
 //
 // GameScreen delega al sub-componente según app.currentCategory.
 // ResultsScreen es compartido y se monta automáticamente al terminar.
@@ -842,9 +842,13 @@ const RECENT_KEYS = {
   escritor: "edinun_juego7_escritor_recientes_v1",
   usog:     "edinun_juego7_usog_recientes_v1",
 };
-// FIFO por categoría — usog tiene 16 escenas, así que con 8 recientes
-// quedan 8 frescas (margen amplio anti-repetición tras recarga).
-const RECENT_LIMITS = { resena: 4, escritor: 4, usog: 8 };
+// FIFO por categoría. Cada clave la comparten varios bancos (una entrada por
+// ronda y partida): "resena" la usan 3 rondas (3 bancos → 3 ids/partida) y
+// "escritor" 2 rondas (2 ids/partida). Con un tope bajo la ventana efectiva por
+// banco caía a ~1; subimos los topes para conservar ~3 recientes por banco
+// (resena: 3 bancos × ~3, escritor: 2 bancos × ~3). usog es de un solo banco de
+// 16 escenas, 8 recientes dejan 8 frescas.
+const RECENT_LIMITS = { resena: 12, escritor: 9, usog: 8 };
 function getRecentLimit(level) { return RECENT_LIMITS[level] ?? 4; }
 
 function getRecent(level) {
@@ -1189,7 +1193,7 @@ const PRONOMBRES_BANK = [
     huecos: [
       { id: "h1", sustantivo: "Mireya y yo",            pronombre: "Nosotras", opciones: ["Ustedes", "Nosotras", "Ellas"] },
       { id: "h2", sustantivo: "Los libros de mis amigos", pronombre: "Suyos",  opciones: ["Míos", "Suyos", "Tuyos"] },
-      { id: "h3", sustantivo: "La mochila mía",         pronombre: "Mía",      opciones: ["Mía", "Tuya", "Nuestra"] },
+      { id: "h3", sustantivo: "La bicicleta de mi prima", pronombre: "Suya",   opciones: ["Suya", "Tuya", "Mía"] },
     ],
   },
   {
@@ -1536,9 +1540,9 @@ const USO_G_BANK = [
     titulo: "Excursión por el bosque",
     regla: "Recuerda las reglas de uso de G y J.",
     parrafo: [
-      { t: "Caminamos con un " },
-      { c: "g", g: "uía" },                     // guía (_ + g + uía)
-      { t: " experto. Recogimos ho" },
+      { t: "Vimos mucha ve" },
+      { c: "g", g: "etación" },                 // vegetación (ve + g + etación, g suave ante e)
+      { t: " verde. Recogimos ho" },
       { c: "j", g: "as" },                      // hojas (ho + j + as)
       { t: " secas. El sol cruzó con ener" },
       { c: "g", g: "ía" },                      // energía (ener + g + ía)
@@ -1971,9 +1975,9 @@ function CharacterCorner({ char, message }) {
 
 // ─────────────────────────────────────────────────────────────
 // TEMA 1 · ResenaGame — 3 rondas:
-//   R1: Ficha del libro (drag etiquetas a slots)
-//   R2: Partes de la reseña (tap-tap para asignar cajón)
-//   R3: Ordena el cuento (tap-tap intercambio)
+//   R1: Partes de la reseña (clasificar párrafos en 3 cajones)
+//   R2: Pintor de determinantes (tap cicla cardinal/ordinal/indefinido)
+//   R3: Tabla del verbo (arrastrar desinencias por persona)
 // ─────────────────────────────────────────────────────────────
 function ResenaGame({ app, setApp, go, onRestart }) {
   const char = CHARACTERS.find((c) => c.id === app.character) || CHARACTERS[0];
@@ -2088,12 +2092,12 @@ function ResenaGame({ app, setApp, go, onRestart }) {
   // R2: todos los determinantes pintados
   const r2AllPainted = r2Determinantes.every((d) => r2Colors[d.idx]);
   // R3: todas las filas de la tabla llenas
-  const r3AllPlaced = pick => Object.keys(r3Placed).length === r3Pick.filas.length;
+  const r3AllPlaced = Object.keys(r3Placed).length === r3Pick.filas.length;
 
   const canVerify =
     ronda === 0 ? (r1AllAssigned && !r1Locked) :
     ronda === 1 ? (r2AllPainted && !r2Locked) :
-    ronda === 2 ? (Object.keys(r3Placed).length === r3Pick.filas.length && !r3Locked) :
+    ronda === 2 ? (r3AllPlaced && !r3Locked) :
     false;
   const showErase = true;
 
@@ -2171,7 +2175,7 @@ function ResenaGame({ app, setApp, go, onRestart }) {
     // del overlay ¡UPS!. Al acertar mostramos overlay enseguida.
     const okMsg = `+${earned} ⭐`;
     const errMsg = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
-    const revealDelay = isCorrect ? 0 : 1500;
+    const revealDelay = isCorrect ? 0 : 3000;
     const overlayTime = isCorrect ? 950 : 1300;
     const totalTime   = revealDelay + overlayTime;
 
@@ -2204,7 +2208,7 @@ function ResenaGame({ app, setApp, go, onRestart }) {
 
   const bocadillo =
     ronda === 0 ? "Lleva cada frase a donde pertenece." :
-    ronda === 1 ? "1 tap = cardinal, 2 = ordinal,\n3 = indefinido." :
+    ronda === 1 ? "1 tap=cardinal, 2=ordinal,\n3=indefinido, 4=limpia." :
     "Arrastra la terminación a cada fila.";
 
   return (
@@ -2222,6 +2226,12 @@ function ResenaGame({ app, setApp, go, onRestart }) {
             onSelectBin={(tipo) => { if (r1Locked) return; setR1SelectedBin(r1SelectedBin === tipo ? null : tipo); }}
             onAssignParrafo={(pid, zoneId) => {
               if (r1Locked) return;
+              if (zoneId === "__bandeja__") {
+                // Devolver la frase a la bandeja arrastrándola allí.
+                const next = { ...r1Assigned }; delete next[pid];
+                setR1Assigned(next); setR1SelectedBin(null);
+                return;
+              }
               if (zoneId) {
                 setR1Assigned({ ...r1Assigned, [pid]: zoneId });
                 setR1SelectedBin(null);
@@ -2348,6 +2358,12 @@ function PintorDeterminantesCard({ pick, colors, locked, onCycle }) {
                   userSelect: "none",
                 }}>
                 {tk.d}
+                {/* Al fallar, muestra lo que eligió el niño (✗ rojo) Y lo correcto (✓ verde). */}
+                {isWrong && (
+                  <sup style={{ fontSize: 9.5, color: "#c0392b", marginLeft: 3, fontWeight: 800, whiteSpace: "nowrap" }}>
+                    ✗ {(TIPOS.find((t) => t.id === color) || {}).label}
+                  </sup>
+                )}
                 {(isWrong || isEmpty) && correctTipo && (
                   <sup style={{ fontSize: 9.5, color: "#1e8a5d", marginLeft: 3, fontWeight: 800, whiteSpace: "nowrap" }}>
                     ✓ {correctTipo.label}
@@ -2465,9 +2481,9 @@ function TablaVerboCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, 
                 style={{
                   minWidth: 64, height: 30,
                   background: des
-                    ? (isWrong ? "linear-gradient(180deg,#ff8888,#e04545)" : "linear-gradient(180deg, #4fd8ff, #2a98c8)")
+                    ? (isWrong ? "linear-gradient(180deg,#ff8888,#e04545)" : "linear-gradient(180deg, #4666c8, #243f96)")
                     : "rgba(10,6,35,0.1)",
-                  border: `2px ${des ? "solid" : "dashed"} ${des ? (isWrong ? "#ff6b6b" : "#4fd8ff") : "rgba(116,72,32,0.5)"}`,
+                  border: `2px ${des ? "solid" : "dashed"} ${des ? (isWrong ? "#ff6b6b" : "#6f8ee8") : "rgba(116,72,32,0.5)"}`,
                   borderRadius: 8,
                   display: "flex", alignItems: "center", justifyContent: "center",
                   fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 13,
@@ -2554,185 +2570,6 @@ function TablaVerboCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, 
 }
 
 // ─────────────────────────────────────────────────────────────
-// (LEGACY · NO USADO) R1 · Ficha del libro
-// ─────────────────────────────────────────────────────────────
-function FichaLibroCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, onSetPlaced }) {
-  // Construir bandeja: todos los valores correctos + distractores
-  const bandejaItems = useMemoG(() => {
-    const correctos = pick.campos.map((c) => c.valor);
-    return shuffle([...correctos, ...pick.distractores]);
-  }, [pick]);
-
-  const usedValues = new Set(Object.values(placed));
-
-  // Pistas para cada campo — ayudan al niño a identificar qué tipo de dato va
-  const HINTS = {
-    titulo:  "¿Cómo se llama?",
-    autor:   "Quien lo escribió",
-    editor:  "Quien lo publica",
-    anio:    "4 cifras",
-    paginas: "Cantidad de hojas",
-    genero:  "Tipo de libro",
-  };
-
-  return (
-    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
-      {/* Cabecera ficha — portada emoji + título "Ficha del libro" */}
-      <div style={{
-        width: "100%", maxWidth: 470,
-        display: "flex", alignItems: "center", gap: 12,
-        background: "linear-gradient(180deg, rgba(255,253,245,0.97), rgba(245,238,225,0.92))",
-        border: "3px solid #f2c260",
-        borderRadius: 14,
-        padding: "8px 14px",
-        boxShadow: "0 6px 14px rgba(0,0,0,0.4)",
-      }}>
-        <div style={{
-          width: 42, height: 54, borderRadius: 6,
-          background: pick.color,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 22, flexShrink: 0,
-          boxShadow: "0 2px 6px rgba(0,0,0,0.35), inset 0 -3px 0 rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.3)",
-        }}>{pick.portada}</div>
-        <div style={{ flex: 1, fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 13.5, color: "#3a2608", letterSpacing: "0.02em", lineHeight: 1.2 }}>
-          📕 Ficha del libro
-        </div>
-      </div>
-
-      {/* Slots de la ficha — grid 2 cols (dropzones) */}
-      <div style={{
-        width: "100%", maxWidth: 470,
-        background: "rgba(10,6,35,0.45)",
-        border: "1.5px dashed rgba(252,233,168,0.4)",
-        borderRadius: 14,
-        padding: "10px 12px",
-        display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8,
-      }}>
-        {pick.campos.map((c) => {
-          const val = placed[c.id];
-          const isCorrect = locked && val === c.valor;
-          const isWrong = locked && val && val !== c.valor;
-          const isEmpty = locked && !val;
-          const bg = isCorrect
-            ? "linear-gradient(180deg, rgba(46,204,143,0.45), rgba(255,255,255,0.92))"
-            : isWrong
-            ? "linear-gradient(180deg, rgba(255,107,107,0.4), rgba(255,255,255,0.92))"
-            : isEmpty
-            ? "linear-gradient(180deg, rgba(252,233,168,0.25), rgba(10,6,35,0.55))"
-            : val ? "linear-gradient(180deg, rgba(252,233,168,0.95), rgba(217,164,65,0.85))" : "rgba(10,6,35,0.55)";
-          const borderColor = isCorrect ? "#2ecc8f" : isWrong ? "#ff6b6b" : isEmpty ? "#d9a441" : val ? "#fce9a8" : "rgba(252,233,168,0.4)";
-          return (
-            <div key={c.id}
-              data-dropzone={`slot:${c.id}`}
-              onClick={() => onPlaceIn(c.id)}
-              style={{
-                background: bg,
-                border: `1.5px solid ${borderColor}`,
-                borderRadius: 10,
-                padding: "6px 10px",
-                cursor: locked ? "default" : "pointer",
-                transition: "all 0.15s",
-                minHeight: 48,
-                display: "flex", flexDirection: "column", justifyContent: "center", gap: 3,
-              }}>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 6, flexWrap: "wrap" }}>
-                <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 9.5, color: (val || locked) ? "#3a2608" : "#fce9a8", letterSpacing: "0.06em" }}>
-                  {c.label}
-                </div>
-                {!val && !locked && HINTS[c.id] && (
-                  <div style={{
-                    fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 8.5,
-                    color: "#4fd8ff", fontStyle: "italic", letterSpacing: "0.02em",
-                  }}>
-                    💡 {HINTS[c.id]}
-                  </div>
-                )}
-              </div>
-              <div style={{
-                minHeight: 16,
-                fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 11.5,
-                color: val ? "#3a2608" : "rgba(252,233,168,0.45)",
-                fontStyle: val ? "normal" : "italic",
-                lineHeight: 1.15,
-                wordBreak: "break-word",
-                textDecoration: isWrong ? "line-through" : "none",
-                textDecorationColor: "#ff6b6b",
-              }}>
-                {val || (isEmpty ? "(vacío)" : "(arrastra o toca)")}
-              </div>
-              {(isWrong || isEmpty) && (
-                <div style={{
-                  fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 10,
-                  color: "#1e8a5d", lineHeight: 1.15, wordBreak: "break-word",
-                  background: "rgba(46,204,143,0.18)",
-                  border: "1px solid rgba(46,204,143,0.5)",
-                  borderRadius: 6, padding: "2px 6px", marginTop: 2,
-                }}>
-                  ✓ {c.valor}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Bandeja con datos arrastrables */}
-      <div data-qa="bandeja" style={{
-        width: "100%", maxWidth: 470,
-        background: "rgba(10,6,35,0.55)",
-        border: "1px dashed rgba(252,233,168,0.35)",
-        borderRadius: 12,
-        padding: "8px 10px",
-        display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap",
-        minHeight: 46,
-        alignItems: "center",
-      }}>
-        {bandejaItems.map((v, i) => {
-          if (usedValues.has(v)) return null;
-          const isPicked = picked === v;
-          return (
-            <div key={`${v}-${i}`}
-              className="ed-draggable"
-              onPointerDown={makeDragHandler({
-                item: v,
-                ghostHtml: `<div style="background:#fce9a8;color:#3a2608;padding:6px 12px;border-radius:10px;font-family:Fredoka,Nunito,sans-serif;font-weight:700;font-size:11.5px;border:2px solid #4fd8ff;box-shadow:0 8px 22px rgba(0,0,0,0.5);max-width:240px;">${String(v).replace(/"/g,'&quot;')}</div>`,
-                onTap: () => onPickLabel(v),
-                onDrop: (zoneId, item) => {
-                  if (zoneId && zoneId.startsWith("slot:")) {
-                    const slotId = zoneId.slice(5);
-                    // limpiar previo + asignar
-                    const cleared = { ...placed };
-                    for (const k of Object.keys(cleared)) if (cleared[k] === item) delete cleared[k];
-                    cleared[slotId] = item;
-                    onSetPlaced(cleared);
-                  }
-                },
-                disabled: locked,
-              })}
-              style={{
-                padding: "6px 12px", borderRadius: 10,
-                background: isPicked ? "linear-gradient(180deg,#fce9a8,#d9a441)" : "rgba(255,255,255,0.94)",
-                color: "#3a2608",
-                border: `1.5px solid ${isPicked ? "#4fd8ff" : "rgba(242,194,96,0.55)"}`,
-                fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 11.5,
-                cursor: locked ? "default" : "grab",
-                boxShadow: isPicked ? "0 0 14px rgba(79,216,255,0.6)" : "0 2px 6px rgba(0,0,0,0.3)",
-                transform: isPicked ? "translateY(-2px)" : "none",
-                transition: "all 0.15s",
-                maxWidth: 200,
-                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                userSelect: "none",
-              }}>
-              {v}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
 // R2 · Partes de la reseña — 3 cajones a la izquierda, 6 párrafos a la derecha
 // ─────────────────────────────────────────────────────────────
 function PartesResenaCard({ pick, parrafos, assigned, selectedBin, locked, onSelectBin, onAssignParrafo }) {
@@ -2795,6 +2632,9 @@ function PartesResenaCard({ pick, parrafos, assigned, selectedBin, locked, onSel
               {/* Lista interna de párrafos asignados */}
               <div style={{ display: "flex", flexDirection: "column", gap: 3, flex: 1 }}>
                 {parrafosEnCajon.length === 0 ? (
+                  // En locked NO mostramos el placeholder de acción (se veía como
+                  // si el cajón siguiera interactuable/vacío durante el revelado).
+                  locked ? null : (
                   <div style={{
                     flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
                     fontFamily: "var(--ed-font-display)", fontStyle: "italic", fontSize: 9.5,
@@ -2805,6 +2645,7 @@ function PartesResenaCard({ pick, parrafos, assigned, selectedBin, locked, onSel
                   }}>
                     Arrastra una frase aquí
                   </div>
+                  )
                 ) : parrafosEnCajon.map((p) => {
                   const isCorrect = locked && p.tipo === b.id;
                   const isWrong = locked && p.tipo !== b.id;
@@ -2812,6 +2653,7 @@ function PartesResenaCard({ pick, parrafos, assigned, selectedBin, locked, onSel
                   return (
                     <div key={p.id}
                       className="ed-draggable"
+                      onClick={!locked ? (e) => e.stopPropagation() : undefined}
                       onPointerDown={makeDragHandler({
                         item: p.id,
                         ghostHtml: `<div style="max-width:260px;background:#fff;color:#3a2608;padding:6px 10px;border-radius:10px;font-family:Fredoka,Nunito,sans-serif;font-weight:600;font-size:11px;border:2px solid #4fd8ff;box-shadow:0 8px 22px rgba(0,0,0,0.5);">${p.texto.replace(/"/g,'&quot;')}</div>`,
@@ -2853,8 +2695,9 @@ function PartesResenaCard({ pick, parrafos, assigned, selectedBin, locked, onSel
         })}
       </div>
 
-      {/* Bandeja de párrafos pendientes — arrastrables */}
-      <div data-qa="bandeja" style={{
+      {/* Bandeja de párrafos pendientes — arrastrables. También es dropzone:
+          soltar aquí una frase ya clasificada la devuelve a pendientes. */}
+      <div data-qa="bandeja" data-dropzone="__bandeja__" style={{
         width: "100%", maxWidth: 480,
         background: "rgba(10,6,35,0.55)",
         border: "1px dashed rgba(252,233,168,0.35)",
@@ -2895,82 +2738,6 @@ function PartesResenaCard({ pick, parrafos, assigned, selectedBin, locked, onSel
             {p.texto}
           </div>
         ))}
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// R3 · Ordena el cuento — 5 escenas con foto+texto, tap-tap intercambia
-// ─────────────────────────────────────────────────────────────
-function OrdenaCuentoCard({ cuento, order, selected, locked, onTap }) {
-  return (
-    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6 }}>
-      <div style={{
-        fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13.5, color: "#fce9a8", textAlign: "center",
-        background: "rgba(10,6,35,0.55)",
-        border: "1px solid rgba(242,194,96,0.45)",
-        borderRadius: 999,
-        padding: "5px 18px",
-      }}>
-        📖 {cuento.titulo}
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 5, width: "100%", maxWidth: 480 }}>
-        {order.map((escena, i) => {
-          const isSelected = selected === i;
-          const isCorrect = locked && escena.n === i + 1;
-          const isWrong = locked && escena.n !== i + 1;
-          return (
-            <div key={`${escena.n}-${i}`}
-              onClick={() => onTap(i)}
-              style={{
-                display: "flex", alignItems: "center", gap: 10,
-                background: isCorrect
-                  ? "linear-gradient(180deg, rgba(46,204,143,0.28), rgba(255,255,255,0.94))"
-                  : isWrong
-                  ? "linear-gradient(180deg, rgba(255,107,107,0.22), rgba(255,255,255,0.94))"
-                  : isSelected
-                  ? "linear-gradient(180deg, rgba(79,216,255,0.45), rgba(252,233,168,0.88))"
-                  : "rgba(255,255,255,0.95)",
-                color: "#3a2608",
-                border: `2.5px solid ${isCorrect ? "#2ecc8f" : isWrong ? "#ff6b6b" : isSelected ? "#4fd8ff" : "#f2c260"}`,
-                borderRadius: 12, padding: "7px 11px",
-                cursor: locked ? "default" : "pointer",
-                boxShadow: isSelected ? "0 0 18px rgba(79,216,255,0.65)" : "0 3px 8px rgba(0,0,0,0.35)",
-                transform: isSelected ? "translateX(5px)" : "none",
-                transition: "all 0.18s",
-              }}>
-              <div style={{
-                width: 28, height: 28, borderRadius: "50%",
-                background: "linear-gradient(180deg, #f2c260, #d9a441)",
-                color: "#3a2608", fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 14,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                flexShrink: 0,
-                border: "2px solid rgba(255,255,255,0.9)",
-                boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
-              }}>
-                {i + 1}
-              </div>
-              <div style={{ fontSize: 22, lineHeight: 1, flexShrink: 0 }}>{escena.emoji}</div>
-              <div style={{ flex: 1, minWidth: 0, fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 12, lineHeight: 1.25 }}>
-                {escena.texto}
-              </div>
-              {isWrong && (
-                <div style={{
-                  flexShrink: 0,
-                  fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 10,
-                  color: "#fff",
-                  background: "linear-gradient(180deg, #2ecc8f, #15a06a)",
-                  padding: "2px 8px", borderRadius: 999,
-                  letterSpacing: "0.04em",
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
-                }}>
-                  ✓ Iba en {escena.n}
-                </div>
-              )}
-            </div>
-          );
-        })}
       </div>
     </div>
   );
@@ -3178,7 +2945,7 @@ function EscritorGame({ app, setApp, go, onRestart }) {
 
     const okMsg = `+${earned} ⭐`;
     const errMsg = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
-    const revealDelay = isCorrect ? 0 : 1500;
+    const revealDelay = isCorrect ? 0 : 3000;
     const overlayTime = isCorrect ? 950 : 1300;
     const totalTime   = revealDelay + overlayTime;
 
@@ -3205,7 +2972,7 @@ function EscritorGame({ app, setApp, go, onRestart }) {
   }
 
   const enunciado =
-    ronda === 0 ? `Reemplaza cada nombre por el pronombre correcto.` :
+    ronda === 0 ? `Elige el pronombre correcto para cada caso.` :
     ronda === 1 ? `Forma los 3 verboides del verbo "${r2Pick.verbo}".` :
     `Completa el texto con G o J.`;
 
@@ -3486,9 +3253,9 @@ function VerboidesCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, o
                   style={{
                     minWidth: 80, height: 40,
                     background: des
-                      ? (isWrong ? "linear-gradient(180deg,#ff8888,#e04545)" : "linear-gradient(180deg, #4fd8ff, #2a98c8)")
+                      ? (isWrong ? "linear-gradient(180deg,#ff8888,#e04545)" : "linear-gradient(180deg, #4666c8, #243f96)")
                       : "rgba(10,6,35,0.15)",
-                    border: `2px ${des ? "solid" : "dashed"} ${des ? (isWrong ? "#ff6b6b" : "#4fd8ff") : "rgba(116,72,32,0.5)"}`,
+                    border: `2px ${des ? "solid" : "dashed"} ${des ? (isWrong ? "#ff6b6b" : "#6f8ee8") : "rgba(116,72,32,0.5)"}`,
                     borderRadius: 10,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 16,
@@ -3502,16 +3269,18 @@ function VerboidesCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, o
                   {des || "?"}
                 </div>
                 {(isWrong || isEmpty) && (
+                  // Revelado de la desinencia CORRECTA en VERDE con ✓ (lo que el
+                  // niño puso ya se ve en rojo/tachado en el slot de la izquierda).
                   <div style={{
                     fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 12,
                     color: "#fff",
-                    background: "linear-gradient(180deg, #ff8b8b, #c33b3b)",
+                    background: "linear-gradient(180deg, #6fe0b0, #2ecc8f)",
                     padding: "4px 10px", borderRadius: 999,
-                    border: "1.5px solid #fff",
+                    border: "1.5px solid #d6fff0",
                     boxShadow: "0 3px 7px rgba(0,0,0,0.3)",
                     letterSpacing: "0.04em",
                   }}>
-                    ✗ {pick.correctas[b.id]}
+                    ✓ {pick.correctas[b.id]}
                   </div>
                 )}
               </div>
@@ -3629,14 +3398,23 @@ function DetectiveGCard({ pick, choices, locked, onSelectLetter }) {
             const isEmpty = locked && !choice;
             const renderHalf = (letter, fillColor) => {
               const isSel = choice === letter;
+              // Al bloquear, el color va por CORRECCIÓN (no por letra): la letra
+              // correcta SIEMPRE verde, la que el niño eligió mal en rojo.
+              let bg = "transparent", col = "rgba(116,72,32,0.55)";
+              if (locked) {
+                if (letter === correct) { bg = "#2ecc8f"; col = "#fff"; }
+                else if (isSel) { bg = "#ff6b6b"; col = "#fff"; }
+              } else if (isSel) {
+                bg = fillColor; col = "#fff";
+              }
               return (
                 <span
                   onClick={() => !locked && onSelectLetter(i, letter)}
                   style={{
                     display: "inline-block",
                     padding: "1px 8px",
-                    background: isSel ? fillColor : "transparent",
-                    color: isSel ? "#fff" : "rgba(116,72,32,0.55)",
+                    background: bg,
+                    color: col,
                     fontWeight: 800,
                     fontFamily: "var(--ed-font-display)",
                     fontSize: 14,
@@ -3672,7 +3450,7 @@ function DetectiveGCard({ pick, choices, locked, onSelectLetter }) {
                 </span>
                 <span>{g.choice.g}</span>
                 {(isWrong || isEmpty) && (
-                  <sup style={{ fontSize: 10, color: "#c33b3b", marginLeft: 2, fontWeight: 800 }}>{correct}</sup>
+                  <sup style={{ fontSize: 10, color: "#1e8a5d", marginLeft: 2, fontWeight: 900 }}>✓{correct}</sup>
                 )}
               </span>
             );
