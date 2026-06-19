@@ -29,11 +29,12 @@ en las 3 rondas, con foco distinto por ronda.
 2. Palabra debajo con UN slot ancho al inicio + letras restantes visibles:
    `[ __ ] O R` o `[ __ ] A T O`. El slot tiene el doble de ancho que las
    casillas regulares para acomodar las 2 letras de la sílaba trabada.
-3. Bandeja inferior con **3 sílabas** (1 correcta + 2 distractoras). Las
-   distractoras se eligen así:
-   - 1 cluster del OTRO grupo en foco de la ronda (para forzar
-     discriminación auditiva entre PR y PL en R1, etc.).
-   - 1 cluster de fuera del par (para introducir contraste cruzado).
+3. Bandeja inferior con **3 opciones** (1 correcta + 2 distractoras). Reglas:
+   - Ninguna distractora puede formar una palabra real con el resto visible
+     (evita ambigüedad: flato, plan, presa, brecha, bruma, plazo, bruta…).
+   - La pareja del par mínimo (PR↔PL, etc.) entra solo *a veces*; el resto de
+     las veces se usan clusters de fuera del par, para no exigir siempre la
+     discriminación fina a un niño de 6 años.
 4. **1 tap** a una sílaba → se inserta en el slot.
 5. Tap al slot lleno → se borra (puede cambiar de opinión).
 6. **VERIFICAR** → si correcto: feedback verde + estrellas (fórmula
@@ -45,8 +46,8 @@ en las 3 rondas, con foco distinto por ronda.
 
 | Ronda | Grupos en foco | Banco posible |
 |---|---|---|
-| R1 | **PR / PL** | primo, premio, prima, prado, plato, pluma, playa |
-| R2 | **BL / BR** | blusa, bloque, brazo, brocha, broma |
+| R1 | **PR / PL** | primo, premio, prima, plato, pluma, playa |
+| R2 | **BL / BR** | blusa, bloque, brazo, brocha, bruja |
 | R3 | **FL / FR** | flor, flecha, flan, flauta, fresa, fruta, frasco |
 
 El motor saca 1 palabra random del banco del par objetivo de la ronda. Se
@@ -92,12 +93,12 @@ de risa (ja/je/ji/jo/ju) + símbolos exclamativos del registro de los chistes.
 ### GameScreen
 - catLabel HUD: "Chistes para los tristes"
 - Enunciado principal: "Completa la palabra"
-- Bocadillo del personaje: "Toca la sílaba que falta para completar la palabra."
+- Bocadillo del personaje: "¿Cuál sonido falta? Tócalo."
 - Feedback OK: "¡EXCELENTE!" + "+N ⭐"
 - Feedback ERR: "¡UPS!" + frase motivadora aleatoria + nombre personaje.
 
 ### ResultsScreen
-- Columnas del reporte: # | Palabra | Sílaba elegida | Sílaba correcta | Estado | Tiempo.
+- Columnas del reporte: # | Palabra | Sonido elegido | Sonido correcto | Estado | Tiempo.
 - Categoría mostrada: "Chistes para los tristes".
 
 ## Slug y personaje destacado
@@ -107,9 +108,13 @@ de risa (ja/je/ji/jo/ju) + símbolos exclamativos del registro de los chistes.
 
 ## Decisiones abiertas / riesgos
 
-- **Emojis Unicode**: 🪶 (pluma), 🫙 (frasco) son emojis modernos que en
-  algunos sistemas antiguos pueden no renderizar. Si surgen quejas, se
-  pueden sustituir por símbolos más universales en `WORD_BANK`.
+- **Emojis Unicode**: 🪶 (pluma), 🫙 (frasco), 🪈 (flauta) son emojis modernos
+  que en algunos sistemas antiguos pueden no renderizar. Decisión de la autora
+  (2026-06-19): se usan igual por fidelidad al objeto; si surgen quejas se
+  sustituyen por símbolos más universales en `WORD_BANK`.
+- **"prado"** se retiró del banco (emoji poco evocador + baja frecuencia léxica
+  en Ecuador). **"broma"** se reemplazó por **"bruja" 🧙** (objeto concreto,
+  sin tilde, coherente con el tema de cuentos).
 - **"Playa"**: tiene "ya" interior. Si pedagógicamente se prefiere evitar
   palabras con otra consonante compleja, se puede sacar del banco.
 - **Discriminación PR vs PL**: para un niño de 6 años puede ser sutil. Si

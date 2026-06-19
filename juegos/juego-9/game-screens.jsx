@@ -27,17 +27,15 @@ function PortalToBody({ children }) {
 //   cluster:  las 2 letras de la sílaba trabada (siempre las INICIALES).
 //   word:     la palabra completa en minúsculas.
 //   emoji:    icono evocador para que el niño identifique sin leer.
-//   group:    "PR"|"PL"|"BL"|"BR"|"FL"|"FR" (mayúscula, para distractoras).
 // ─────────────────────────────────────────────────────────────
 const WORD_BANK = [
   // pr
   { word: "primo",    cluster: "pr", emoji: "👦" },
   { word: "premio",   cluster: "pr", emoji: "🏆" },
   { word: "prima",    cluster: "pr", emoji: "👧" },
-  { word: "prado",    cluster: "pr", emoji: "🏕️" },
   // pl
   { word: "plato",    cluster: "pl", emoji: "🍽️" },
-  { word: "pluma",    cluster: "pl", emoji: "✒️" },
+  { word: "pluma",    cluster: "pl", emoji: "🪶" },
   { word: "playa",    cluster: "pl", emoji: "🏝️" },
   // bl
   { word: "blusa",    cluster: "bl", emoji: "👚" },
@@ -45,16 +43,16 @@ const WORD_BANK = [
   // br
   { word: "brazo",    cluster: "br", emoji: "💪" },
   { word: "brocha",   cluster: "br", emoji: "🖌️" },
-  { word: "broma",    cluster: "br", emoji: "🤪" },
+  { word: "bruja",    cluster: "br", emoji: "🧙" },
   // fl
   { word: "flor",     cluster: "fl", emoji: "🌻" },
   { word: "flecha",   cluster: "fl", emoji: "🏹" },
   { word: "flan",     cluster: "fl", emoji: "🍮" },
-  { word: "flauta",   cluster: "fl", emoji: "🎵" },
+  { word: "flauta",   cluster: "fl", emoji: "🪈" },
   // fr
   { word: "fresa",    cluster: "fr", emoji: "🍓" },
   { word: "fruta",    cluster: "fr", emoji: "🍇" },
-  { word: "frasco",   cluster: "fr", emoji: "🍯" },
+  { word: "frasco",   cluster: "fr", emoji: "🫙" },
 ];
 
 // Por ronda — los grupos consonánticos en foco. R1 pr/pl, R2 bl/br, R3 fl/fr.
@@ -67,6 +65,16 @@ const ROUNDS_CFG = [
 ];
 
 const ALL_CLUSTERS = ["pr", "pl", "bl", "br", "fl", "fr"];
+
+// Palabras reales que pueden formarse al combinar un cluster con el resto
+// visible de OTRA palabra del banco. Se usan para que ninguna ficha distractora
+// forme una palabra real (evita ambigüedad: flato, bruma, plazo, brecha, plan,
+// presa, bruta…). Incluye las del banco + las colisiones detectadas.
+const REAL_WORDS = new Set([
+  "primo", "premio", "prima", "plato", "flato", "pluma", "bruma", "playa",
+  "blusa", "bloque", "brazo", "plazo", "brocha", "bruja", "flor", "flecha",
+  "brecha", "flan", "plan", "flauta", "fresa", "presa", "fruta", "bruta", "frasco",
+]);
 
 // Frases motivadoras para feedback de error.
 const ENCOURAGEMENTS = [
@@ -117,10 +125,9 @@ function shuffle(arr) {
 //   1. Filtra el banco por los grupos en foco de la ronda.
 //   2. Excluye palabras ya usadas en la sesión + recientes.
 //   3. Elige una al azar y construye la bandeja de 3 sílabas:
-//      - la correcta (cluster en mayúscula)
-//      - 2 distractoras, priorizando el OTRO grupo en foco
-//        (para forzar discriminación auditiva entre PR y PL en R1, etc.)
-//        y completando con un cluster de fuera del par si hace falta.
+//      - la correcta (cluster en minúscula)
+//      - 2 distractoras seguras: ninguna forma palabra real con el resto
+//        visible (#3), y la pareja del par mínimo entra solo a veces (#5).
 // ─────────────────────────────────────────────────────────────
 function makeProblem(roundIdx, usedKeys) {
   const cfg = ROUNDS_CFG[roundIdx] || ROUNDS_CFG[0];
@@ -136,12 +143,39 @@ function makeProblem(roundIdx, usedKeys) {
   }
   const pick = pool[Math.floor(Math.random() * pool.length)];
 
-  // Bandeja: cluster correcto + 1 del otro par + 1 de fuera del par.
-  // Todo en minúsculas (regla de juegos de "completar palabra").
+  // Bandeja: cluster correcto + 2 distractoras. Reglas:
+  //  · #3 ninguna distractora puede formar una palabra real con el resto
+  //    visible (evita flato/plan/presa/brecha/bruma/plazo/bruta…).
+  //  · #5 la pareja del par mínimo (pr↔pl, bl↔br, fl↔fr) entra solo "a veces",
+  //    para no exigir siempre la discriminación fina a un niño de 6 años.
+  //  Todo en minúsculas (regla de juegos de "completar palabra").
   const correct = pick.cluster;
+  const rest = pick.word.slice(correct.length);
+  const safe = (c) => c !== correct && !REAL_WORDS.has(c + rest);
   const otherInPair = cfg.focus.find((g) => g !== correct);
-  const outsidePair = shuffle(ALL_CLUSTERS.filter((c) => !cfg.focus.includes(c)))[0];
-  const trayClusters = shuffle([correct, otherInPair, outsidePair]);
+  const outside = ALL_CLUSTERS.filter((c) => !cfg.focus.includes(c));
+
+  // includePair → prioriza la pareja del par (discriminación fina); si no,
+  // prioriza clusters "lejanos" (más fáciles de descartar para 6 años).
+  const includePair = Math.random() < 0.5;
+  const candidates = includePair
+    ? [otherInPair, ...shuffle(outside)]
+    : [...shuffle(outside), otherInPair];
+
+  const distractors = [];
+  for (const c of candidates) {
+    if (distractors.length >= 2) break;
+    if (safe(c) && !distractors.includes(c)) distractors.push(c);
+  }
+  // Fallback defensivo: garantizar 2 distractoras aunque haya que aceptar la
+  // pareja o, en última instancia, una colisión rara.
+  if (distractors.length < 2) {
+    for (const c of shuffle([otherInPair, ...outside])) {
+      if (distractors.length >= 2) break;
+      if (c !== correct && !distractors.includes(c)) distractors.push(c);
+    }
+  }
+  const trayClusters = shuffle([correct, ...distractors]);
 
   return {
     word: pick.word,
@@ -181,7 +215,7 @@ function GameScreen({ app, setApp, go }) {
     pushRecent(p.word);
     return p;
   });
-  // Sílaba que el niño eligió en la bandeja (string en mayúsculas) o null.
+  // Sílaba que el niño eligió en la bandeja (string en minúsculas) o null.
   const [picked, setPicked] = useStateG(null);
 
   const [elapsed, setElapsed] = useStateG(0);
@@ -194,7 +228,7 @@ function GameScreen({ app, setApp, go }) {
   // Fase "reveal": al fallar, ANTES del overlay "¡UPS!" se revela la sílaba
   // correcta — la bandeja la marca en verde con ✓, la ficha equivocada en
   // rojo, y aparece un cartel "Correcta: ✓ XX". Bloquea toda entrada.
-  // `{ cluster: "PR" }`. Mismo mecanismo que juego-1.
+  // `{ cluster: "pr" }`. Mismo mecanismo que juego-1.
   const [reveal, setReveal] = useStateG(null);
   const REVEAL_MS = 2800;
   const [confirmingExit, setConfirmingExit] = useStateG(false);
@@ -204,12 +238,24 @@ function GameScreen({ app, setApp, go }) {
   const started = useRefG(Date.now());
   const exerciseStart = useRefG(Date.now());
 
+  // Candado síncrono: evita que un doble-tap en ¡VERIFICAR! reentre y cuente
+  // el intento dos veces / avance dos rondas. Se libera al terminar el overlay.
+  const busyRef = useRefG(false);
+  // Rastrea los setTimeout pendientes para limpiarlos si el componente se
+  // desmonta (SALIR / REINICIAR) durante el revelado o el feedback, y no
+  // disparar setApp/go sobre una sesión ya reiniciada.
+  const timersRef = useRefG([]);
+  const track = (id) => { timersRef.current.push(id); return id; };
+
   useEffectG(() => {
     const id = setInterval(() => {
       setElapsed(Math.floor((Date.now() - started.current) / 1000));
     }, 500);
     return () => clearInterval(id);
   }, []);
+
+  // Limpia cualquier timeout pendiente al desmontar.
+  useEffectG(() => () => { timersRef.current.forEach(clearTimeout); timersRef.current = []; }, []);
 
   function pressCluster(cluster) {
     if (reveal) return;
@@ -231,13 +277,14 @@ function GameScreen({ app, setApp, go }) {
   }
 
   function verify() {
-    if (reveal) return;
+    if (reveal || busyRef.current) return;
     if (!picked) {
       setFeedback("err");
-      setFeedbackMsg("Toca una sílaba primero");
-      setTimeout(() => { setFeedback(null); setFeedbackMsg(""); }, 700);
+      setFeedbackMsg("Toca un sonido primero");
+      track(setTimeout(() => { setFeedback(null); setFeedbackMsg(""); }, 700));
       return;
     }
+    busyRef.current = true;
     if (typeof window.markFirstAttempt === "function") window.markFirstAttempt();
 
     const isCorrect = picked === problem.cluster;
@@ -259,7 +306,7 @@ function GameScreen({ app, setApp, go }) {
       // Revelar la sílaba correcta ANTES del overlay "¡UPS!": la bandeja la
       // marca en verde con ✓ y la ficha equivocada en rojo. Bloquea entradas.
       setReveal({ cluster: problem.cluster });
-      setTimeout(() => { setReveal(null); finalize(false, entry); }, REVEAL_MS);
+      track(setTimeout(() => { setReveal(null); finalize(false, entry); }, REVEAL_MS));
       return;
     }
     finalize(true, entry);
@@ -289,7 +336,7 @@ function GameScreen({ app, setApp, go }) {
     // El revelado ya cumplió el rol educativo del fallo → el overlay "¡UPS!"
     // va corto, igual que el de acierto.
     const wait = isCorrect ? 950 : 1100;
-    setTimeout(() => {
+    track(setTimeout(() => {
       setFeedback(null);
       setFeedbackMsg("");
       setPicked(null);
@@ -315,7 +362,8 @@ function GameScreen({ app, setApp, go }) {
         setProblem(p);
         exerciseStart.current = Date.now();
       }
-    }, wait);
+      busyRef.current = false;
+    }, wait));
   }
 
   // ── Cálculo de las "letras visibles" de la palabra: todo menos
@@ -400,7 +448,7 @@ function GameScreen({ app, setApp, go }) {
             whiteSpace: "pre-line",
             boxShadow: "0 10px 24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08)",
           }}>
-            ¿Cuál sílaba falta? Tócala.
+            ¿Cuál sonido falta? Tócalo.
             <div style={{
               position: "absolute", bottom: -10, left: "50%", transform: "translateX(-50%)",
               width: 0, height: 0,
@@ -828,8 +876,8 @@ function PrintableReport({ studentName, res, dateStr, m, s, attemptedCount, tota
             <tr style={printStyles.thHead}>
               <th style={printStyles.th}>#</th>
               <th style={printStyles.th}>Palabra</th>
-              <th style={{ ...printStyles.th, ...printStyles.thR }}>Sílaba elegida</th>
-              <th style={{ ...printStyles.th, ...printStyles.thR }}>Sílaba correcta</th>
+              <th style={{ ...printStyles.th, ...printStyles.thR }}>Sonido elegido</th>
+              <th style={{ ...printStyles.th, ...printStyles.thR }}>Sonido correcto</th>
               <th style={{ ...printStyles.th, ...printStyles.thC }}>Estado</th>
               <th style={{ ...printStyles.th, ...printStyles.thR }}>Tiempo</th>
             </tr>
@@ -955,8 +1003,8 @@ function ResultsScreen({ app, setApp, go }) {
                 }}>
                   <th style={{ textAlign: "left", padding: "6px 8px", width: 36 }}>#</th>
                   <th style={{ textAlign: "left", padding: "6px 8px" }}>Palabra</th>
-                  <th style={{ textAlign: "right", padding: "6px 8px" }}>Sílaba elegida</th>
-                  <th style={{ textAlign: "right", padding: "6px 8px" }}>Sílaba correcta</th>
+                  <th style={{ textAlign: "right", padding: "6px 8px" }}>Sonido elegido</th>
+                  <th style={{ textAlign: "right", padding: "6px 8px" }}>Sonido correcto</th>
                   <th style={{ textAlign: "center", padding: "6px 8px" }}>Estado</th>
                   <th style={{ textAlign: "right", padding: "6px 8px" }}>Tiempo</th>
                 </tr>
