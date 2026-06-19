@@ -105,7 +105,7 @@ function formatTime(s) {
 }
 
 function calcStars(isCorrect, exerciseSec) {
-  return isCorrect ? Math.max(1, 10 - Math.floor(exerciseSec / 3)) : 0;
+  return isCorrect ? Math.max(1, 10 - Math.floor(exerciseSec / 6)) : 0;
 }
 
 const ENCOURAGEMENTS = [
@@ -120,7 +120,7 @@ const RECENT_KEYS = {
   escritor: "edinun_juego8_escritor_recientes_v1",
   narrador: "edinun_juego8_narrador_recientes_v1",
 };
-// FIFO compartido sp/mod/cit (escritor) y mag/elem/par (narrador). Como cada
+// FIFO compartido sp/mod/cit (escritor) y lab/cam/ord (narrador). Como cada
 // sesión pushea ~5 entradas y el banco más chico tiene 5, ponemos el límite alto
 // para retener historia de 5–6 sesiones y evitar repeticiones consecutivas.
 const RECENT_LIMIT = 30;
@@ -587,12 +587,12 @@ const LAB_BANK = [
     id: "paraguas",
     titulo: "El paraguas que voló",
     frases: [
-      { categoria: "tiempo", texto: "El día era soleado y tranquilo. ___, una ráfaga muy fuerte sopló sobre la plaza.", correcta: "Sin avisar" },
+      { categoria: "tiempo", texto: "El día era soleado y tranquilo. ___, una ráfaga muy fuerte sopló sobre la plaza.", correcta: "De repente" },
       { categoria: "sonido", texto: "Doña Rosa ___ tan fuerte que se oyó en toda la plaza.",                            correcta: "gritó" },
       { categoria: "color",  texto: "Su paraguas, ya muy lejos entre las nubes, se veía ___ desde abajo.",              correcta: "diminuto" },
     ],
     frascos: {
-      tiempo: ["Sin avisar", "Mañana mismo", "El año pasado", "Cada lunes"],
+      tiempo: ["De repente", "Mañana mismo", "El año pasado", "Cada lunes"],
       sonido: ["gritó", "susurró", "balbuceó", "tartamudeó"],
       color:  ["diminuto", "imponente", "perfumado", "deslumbrante"],
     },
@@ -645,7 +645,7 @@ const LAB_BANK = [
     frases: [
       { categoria: "tiempo", texto: "Eduardo no había fallado un solo día en treinta años. ___, abría su tienda de globos.", correcta: "Cada mañana" },
       { categoria: "sonido", texto: "Una niña muy tímida ___ casi sin voz pidiendo un globo azul.",                          correcta: "tartamudeó" },
-      { categoria: "color",  texto: "Los globos, llenos de colores brillantes y recién hinchados, se veían ___ del techo.", correcta: "alegres" },
+      { categoria: "color",  texto: "Los globos, llenos de colores brillantes y recién hinchados, flotaban ___ bajo el techo.", correcta: "alegres" },
     ],
     frascos: {
       tiempo: ["Cada mañana", "Por última vez", "Aquel jueves", "El próximo año"],
@@ -692,7 +692,7 @@ const CAMINO_BANK = [
     titulo: "El molino del pueblo",
     pasos: [
       { elemento: "lugar",      opciones: ["En el viejo molino del pueblo de Chimbo",          "Don Tomás y su nieta Sara",                      "Las aspas volaron lejos por el viento."],     correctaIdx: 0 },
-      { elemento: "personajes", opciones: ["Cierta noche, sopló un viento fuerte.",            "Don Tomás y su nieta Sara, vecinos del lugar",   "Recorrieron los campos con linternas."],       correctaIdx: 1 },
+      { elemento: "personajes", opciones: ["Cierta noche, sopló un viento fuerte.",            "Don Tomás y su nieta Sara, vecinos del lugar.",   "Recorrieron los campos con linternas."],       correctaIdx: 1 },
       { elemento: "conflicto",  opciones: ["Buscaron por toda la pradera.",                    "Encontraron las aspas en un cerezo viejo.",      "Una noche, el viento se llevó las aspas."],    correctaIdx: 2 },
       { elemento: "acciones",   opciones: ["Buscaron por horas con linternas y herramientas.", "Don Tomás vivía con su nieta Sara.",             "El molino estaba en lo alto del pueblo."],     correctaIdx: 0 },
       { elemento: "resolucion", opciones: ["Sara escuchaba al abuelo contar historias.",       "Al amanecer, hallaron las aspas en un cerezo.",  "El viento soplaba muy fuerte cada noche."],    correctaIdx: 1 },
@@ -703,7 +703,7 @@ const CAMINO_BANK = [
     titulo: "La biblioteca olvidada",
     pasos: [
       { elemento: "lugar",      opciones: ["En una vieja biblioteca al fondo del barrio",     "Camila, una niña curiosa de diez años",           "Camila ordenó los libros por colores."],         correctaIdx: 0 },
-      { elemento: "personajes", opciones: ["Los libros estaban llenos de polvo.",              "Camila y su perro Tomate, fieles amigos",         "Encontraron un libro que brillaba."],            correctaIdx: 1 },
+      { elemento: "personajes", opciones: ["Los libros estaban llenos de polvo.",              "Camila y su perro Tomate, fieles amigos.",         "Encontraron un libro que brillaba."],            correctaIdx: 1 },
       { elemento: "conflicto",  opciones: ["Llegaron a la puerta de la biblioteca.",           "Hallaron un cofre con monedas viejas.",           "Nadie había entrado a esa biblioteca en años."], correctaIdx: 2 },
       { elemento: "acciones",   opciones: ["Limpiaron, leyeron y clasificaron cada estante.",  "La biblioteca estaba en la esquina del barrio.",  "Camila tenía diez años y mucha imaginación."],   correctaIdx: 0 },
       { elemento: "resolucion", opciones: ["Camila vivía cerca de la biblioteca.",             "Reabrieron la biblioteca para todo el barrio.",   "El polvo cubría todos los libros."],             correctaIdx: 1 },
@@ -714,7 +714,7 @@ const CAMINO_BANK = [
     titulo: "La luciérnaga del jardín",
     pasos: [
       { elemento: "lugar",      opciones: ["En el jardín de la abuela Marta",                 "La pequeña Pía y su gata Luna",                   "Buscaron entre los rosales y los geranios."],   correctaIdx: 0 },
-      { elemento: "personajes", opciones: ["Una noche oscura y muy tranquila",                "La pequeña Pía y su gata Luna, inseparables",     "La luz desapareció al amanecer."],              correctaIdx: 1 },
+      { elemento: "personajes", opciones: ["Una noche oscura y muy tranquila.",               "La pequeña Pía y su gata Luna, inseparables.",    "La luz desapareció al amanecer."],              correctaIdx: 1 },
       { elemento: "conflicto",  opciones: ["Caminaron despacio por el sendero.",               "Pusieron la luciérnaga en un frasco.",            "Una luciérnaga perdió su luz por la lluvia."],  correctaIdx: 2 },
       { elemento: "acciones",   opciones: ["La cuidaron toda la noche con paciencia.",         "El jardín estaba lleno de flores.",                "Pía era una niña muy curiosa."],                correctaIdx: 0 },
       { elemento: "resolucion", opciones: ["Pía y Luna jugaban en el jardín.",                 "Al amanecer, la luciérnaga volvió a brillar.",     "La lluvia caía sobre el jardín."],              correctaIdx: 1 },
@@ -725,7 +725,7 @@ const CAMINO_BANK = [
     titulo: "La panadería de la calle larga",
     pasos: [
       { elemento: "lugar",      opciones: ["En la panadería de la calle larga",                "Don Pancho, el panadero del barrio",             "Hizo galletas de canela durante toda la noche."], correctaIdx: 0 },
-      { elemento: "personajes", opciones: ["El horno se apagó en plena madrugada.",              "Don Pancho, el panadero más querido del barrio", "Repartió pan caliente a todos."],                correctaIdx: 1 },
+      { elemento: "personajes", opciones: ["El horno se apagó en plena madrugada.",              "Don Pancho, el panadero más querido del barrio.", "Repartió pan caliente a todos."],                correctaIdx: 1 },
       { elemento: "conflicto",  opciones: ["Abrieron las puertas muy temprano.",                 "El barrio celebró con un desayuno especial.",     "El horno se apagó justo antes del amanecer."],   correctaIdx: 2 },
       { elemento: "acciones",   opciones: ["Encendieron el horno con leña vieja y paciencia.",   "Don Pancho llevaba treinta años amasando pan.",   "La panadería quedaba en una calle larga."],     correctaIdx: 0 },
       { elemento: "resolucion", opciones: ["Don Pancho horneaba todos los días.",                "El pan caliente alegró a todo el vecindario.",     "El horno funcionaba con leña."],                correctaIdx: 1 },
@@ -736,7 +736,7 @@ const CAMINO_BANK = [
     titulo: "El huerto de la escuela",
     pasos: [
       { elemento: "lugar",      opciones: ["En el huerto de la escuela del barrio",            "La maestra Lucía y sus alumnos de quinto",       "Sembraron tomates y lechugas en hileras."],     correctaIdx: 0 },
-      { elemento: "personajes", opciones: ["Una mañana, las plantas amanecieron marchitas.",    "La maestra Lucía y sus alumnos de quinto grado", "Regaron el huerto con baldes de agua."],        correctaIdx: 1 },
+      { elemento: "personajes", opciones: ["Una mañana, las plantas amanecieron marchitas.",    "La maestra Lucía y sus alumnos de quinto grado.", "Regaron el huerto con baldes de agua."],        correctaIdx: 1 },
       { elemento: "conflicto",  opciones: ["Revisaron la tierra con las manos.",                "Las verduras crecieron sanas y verdes.",         "Una semana sin lluvia secó todo el huerto."],   correctaIdx: 2 },
       { elemento: "acciones",   opciones: ["Regaron y abonaron la tierra cada tarde.",          "El huerto estaba junto a las canchas.",          "La maestra Lucía enseñaba ciencias."],          correctaIdx: 0 },
       { elemento: "resolucion", opciones: ["Los alumnos estudiaban en quinto grado.",           "Al poco tiempo, cosecharon verduras para todos.","El sol calentó mucho esa semana."],             correctaIdx: 1 },
@@ -747,7 +747,7 @@ const CAMINO_BANK = [
     titulo: "La balsa del río",
     pasos: [
       { elemento: "lugar",      opciones: ["A orillas del río que cruza el pueblo",            "Joaquín y su tío Ernesto, dos pescadores",       "Ataron los troncos con cuerdas resistentes."],  correctaIdx: 0 },
-      { elemento: "personajes", opciones: ["Una tarde, la corriente creció de golpe.",          "Joaquín y su tío Ernesto, grandes pescadores",   "Remaron juntos hasta la otra orilla."],         correctaIdx: 1 },
+      { elemento: "personajes", opciones: ["Una tarde, la corriente creció de golpe.",          "Joaquín y su tío Ernesto, grandes pescadores.",   "Remaron juntos hasta la otra orilla."],         correctaIdx: 1 },
       { elemento: "conflicto",  opciones: ["Empujaron la balsa hacia el agua.",                 "Llegaron sanos a la orilla opuesta.",            "La crecida del río arrastró su vieja balsa."],  correctaIdx: 2 },
       { elemento: "acciones",   opciones: ["Construyeron una balsa nueva con troncos y cuerdas.","El río pasaba junto al pueblo.",                 "El tío Ernesto pescaba desde niño."],           correctaIdx: 0 },
       { elemento: "resolucion", opciones: ["Joaquín acompañaba a su tío a pescar.",             "Por la tarde, cruzaron el río en su nueva balsa.","La corriente bajaba con fuerza."],              correctaIdx: 1 },
@@ -758,7 +758,7 @@ const CAMINO_BANK = [
     titulo: "La campana de la iglesia",
     pasos: [
       { elemento: "lugar",      opciones: ["En la torre de la iglesia del pueblo",             "Don Aurelio, el campanero del lugar",            "Subió los escalones con su caja de herramientas."], correctaIdx: 0 },
-      { elemento: "personajes", opciones: ["Cierto domingo, la campana no sonó.",               "Don Aurelio, el campanero de toda la vida",      "Ajustó la cuerda y limpió el badajo."],         correctaIdx: 1 },
+      { elemento: "personajes", opciones: ["Cierto domingo, la campana no sonó.",               "Don Aurelio, el campanero de toda la vida.",      "Ajustó la cuerda y limpió el badajo."],         correctaIdx: 1 },
       { elemento: "conflicto",  opciones: ["Revisó cada rincón de la torre.",                   "La campana volvió a sonar con fuerza.",          "Un domingo, la campana quedó muda de repente."], correctaIdx: 2 },
       { elemento: "acciones",   opciones: ["Engrasó la cuerda y ajustó el badajo con paciencia.","La iglesia tenía una torre muy alta.",           "Don Aurelio cuidaba la campana hace años."],    correctaIdx: 0 },
       { elemento: "resolucion", opciones: ["Don Aurelio vivía cerca de la iglesia.",            "Esa misma tarde, la campana llamó a todos a misa.","La torre se alzaba sobre el pueblo."],          correctaIdx: 1 },
@@ -769,7 +769,7 @@ const CAMINO_BANK = [
     titulo: "El telescopio del abuelo",
     pasos: [
       { elemento: "lugar",      opciones: ["En la azotea de la casa del abuelo",               "El abuelo Ramón y su nieta Elisa",               "Apuntaron el telescopio hacia la luna."],       correctaIdx: 0 },
-      { elemento: "personajes", opciones: ["Una noche estrellada, el lente se empañó.",         "El abuelo Ramón y su nieta Elisa, curiosa del cielo","Observaron juntos las estrellas."],         correctaIdx: 1 },
+      { elemento: "personajes", opciones: ["Una noche estrellada, el lente se empañó.",         "El abuelo Ramón y su nieta Elisa, curiosos del cielo.","Observaron juntos las estrellas."],         correctaIdx: 1 },
       { elemento: "conflicto",  opciones: ["Limpiaron el lente con un paño suave.",             "Vieron los cráteres de la luna con claridad.",   "Una noche, la niebla cubrió todo el cielo."],   correctaIdx: 2 },
       { elemento: "acciones",   opciones: ["Esperaron con paciencia hasta que la niebla se fue.","La azotea estaba sobre la casa del abuelo.",    "El abuelo Ramón amaba la astronomía."],         correctaIdx: 0 },
       { elemento: "resolucion", opciones: ["Elisa visitaba al abuelo cada fin de semana.",      "Más tarde, el cielo se despejó y vieron mil estrellas.","La niebla era espesa esa noche."],        correctaIdx: 1 },
@@ -1300,7 +1300,6 @@ function EscritorGame({ app, setApp, go, onRestart }) {
       if (!usados.has(candidato.id)) {
         picks.push(candidato);
         usados.add(candidato.id);
-        pushRecent("escritor", "sp:" + candidato.id);
       }
       pool.splice(idx, 1);
     }
@@ -1325,12 +1324,19 @@ function EscritorGame({ app, setApp, go, onRestart }) {
     let pool = bank.filter((p) => !blocked.has(p.id));
     if (pool.length < 1) pool = bank;
     const p = pool[Math.floor(Math.random() * pool.length)];
-    pushRecent("escritor", prefix + p.id);
     return p;
   }
 
   const [r2Pick] = useStateG(() => pickEscritorFIFO(MOD_BANK,   "mod:"));
   const [r3Pick] = useStateG(() => pickEscritorFIFO(CITAS_BANK, "cit:"));
+
+  // Registrar en el FIFO los picks elegidos como EFECTO (no en el render):
+  // evita escribir en localStorage durante la inicialización (pureza de render).
+  useEffectG(() => {
+    r1Picks.forEach((p) => pushRecent("escritor", "sp:" + p.id));
+    pushRecent("escritor", "mod:" + r2Pick.id);
+    pushRecent("escritor", "cit:" + r3Pick.id);
+  }, []);
 
   // Lista plana de slots para R3 (con su signo correcto e índice)
   const r3Slots = r3Pick.partes.map((pt, i) => pt.s != null ? { idx: i, signo: pt.s } : null).filter(Boolean);
@@ -1353,6 +1359,9 @@ function EscritorGame({ app, setApp, go, onRestart }) {
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - started.current) / 1000)), 500);
     return () => clearInterval(id);
   }, []);
+
+  const aliveRef = useRefG(true);
+  useEffectG(() => () => { aliveRef.current = false; }, []);  // desmontado → timers huérfanos no tocan estado muerto
 
   useEffectG(() => {
     window.__currentChalkGlyphs = [
@@ -1457,6 +1466,7 @@ function EscritorGame({ app, setApp, go, onRestart }) {
   }
 
   function answer(isCorrect, userText, correctText, opIcon) {
+    if (!aliveRef.current) return;  // componente desmontado: no tocar estado muerto
     if (typeof window.markFirstAttempt === "function") window.markFirstAttempt();
     const exerciseSec = Math.max(0, Math.floor((Date.now() - exerciseStart.current) / 1000));
     const earned = calcStars(isCorrect, exerciseSec);
@@ -1483,12 +1493,13 @@ function EscritorGame({ app, setApp, go, onRestart }) {
 
     const wait = isCorrect ? 950 : 1400;
     setTimeout(() => {
+      if (!aliveRef.current) return;  // si el niño salió/reinició en la ventana, no navegar
       setFeedback(null);
       setFeedbackMsg("");
       if (newAttempted >= 3) {
         setApp((s) => ({
           ...s, stars: newStarsTotal,
-          lastResult: { category: catLabel, solved: newSolved, total: 3, time: elapsed, starsEarned: newStarsSession, log: newLog },
+          lastResult: { category: catLabel, solved: newSolved, total: 3, time: Math.floor((Date.now() - started.current) / 1000), starsEarned: newStarsSession, log: newLog },
         }));
         window.incrementGamesCompleted && window.incrementGamesCompleted();
         go("results");
@@ -1674,6 +1685,7 @@ function SujetoPredicadoCard({ picks, splits, locked, onChooseSplit }) {
                   <React.Fragment key={i}>
                     <span style={{
                       display: "inline-block",
+                      position: "relative",
                       padding: "4px 9px",
                       borderRadius: 8,
                       background: bg, border, color,
@@ -1682,7 +1694,16 @@ function SujetoPredicadoCard({ picks, splits, locked, onChooseSplit }) {
                       userSelect: "none",
                       boxShadow: chosen !== null ? "0 2px 3px rgba(0,0,0,0.2)" : "none",
                       transition: "all 0.18s",
-                    }}>{p}</span>
+                    }}>{p}{chosen !== null && (i === 0 || i === chosen + 1) && (
+                      <span style={{
+                        position: "absolute", top: -7, left: -6,
+                        minWidth: 15, height: 15, padding: "0 3px", borderRadius: 8,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        background: i === 0 ? "#b48817" : "#a31818", color: "#fff",
+                        fontSize: 9, fontWeight: 800, lineHeight: 1, letterSpacing: "0.04em",
+                        border: "1.5px solid #fffdf5", whiteSpace: "nowrap",
+                      }}>{i === 0 ? "S" : "P"}</span>
+                    )}</span>
                     {i < palabras.length - 1 && (() => {
                       const isCutChosen = chosen === i;
                       // Al fallar, revelamos en verde (✓) dónde iba realmente el corte.
@@ -1696,7 +1717,7 @@ function SujetoPredicadoCard({ picks, splits, locked, onChooseSplit }) {
                           onClick={() => !locked && onChooseSplit(oracionIdx, i)}
                           disabled={locked}
                           style={{
-                            width: isCutChosen ? 5 : revealCut ? 22 : 20, height: 28,
+                            width: isCutChosen ? 7 : revealCut ? 24 : 24, height: 34,
                             padding: 0,
                             background: asBar ? barColor : "transparent",
                             border: asBar ? "none" : "2px dashed rgba(180,136,23,0.5)",
@@ -1858,7 +1879,7 @@ function DetectiveModCard({ pick, marks, pickedChip, locked, onPickChip, onAssig
     const cfg = tipo === "md" ? colorMD : colorMI;
     const label = tipo === "md" ? "DIRECTO" : "INDIRECTO";
     const icono = tipo === "md" ? "📘" : "📗";
-    const tip = tipo === "md" ? "artículo o adjetivo" : "con preposición";
+    const tip = tipo === "md" ? "sin preposición" : "con preposición";
     const canDrop = !locked && pickedTokenIdx != null;
     // Tokens asignados a esta carpeta
     const dentro = pick.tokens
@@ -1869,7 +1890,7 @@ function DetectiveModCard({ pick, marks, pickedChip, locked, onPickChip, onAssig
         onClick={() => canDrop && onAssignBucket(tipo)}
         data-dropzone={`bucket:${tipo}`}
         style={{
-          width: 200, height: 130,
+          width: 200, height: 150,
           padding: "10px 14px 12px 14px",
           background: cfg.bg,
           border: `3px ${canDrop ? "solid #fce9a8" : "dashed " + cfg.border}`,
@@ -1901,9 +1922,9 @@ function DetectiveModCard({ pick, marks, pickedChip, locked, onPickChip, onAssig
           border: `1.5px dashed ${cfg.border}`,
           borderRadius: 10,
           padding: "5px 7px",
-          display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", gap: 5,
+          display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center", alignContent: "center", gap: 5,
           marginTop: 4,
-          overflow: "hidden",
+          overflowY: "auto", overflowX: "hidden",
         }}>
           {dentro.length === 0 ? (
             <span style={{ fontSize: 10, fontStyle: "italic", opacity: 0.55, fontWeight: 700, letterSpacing: "0.04em" }}>
@@ -1941,6 +1962,7 @@ function DetectiveModCard({ pick, marks, pickedChip, locked, onPickChip, onAssig
                   boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
                   userSelect: "none",
                   touchAction: "none",
+                  whiteSpace: "nowrap", maxWidth: "100%",
                 }}
                 title={locked ? "" : "Arrástrala a la otra carpeta o tócala para devolver"}
               >{t.w}{correctLabel && (
@@ -2218,8 +2240,10 @@ function LabCitasCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, on
                 const newSlotIdx = parseInt(zoneId.slice("citaslot:".length), 10);
                 if (newSlotIdx === p._i) return;
                 const next = { ...placed };
+                const destVal = next[newSlotIdx];        // signo que ya había en el destino
                 next[newSlotIdx] = val;
-                delete next[p._i];
+                if (destVal != null) next[p._i] = destVal; // swap: vuelve al hueco de origen
+                else delete next[p._i];
                 onSetPlaced(next);
               }
             },
@@ -2227,8 +2251,8 @@ function LabCitasCard({ pick, placed, picked, locked, onPickLabel, onPlaceIn, on
           }) : undefined}
           style={{
             display: "inline-flex", alignItems: "center", justifyContent: "center",
-            minWidth: 26, minHeight: 30,
-            padding: "0 5px", margin: "0 1px",
+            minWidth: 34, minHeight: 36,
+            padding: "0 7px", margin: "0 2px",
             borderRadius: 8,
             background: bg, border, color,
             fontWeight: 800,
@@ -2583,7 +2607,6 @@ function NarradorGame({ app, setApp, go, onRestart }) {
     let pool = bank.filter((p) => !blocked.has(p.id));
     if (pool.length < 1) pool = bank;
     const p = pool[Math.floor(Math.random() * pool.length)];
-    pushRecent("narrador", prefix + p.id);
     return p;
   }
 
@@ -2592,6 +2615,14 @@ function NarradorGame({ app, setApp, go, onRestart }) {
   const [r3Pick] = useStateG(() => pickWithFIFO(ORDEN_BANK,  "ord:"));
   // Frases mezcladas (banco visible) — el niño las arrastra a los slots 1..5
   const [r3FrasesShuffled] = useStateG(() => shuffle(r3Pick.frases));
+
+  // Registrar en el FIFO los picks elegidos como EFECTO (no en el render):
+  // evita escribir en localStorage durante la inicialización (pureza de render).
+  useEffectG(() => {
+    pushRecent("narrador", "lab:" + r1Pick.id);
+    pushRecent("narrador", "cam:" + r2Pick.id);
+    pushRecent("narrador", "ord:" + r3Pick.id);
+  }, []);
 
   // Shell state
   const [elapsed, setElapsed] = useStateG(0);
@@ -2611,6 +2642,9 @@ function NarradorGame({ app, setApp, go, onRestart }) {
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - started.current) / 1000)), 500);
     return () => clearInterval(id);
   }, []);
+
+  const aliveRef = useRefG(true);
+  useEffectG(() => () => { aliveRef.current = false; }, []);  // desmontado → timers huérfanos no tocan estado muerto
 
   useEffectG(() => {
     window.__currentChalkGlyphs = [
@@ -2655,11 +2689,16 @@ function NarradorGame({ app, setApp, go, onRestart }) {
       setTimeout(() => answer(correct, userText, correctText, "🧪"), correct ? 350 : 2500);
     } else if (ronda === 1) {
       setR2Locked(true);
-      // El correct se computa por la cantidad de pasos acertados en primera elección
-      const aciertos = r2Picks.filter((p) => p.ok).length;
+      // El correct se computa por los pasos acertados EN PRIMERA elección (el primer
+      // pick de cada paso); reintentar por descarte ya no cuenta como acierto pleno.
+      const primeroDe = (i) => r2Picks.find((x) => x.pasoIdx === i);
+      const aciertos = r2Pick.pasos.reduce((acc, _p, i) => {
+        const pr = primeroDe(i);
+        return acc + (pr && pr.ok ? 1 : 0);
+      }, 0);
       const correct = aciertos === r2Pick.pasos.length;
       const userText = r2Pick.pasos.map((p, i) => {
-        const elegido = r2Picks.find((x) => x.pasoIdx === i);
+        const elegido = primeroDe(i);
         return `${p.elemento}: ${elegido ? p.opciones[elegido.idxElegido] : "?"}`;
       }).join(" → ");
       const correctText = r2Pick.pasos.map((p) => `${p.elemento}: ${p.opciones[p.correctaIdx]}`).join(" → ");
@@ -2685,6 +2724,15 @@ function NarradorGame({ app, setApp, go, onRestart }) {
     }
   }
 
+  // Camino (R2): autoverifica al llegar a la meta. El niño ya recibió la corrección
+  // paso a paso, así que no necesita pulsar VERIFICAR en esta ronda (solo en esta).
+  useEffectG(() => {
+    if (ronda === 1 && r2Done && !r2Locked) {
+      const id = setTimeout(() => handleVerify(), 900);
+      return () => clearTimeout(id);
+    }
+  }, [ronda, r2Done, r2Locked]);
+
   function handleErase() {
     if (ronda === 0) { if (r1Locked) return; setR1Placed({}); }
     else if (ronda === 1) {
@@ -2698,6 +2746,7 @@ function NarradorGame({ app, setApp, go, onRestart }) {
   }
 
   function answer(isCorrect, userText, correctText, opIcon) {
+    if (!aliveRef.current) return;  // componente desmontado: no tocar estado muerto
     if (typeof window.markFirstAttempt === "function") window.markFirstAttempt();
     const exerciseSec = Math.max(0, Math.floor((Date.now() - exerciseStart.current) / 1000));
     const earned = calcStars(isCorrect, exerciseSec);
@@ -2724,12 +2773,13 @@ function NarradorGame({ app, setApp, go, onRestart }) {
 
     const wait = isCorrect ? 950 : 1400;
     setTimeout(() => {
+      if (!aliveRef.current) return;  // si el niño salió/reinició en la ventana, no navegar
       setFeedback(null);
       setFeedbackMsg("");
       if (newAttempted >= 3) {
         setApp((s) => ({
           ...s, stars: newStarsTotal,
-          lastResult: { category: catLabel, solved: newSolved, total: 3, time: elapsed, starsEarned: newStarsSession, log: newLog },
+          lastResult: { category: catLabel, solved: newSolved, total: 3, time: Math.floor((Date.now() - started.current) / 1000), starsEarned: newStarsSession, log: newLog },
         }));
         window.incrementGamesCompleted && window.incrementGamesCompleted();
         go("results");
@@ -2858,7 +2908,7 @@ function NarradorGame({ app, setApp, go, onRestart }) {
 const CATEGORIAS = {
   tiempo: { icono: "🕰️",  label: "TIEMPO",   color: "#ffb87a", border: "#a3501e", ink: "#3a2608" },
   sonido: { icono: "🔊",  label: "SONIDO",   color: "#b9e3ff", border: "#1466a6", ink: "#0a2540" },
-  color:  { icono: "🎨",  label: "COLOR",    color: "#d6c7ff", border: "#532a99", ink: "#1a0a3a" },
+  color:  { icono: "🎨",  label: "ASPECTO",  color: "#d6c7ff", border: "#532a99", ink: "#1a0a3a" },
 };
 
 function LaboratorioCuentacuentosCard({ pick, placed, locked, onPlace, onClear }) {
@@ -2934,7 +2984,7 @@ function LaboratorioCuentacuentosCard({ pick, placed, locked, onPlace, onClear }
           📜 {pick.titulo}
         </div>
         <div style={{
-          fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12.5, lineHeight: 1.6,
+          fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13.5, lineHeight: 1.5,
           textAlign: "center",
         }}>
           {pick.frases.map((f, idx) => (
@@ -3035,6 +3085,7 @@ function CaminoNarradorCard({ pick, step, picks, locked, char, onChoose }) {
   const pasoActual = step < totalPasos ? pick.pasos[step] : null;
   const meta = step >= totalPasos;
   const pickActual = picks.filter((p) => p.pasoIdx === step);
+  const hayFallo = pickActual.some((p) => !p.ok);  // ya falló al menos una vez en este paso
 
   return (
     <div style={{ position: "relative", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
@@ -3115,6 +3166,9 @@ function CaminoNarradorCard({ pick, step, picks, locked, char, onChoose }) {
           <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
             {pasoActual.opciones.map((op, idx) => {
               const elegidoFallido = pickActual.find((x) => x.idxElegido === idx && !x.ok);
+              // Tras un fallo, revelamos la opción correcta (verde + ✅) para que el
+              // niño aprenda cuál era, en vez de adivinar por descarte (estándar #11).
+              const revelarCorrecta = hayFallo && idx === pasoActual.correctaIdx;
               return (
                 <button key={idx}
                   onClick={() => !locked && onChoose(idx)}
@@ -3122,15 +3176,15 @@ function CaminoNarradorCard({ pick, step, picks, locked, char, onChoose }) {
                   style={{
                     width: "100%", textAlign: "left",
                     padding: "6px 10px", borderRadius: 9,
-                    background: elegidoFallido ? "rgba(255,107,107,0.35)" : "rgba(255,255,255,0.92)",
-                    border: `2px solid ${elegidoFallido ? "#ff6b6b" : "#f2c260"}`,
+                    background: elegidoFallido ? "rgba(255,107,107,0.35)" : revelarCorrecta ? "rgba(46,204,143,0.35)" : "rgba(255,255,255,0.92)",
+                    border: `2px solid ${elegidoFallido ? "#ff6b6b" : revelarCorrecta ? "#2ecc8f" : "#f2c260"}`,
                     color: "#3a2608",
-                    fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 11.5, lineHeight: 1.3,
+                    fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 12.5, lineHeight: 1.35,
                     cursor: (locked || elegidoFallido) ? "default" : "pointer",
                     opacity: elegidoFallido ? 0.6 : 1,
                     transition: "all 0.18s",
                   }}>
-                  {elegidoFallido && "❌ "}{op}
+                  {elegidoFallido && "❌ "}{revelarCorrecta && "✅ "}{op}
                 </button>
               );
             })}
@@ -3149,7 +3203,7 @@ function CaminoNarradorCard({ pick, step, picks, locked, char, onChoose }) {
           borderRadius: 12, padding: "8px 16px",
           boxShadow: "0 4px 16px rgba(252,233,168,0.45)",
         }}>
-          ✨ ¡Llegaste al final! Pulsa ¡VERIFICAR!
+          ✨ ¡Llegaste al final! Revisando tus respuestas…
         </div>
       )}
     </div>
@@ -3192,7 +3246,7 @@ function OrdenaCuentoCard({ pick, frases, orden, locked, onPlace, onClear }) {
           border: "2px solid #f2c260",
           borderRadius: 9, padding: "4px 8px",
           cursor: locked ? "default" : "grab",
-          fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 11, lineHeight: 1.2,
+          fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 12, lineHeight: 1.3,
           boxShadow: "0 2px 5px rgba(0,0,0,0.25)",
           userSelect: "none", touchAction: "none",
           flex: "0 0 auto",
@@ -3250,10 +3304,12 @@ function OrdenaCuentoCard({ pick, frases, orden, locked, onPlace, onClear }) {
                 disabled: locked,
               })}
               style={{
-                color: "#3a2608",
-                fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 11, lineHeight: 1.2,
+                color: isWrong ? "#a31818" : "#3a2608",
+                fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 12, lineHeight: 1.3,
                 cursor: locked ? "default" : "grab",
                 userSelect: "none", touchAction: "none",
+                textDecoration: isWrong ? "line-through" : "none",
+                opacity: isWrong ? 0.7 : 1,
               }}>
               {frase.texto}
             </div>
@@ -3263,17 +3319,15 @@ function OrdenaCuentoCard({ pick, frases, orden, locked, onPlace, onClear }) {
               fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 10.5, fontStyle: "italic",
             }}>arrastra una frase aquí…</div>
           )}
+          {isWrong && correctFrase && (
+            <div style={{
+              marginTop: 3, color: "#1e8a5d",
+              fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 10.5, lineHeight: 1.25,
+            }}>
+              ✓ Correcta: {correctFrase.texto}
+            </div>
+          )}
         </div>
-        {isWrong && correctFrase && (
-          <div style={{
-            flex: "0 0 auto",
-            background: "#2ecc8f", color: "#fff",
-            padding: "1px 6px", borderRadius: 999,
-            fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 9,
-          }}>
-            ✓
-          </div>
-        )}
       </div>
     );
   };
