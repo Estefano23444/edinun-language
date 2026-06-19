@@ -30,7 +30,10 @@ HUD del juego sin tabs de nivel. 3 rondas por sesión.
   R3 sílabas ensambladas == palabra.
 - **Sílabas en MINÚSCULAS** y sin tildes (shell-standards §4). Animales sin tilde:
   zorro, tortuga, hormiga, conejo, lobo, oveja.
-- **Feedback al fallar**: opción/parte correcta en verde con ✓; reveal 1.5 s antes del overlay.
+- **Feedback al fallar**: opción/parte correcta en verde con ✓ (en R1 "✓ Va en: …", en R3 "✓ Era: …",
+  en R2 la moraleja correcta resaltada); reveal 3 s antes del overlay (alineado con juego-7).
+- **R2 anti-patrón**: las opciones de moraleja se **barajan por sesión** (el banco trae `correcta:0`
+  en todas); se califica por texto, no por índice fijo, para que la correcta no quede siempre arriba.
 - **FIFO anti-repetición** por categoría (orden/moraleja/acertijo), banco de 6 → FIFO=3.
 - Contrato `lastResult.log` con columnas genéricas (Reto / Tu respuesta / Correcta / Estado / Tiempo).
 
@@ -40,7 +43,7 @@ HUD del juego sin tabs de nivel. 3 rondas por sesión.
 
 ## Copy específico
 - **Slug**: `juego-10` · **Título landing**: "Mi fabulosa fábula" · charId `narrador`.
-- **Enunciados (QUÉ)**: R1 "Ordena las partes de la fábula." · R2 "Lee la fábula y elige su moraleja." · R3 "Adivina el personaje y escribe su nombre."
+- **Enunciados (QUÉ)**: R1 "Ordena las partes de la fábula." · R2 "Lee la fábula y elige su moraleja." · R3 "Adivina el personaje y forma su nombre."
 - **Bocadillos (CÓMO)**: R1 "Toca una parte y luego su lugar." · R2 "Toca la moraleja correcta." · R3 "Toca las sílabas en orden para formar el nombre."
 
 ## QA

@@ -562,7 +562,7 @@ function HomeScreen({ app, setApp, go }) {
 
 // ─────────────────────────────────────────────────────────────
 // 2. SELECCIÓN DE PERSONAJE — idéntico al shell. Default Márquez
-// porque encaja temáticamente con "chistes y cuentos".
+// porque encaja temáticamente con las fábulas y los cuentos.
 // ─────────────────────────────────────────────────────────────
 function CharacterScreen({ app, setApp, go }) {
   const [sel, setSel] = useState(app.character || "narrador");
@@ -1111,7 +1111,7 @@ function ExitModal({ open, onCancel, attempted, total, onExit }) {
   );
 }
 
-function ActionRail({ canVerify, onVerify, hideVerify, showErase, onErase, onRestart, onExit }) {
+function ActionRail({ canVerify, onVerify, hideVerify, showErase, eraseDisabled, onErase, onRestart, onExit }) {
   return (
     <div data-qa="acciones" style={{
       position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
@@ -1129,8 +1129,11 @@ function ActionRail({ canVerify, onVerify, hideVerify, showErase, onErase, onRes
         </button>
       )}
       {showErase && (
-        <button className="ed-btn ed-btn-erase" onClick={onErase}
-          style={{ fontSize: 13, padding: "0 8px", height: 48, fontWeight: 800, letterSpacing: "0.04em" }}>
+        <button className="ed-btn ed-btn-erase" onClick={onErase} disabled={eraseDisabled}
+          style={{
+            fontSize: 13, padding: "0 8px", height: 48, fontWeight: 800, letterSpacing: "0.04em",
+            opacity: eraseDisabled ? 0.45 : 1, cursor: eraseDisabled ? "not-allowed" : "pointer",
+          }}>
           BORRAR
         </button>
       )}
@@ -1268,6 +1271,15 @@ function FabulaGame({ app, setApp, go, onRestart }) {
   const [r1Pick] = useStateG(() => pickFromBank("orden", FABULAS_ORDEN));
   const [r1Tray] = useStateG(() => shuffle(r1Pick.partes));   // orden mezclado de las partes
   const [r2Pick] = useStateG(() => pickFromBank("moraleja", MORALEJAS));
+  // Las opciones de moraleja se barajan por sesión para que la correcta NO quede
+  // siempre en la misma posición (todas las del banco traen correcta:0). Se guarda
+  // el TEXTO correcto antes de barajar y se recalcula su índice tras el shuffle, así
+  // la calificación es por valor y no por una posición fija explotable.
+  const [r2Opts] = useStateG(() => {
+    const correctText = r2Pick.opciones[r2Pick.correcta];
+    const opciones = shuffle(r2Pick.opciones);
+    return { opciones, correcta: opciones.indexOf(correctText) };
+  });
   const [r3Pick] = useStateG(() => pickFromBank("acertijo", ACERTIJOS));
   const [r3Tray] = useStateG(() => shuffle([
     ...r3Pick.silabas.map((s, i) => ({ tid: `c${i}`, syl: s })),
@@ -1388,9 +1400,9 @@ function FabulaGame({ app, setApp, go, onRestart }) {
   function gradeR2(choice) {
     if (r2Locked) return;
     setR2Locked(true);
-    const correct = choice === r2Pick.correcta;
+    const correct = choice === r2Opts.correcta;
     setTimeout(() => answer(correct, `Moraleja: ${r2Pick.titulo}`, "💡",
-      r2Pick.opciones[choice], r2Pick.opciones[r2Pick.correcta]), 350);
+      r2Opts.opciones[choice], r2Opts.opciones[r2Opts.correcta]), 350);
   }
 
   function handleErase() {
@@ -1445,7 +1457,7 @@ function FabulaGame({ app, setApp, go, onRestart }) {
 
     const okMsg = `+${earned} ⭐`;
     const errMsg = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
-    const revealDelay = isCorrect ? 0 : 1500;   // tiempo para ver marcas verdes/rojas al fallar
+    const revealDelay = isCorrect ? 0 : 3000;   // tiempo para leer la respuesta correcta revelada al fallar (alineado con juego-7)
     const overlayTime = isCorrect ? 950 : 1300;
 
     setTimeout(() => { setFeedback(isCorrect ? "ok" : "err"); setFeedbackMsg(isCorrect ? okMsg : errMsg); }, revealDelay);
@@ -1469,7 +1481,7 @@ function FabulaGame({ app, setApp, go, onRestart }) {
   const enunciado =
     ronda === 0 ? "Ordena las partes de la fábula." :
     ronda === 1 ? (r2Spun ? "Lee la fábula y elige su moraleja." : "Gira la ruleta para conocer tu fábula.") :
-    "Adivina el personaje y escribe su nombre.";
+    "Adivina el personaje y forma su nombre.";
   const bocadillo =
     ronda === 0 ? "Toca una parte y luego\nsu lugar." :
     ronda === 1 ? (r2Spun ? "Toca la moraleja correcta." : "Toca GIRAR para sacar\ntu fábula.") :
@@ -1482,6 +1494,10 @@ function FabulaGame({ app, setApp, go, onRestart }) {
   // donde el contenido (ruleta / cartel) está centrado y deja aire arriba.
   const enunTop = ronda === 0 ? 88 : 132;
   const zonaTop = ronda === 0 ? 142 : 116;
+
+  // Vista de R2 con las opciones ya barajadas (la rueda/cartel siguen usando los
+  // campos originales vía spread: id para el sorteo, emoji/titulo/texto del cartel).
+  const r2View = { ...r2Pick, opciones: r2Opts.opciones, correcta: r2Opts.correcta };
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
@@ -1499,7 +1515,7 @@ function FabulaGame({ app, setApp, go, onRestart }) {
           />
         )}
         {ronda === 1 && (
-          <RuletaMoralejaCard pick={r2Pick} bank={MORALEJAS} spun={r2Spun} onLanded={() => setR2Spun(true)}
+          <RuletaMoralejaCard pick={r2View} bank={MORALEJAS} spun={r2Spun} onLanded={() => setR2Spun(true)}
             selected={r2Sel} locked={r2Locked}
             onChoose={(i) => {
               // Auto-evaluación (comportamiento B): solo tras girar la ruleta.
@@ -1518,7 +1534,8 @@ function FabulaGame({ app, setApp, go, onRestart }) {
       </div>
 
       <ActionRail canVerify={canVerify} onVerify={handleVerify} hideVerify={ronda === 1}
-        showErase={showErase} onErase={handleErase}
+        showErase={showErase} eraseDisabled={ronda === 0 ? r1Locked : ronda === 2 ? r3Locked : false}
+        onErase={handleErase}
         onRestart={() => setConfirmingRestart(true)} onExit={() => setConfirmingExit(true)} />
 
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />
@@ -1608,10 +1625,14 @@ function OrdenaFabulaCard({ pick, trayParts, bins, selected, locked, onTapTray, 
                     <span style={{ flex: 1, minWidth: 0, fontFamily: "var(--ed-font-display)", fontWeight: 600, fontSize: 11.5, lineHeight: 1.2 }}>
                       {part.texto}
                     </span>
-                    {isWrong && correctPart && (
+                    {isWrong && (
                       <span style={{
-                        flexShrink: 0, fontFamily: "var(--ed-font-display)", fontWeight: 900, fontSize: 18, color: "#c33b3b",
-                      }} title={`Aquí va: ${correctPart.texto}`}>✗</span>
+                        flexShrink: 0, fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 10,
+                        color: "#fff", background: "linear-gradient(180deg, #2ecc8f, #1f9c66)",
+                        border: "1.5px solid #eafff4", borderRadius: 7,
+                        padding: "2px 7px", letterSpacing: "0.03em", lineHeight: 1.15, whiteSpace: "nowrap",
+                        boxShadow: "0 1px 5px rgba(0,0,0,0.3)",
+                      }}>✓ Va en: {(PARTES_CFG.find((c) => c.id === part.tipo) || {}).label}</span>
                     )}
                   </div>
                 ) : (
@@ -1814,16 +1835,16 @@ function AcertijoCard({ pick, tray, seq, used, slots, assembled, locked, onTapTi
   const isWrong = locked && assembled !== pick.word;
   const SLOT_W = slots <= 2 ? 76 : slots <= 3 ? 66 : 56;
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 18 }}>
+    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12 }}>
       {/* Tarjeta del acertijo */}
       <div style={{
         width: "fit-content", maxWidth: 420,
         background: "linear-gradient(180deg, rgba(255,253,245,0.97), rgba(245,238,225,0.92))",
         border: "3px solid #f2c260", borderRadius: 18,
-        padding: "14px 20px", boxShadow: "0 12px 26px rgba(0,0,0,0.5)", color: "#3a2608",
-        display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
+        padding: "10px 18px", boxShadow: "0 12px 26px rgba(0,0,0,0.5)", color: "#3a2608",
+        display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
       }}>
-        <div style={{ fontSize: 64, lineHeight: 1 }}>{pick.emoji}</div>
+        <div style={{ fontSize: 50, lineHeight: 1 }}>{pick.emoji}</div>
         <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13.5, lineHeight: 1.35, textAlign: "center", fontStyle: "italic" }}>
           “{pick.pista}”
         </div>
@@ -1859,6 +1880,18 @@ function AcertijoCard({ pick, tray, seq, used, slots, assembled, locked, onTapTi
           );
         })}
       </div>
+
+      {/* Revelado de la palabra correcta al fallar (verde + ✓), igual que R2. */}
+      {isWrong && (
+        <div style={{
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 16,
+          color: "#fff",
+          background: "linear-gradient(180deg, #2ecc8f, #1f9c66)",
+          border: "2px solid #eafff4", borderRadius: 999,
+          padding: "5px 18px", letterSpacing: "0.02em",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.4), 0 0 0 3px rgba(46,204,143,0.3)",
+        }}>✓ Era: {pick.word}</div>
+      )}
 
       {/* Bandeja de sílabas */}
       <div data-qa="bandeja" style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center", maxWidth: 460 }}>
@@ -2008,7 +2041,7 @@ function ResultsScreen({ app, setApp, go }) {
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
             lineHeight: 1, marginBottom: 4,
           }}>
-            {res.surrendered ? "Sesión terminada" : "¡Ronda completa!"}
+            ¡Ronda completa!
           </div>
           <char.Component size={180} />
           <div className="ed-body" style={{ fontStyle: "italic", textAlign: "center", maxWidth: 240, fontSize: 13 }}>
@@ -2558,7 +2591,7 @@ function App() {
   const [app, setApp] = useStateA({
     studentName: "",
     character: "narrador",
-    level: "chistes",
+    level: "fabula",
     stars: 0,
     sessionStart: Date.now(),
     gameSeed: 0,

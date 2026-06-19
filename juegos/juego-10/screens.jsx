@@ -326,7 +326,7 @@ function HomeScreen({ app, setApp, go }) {
 
 // ─────────────────────────────────────────────────────────────
 // 2. SELECCIÓN DE PERSONAJE — idéntico al shell. Default Márquez
-// porque encaja temáticamente con "chistes y cuentos".
+// porque encaja temáticamente con las fábulas y los cuentos.
 // ─────────────────────────────────────────────────────────────
 function CharacterScreen({ app, setApp, go }) {
   const [sel, setSel] = useState(app.character || "narrador");

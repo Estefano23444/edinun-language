@@ -438,7 +438,7 @@ function App() {
   const [app, setApp] = useStateA({
     studentName: "",
     character: "narrador",
-    level: "chistes",
+    level: "fabula",
     stars: 0,
     sessionStart: Date.now(),
     gameSeed: 0,
