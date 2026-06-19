@@ -1,9 +1,9 @@
 // game-screens.jsx — GameScreen + ResultsScreen para JUEGO-11
 // "Mi refrán refranero" (TEMA 3 del libro EDINUN, 7 años). 1 nivel, 3 rondas
 // con mecánicas DISTINTAS (estándar 7+ años):
-//   R1 — Laboratorio de palabras: combinar 2 sílabas en la probeta.
+//   R1 — Laboratorio de palabras: combinar 2 o 3 sílabas en la probeta.
 //   R2 — Atrapa y clasifica: arrastrar palabras al frasco de su grupo.
-//   R3 — Detective de refranes: marcar con la lupa las palabras con grupo.
+//   R3 — Memoria de parejas: emparejar cada dibujo con su palabra.
 //
 // El shell (HUD, personaje, enunciado, action rail, modales, feedback,
 // reporte académico, scoring por tiempo) se hereda del estándar (igual que
@@ -159,7 +159,7 @@ const R1_BANK = [
   { word: "plato",  syll: ["pla", "to"],  emoji: "🍽️", hint: "Donde te sirven la comida." },
   { word: "prado",  syll: ["pra", "do"],  emoji: "🌳", hint: "Campo verde lleno de hierba." },
   { word: "fresa",  syll: ["fre", "sa"],  emoji: "🍓", hint: "Fruta roja y dulce." },
-  { word: "grano",  syll: ["gra", "no"],  emoji: "🌾", hint: "Semillita del trigo o el maíz." },
+  { word: "grano",  syll: ["gra", "no"],  emoji: "🌾", hint: "Semillita del trigo o el maíz.", avoid: ["do"] }, // "do" formaría "grado"
   { word: "brazo",  syll: ["bra", "zo"],  emoji: "💪", hint: "Con él das un abrazo." },
   { word: "globo",  syll: ["glo", "bo"],  emoji: "🎈", hint: "Se infla y sale volando." },
   { word: "blusa",  syll: ["blu", "sa"],  emoji: "👚", hint: "Prenda para la parte de arriba." },
@@ -239,10 +239,12 @@ const MEMORY_BANK = [
 // ─────────────────────────────────────────────────────────────
 // makeProblem por ronda
 // ─────────────────────────────────────────────────────────────
-function pickFresh(bank, prefix, idOf) {
+function chooseFresh(bank, prefix, idOf) {
   // FIFO por categoría (estándar 12): bloquea solo los floor(N/2) más
   // recientes de ESTE prefijo, no todo el historial. Así el pool nunca
   // se vacía mientras queden frescas y la nueva ≠ las ~floor(N/2) últimas.
+  // NO escribe el historial: devuelve la `recentKey` para confirmarla recién
+  // cuando la ronda se juega (evita "gastar" R2/R3 si el niño sale antes).
   const pre = prefix + ":";
   const recentIds = getRecent().filter((k) => k.startsWith(pre)).map((k) => k.slice(pre.length));
   const windowN = Math.floor(bank.length / 2);
@@ -250,23 +252,43 @@ function pickFresh(bank, prefix, idOf) {
   let pool = bank.filter((b) => !blocked.has(idOf(b)));
   if (pool.length === 0) pool = bank;
   const p = pool[Math.floor(Math.random() * pool.length)];
-  pushRecent(pre + idOf(p));
-  return p;
+  return { item: p, recentKey: pre + idOf(p) };
+}
+
+// Sílabas que, unidas a las del pick, formarían OTRA palabra DEL BANCO (mismo
+// nº de sílabas y al menos una posición compartida) — se excluyen como
+// distractoras para que el niño no pueda armar otra palabra válida del juego.
+function bankCollisionSyllables(pick) {
+  const danger = new Set();
+  const n = pick.syll.length;
+  for (const w of R1_BANK) {
+    if (w.word === pick.word || w.syll.length !== n) continue;
+    let shared = false;
+    for (let i = 0; i < n; i++) if (w.syll[i] === pick.syll[i]) { shared = true; break; }
+    if (!shared) continue;
+    for (let i = 0; i < n; i++) if (w.syll[i] !== pick.syll[i]) danger.add(w.syll[i]);
+  }
+  return danger;
 }
 
 function makeProblemR1() {
-  const pick = pickFresh(R1_BANK, "lab", (w) => w.word);
+  const { item: pick, recentKey } = chooseFresh(R1_BANK, "lab", (w) => w.word);
   const n = pick.syll.length;
-  // Excluye las propias sílabas y las del `avoid` (sílabas que formarían otra
-  // palabra válida con el mismo prefijo, p. ej. "to" → fru+to = "fruto").
+  // Excluye: (a) sus propias sílabas; (b) las del `avoid` manual (formarían otra
+  // palabra real FUERA del banco, p. ej. "to"→fru+to="fruto", "do"→gra+do="grado");
+  // (c) sílabas que, unidas a este prefijo, formarían OTRA palabra del banco
+  //     (p. ej. con "plato" se bloquea "za" para que no se arme "plaza").
   const avoid = pick.avoid || [];
-  const distract = shuffle(R1_SYLL_POOL.filter((s) => !pick.syll.includes(s) && !avoid.includes(s))).slice(0, Math.max(2, 6 - n));
+  const collide = bankCollisionSyllables(pick);
+  const distract = shuffle(R1_SYLL_POOL.filter(
+    (s) => !pick.syll.includes(s) && !avoid.includes(s) && !collide.has(s)
+  )).slice(0, Math.max(2, 6 - n));
   const tray = shuffle([...pick.syll, ...distract]);
-  return { word: pick.word, emoji: pick.emoji, hint: pick.hint, syll: pick.syll, tray };
+  return { word: pick.word, emoji: pick.emoji, hint: pick.hint, syll: pick.syll, tray, recentKey };
 }
 
 function makeProblemR2() {
-  const set = pickFresh(R2_SETS, "clas", (s) => s.id);
+  const { item: set, recentKey } = chooseFresh(R2_SETS, "clas", (s) => s.id);
   const bins = set.bins;
   // 1 palabra por frasco (garantiza cobertura) + 2 extra → 6 chips.
   const chosen = [];
@@ -281,7 +303,7 @@ function makeProblemR2() {
     if (extras >= 2) break;
     if (!wordGroup[w]) { chosen.push(w); wordGroup[w] = b; extras++; }
   }
-  return { bins, words: shuffle(chosen), wordGroup };
+  return { bins, words: shuffle(chosen), wordGroup, recentKey };
 }
 
 function makeProblemR3() {
@@ -294,13 +316,13 @@ function makeProblemR3() {
   let pool = MEMORY_BANK.filter((w) => !blocked.has(w.word));
   if (pool.length < 4) pool = MEMORY_BANK;
   const picks = shuffle(pool).slice(0, 4);
-  for (const p of picks) pushRecent("mem:" + p.word);
+  const recentKeys = picks.map((p) => "mem:" + p.word);
   const cards = [];
   picks.forEach((p, i) => {
     cards.push({ pairId: i, kind: "emoji", content: p.emoji, word: p.word });
     cards.push({ pairId: i, kind: "word", content: p.word, word: p.word });
   });
-  return { pairs: picks.length, cards: shuffle(cards) };
+  return { pairs: picks.length, cards: shuffle(cards), recentKeys };
 }
 
 // ═════════════════════════════════════════════════════════════
@@ -324,7 +346,7 @@ function GameEnunciado({ text, top = 84 }) {
   );
 }
 
-function GameHUD({ elapsed, stars, attempted, solved, total = 3 }) {
+function GameHUD({ elapsed, stars, results = [], total = 3 }) {
   return (
     <>
       <div data-qa="hud" style={{
@@ -358,14 +380,20 @@ function GameHUD({ elapsed, stars, attempted, solved, total = 3 }) {
         display: "flex", alignItems: "center", gap: 8,
       }}>
         <span className="ed-label" style={{ color: "rgba(255,255,255,0.7)" }}>Ronda</span>
-        {Array.from({ length: total }).map((_, i) => (
-          <div key={i} style={{
-            width: 10, height: 10, borderRadius: "50%",
-            background: i < attempted ? (i < solved ? "#fce9a8" : "#ff6b6b") : "rgba(255,255,255,0.2)",
-            boxShadow: i < attempted ? "0 0 10px currentColor" : "none",
-            color: i < solved ? "#fce9a8" : "#ff6b6b",
-          }} />
-        ))}
+        {Array.from({ length: total }).map((_, i) => {
+          // Pinta por el resultado REAL de cada ronda (no por conteos): así el
+          // punto i refleja si se acertó/falló la ronda i, en orden.
+          const done = i < results.length;
+          const ok = done && results[i];
+          return (
+            <div key={i} style={{
+              width: 10, height: 10, borderRadius: "50%",
+              background: done ? (ok ? "#fce9a8" : "#ff6b6b") : "rgba(255,255,255,0.2)",
+              boxShadow: done ? "0 0 10px currentColor" : "none",
+              color: ok ? "#fce9a8" : "#ff6b6b",
+            }} />
+          );
+        })}
       </div>
     </>
   );
@@ -624,6 +652,21 @@ function RefranesGame({ app, setApp, go, onRestart }) {
     return () => clearInterval(id);
   }, []);
 
+  // FIFO: confirma la escena en el historial recién cuando se juega su ronda
+  // (no al montar), para no "gastar" R2/R3 si el niño sale antes de llegar.
+  const committedRef = useRefG(new Set());
+  useEffectG(() => {
+    const keys =
+      ronda === 0 ? [r1Pick.recentKey] :
+      ronda === 1 ? [r2Pick.recentKey] :
+      (r3Pick.recentKeys || []);
+    for (const k of keys) {
+      if (!k || committedRef.current.has(k)) continue;
+      committedRef.current.add(k);
+      pushRecent(k);
+    }
+  }, [ronda]);
+
   // ── Estados de completitud por ronda
   const r1Filled = r1Slots.length > 0 && r1Slots.every((s) => s !== null);
   const r2AllPlaced = r2Pick.words.every((w) => r2Placed[w]);
@@ -726,7 +769,7 @@ function RefranesGame({ app, setApp, go, onRestart }) {
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
-      <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} />
+      <GameHUD elapsed={elapsed} stars={stars} results={log.map((e) => e.isCorrect)} total={3} />
       <CharacterCorner char={char} message={bocadillo} />
       <GameEnunciado text={enunciado} top={86} />
 
@@ -797,8 +840,8 @@ function RefranesGame({ app, setApp, go, onRestart }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// R1 · Laboratorio de palabras — clue + probeta de 2 slots + bandeja
-// de 6 sílabas (minúsculas). Tap una sílaba → llena el siguiente slot.
+// R1 · Laboratorio de palabras — clue + probeta de 2-3 slots + bandeja
+// de hasta 6 sílabas (minúsculas). Tap una sílaba → llena el siguiente slot.
 // ─────────────────────────────────────────────────────────────
 function LaboratorioCard({ pick, slots, locked, onTapTile, onClearSlot }) {
   const formed = slots.map((i) => (i === null ? null : pick.tray[i]));
@@ -828,43 +871,64 @@ function LaboratorioCard({ pick, slots, locked, onTapTile, onClearSlot }) {
           }}>{pick.hint}</div>
         </div>
 
-        {/* Probeta: una casilla por sílaba (2 o 3) */}
+        {/* Probeta: una casilla por sílaba (2 o 3). Al fallar MANTIENE lo que
+            puso el niño (en rojo) para que pueda compararlo; la palabra correcta
+            se revela en el banner verde de abajo. */}
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {slots.map((_, slot) => {
             const v = formed[slot];
-            // Al fallar, la casilla muestra la sílaba CORRECTA (pick.syll) en
-            // verde para revelar cómo se formaba la palabra.
-            const showReveal = locked && !correct;
-            const revealSyl = pick.syll[slot];
+            const showWrong = locked && !correct;
+            const showCorrect = locked && correct;
             return (
               <button key={slot}
                 onClick={() => { if (v !== null && !locked) onClearSlot(slot); }}
                 style={{
                   width: 96, height: 76, borderRadius: 14,
-                  border: `2.5px solid ${showReveal ? "#2ecc8f" : v !== null ? slotBorder : "rgba(242,194,96,0.5)"}`,
-                  background: showReveal
+                  border: `2.5px solid ${showCorrect ? "#2ecc8f" : showWrong ? "#ff6b6b" : v !== null ? slotBorder : "rgba(242,194,96,0.5)"}`,
+                  background: showCorrect
                     ? "linear-gradient(180deg, rgba(46,204,143,0.95), rgba(34,160,108,0.9))"
+                    : showWrong
+                    ? "linear-gradient(180deg, rgba(255,107,107,0.95), rgba(220,80,80,0.9))"
                     : v !== null
                     ? "linear-gradient(180deg, rgba(252,233,168,0.95), rgba(217,164,65,0.85))"
                     : "rgba(10,6,35,0.5)",
-                  color: showReveal ? "#06381f" : v !== null ? "#3a2608" : "rgba(252,233,168,0.45)",
+                  color: showCorrect ? "#06381f" : showWrong ? "#fff" : v !== null ? "#3a2608" : "rgba(252,233,168,0.45)",
                   fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 30,
                   cursor: v !== null && !locked ? "pointer" : "default",
-                  boxShadow: showReveal ? "0 0 16px rgba(46,204,143,0.6)" : v !== null ? "0 4px 10px rgba(0,0,0,0.3)" : "inset 0 1px 0 rgba(255,255,255,0.08)",
+                  boxShadow: showCorrect ? "0 0 16px rgba(46,204,143,0.6)" : showWrong ? "0 0 16px rgba(255,107,107,0.5)" : v !== null ? "0 4px 10px rgba(0,0,0,0.3)" : "inset 0 1px 0 rgba(255,255,255,0.08)",
                   transition: "all 0.15s ease", letterSpacing: "0.03em",
                 }}
                 title={v !== null ? "Toca para quitar" : "Toca una sílaba de abajo"}>
-                {showReveal ? revealSyl : (v !== null ? v : "—")}
+                {v !== null ? v : "—"}
               </button>
             );
           })}
         </div>
+
+        {/* Al fallar: banner verde con la palabra correcta (sílaba · sílaba),
+            debajo de la respuesta del niño, para que pueda comparar. */}
+        {locked && !correct && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 10,
+            width: "fit-content", maxWidth: 420,
+            padding: "7px 18px", borderRadius: 12,
+            background: "linear-gradient(180deg, rgba(46,204,143,0.96), rgba(34,160,108,0.92))",
+            border: "2px solid #2ecc8f",
+            boxShadow: "0 4px 14px rgba(46,204,143,0.45)",
+          }}>
+            <span style={{ fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 14, color: "#06381f", letterSpacing: "0.02em" }}>✓ Correcto:</span>
+            <span style={{ fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 20, color: "#06381f", letterSpacing: "0.04em" }}>
+              {pick.syll.join(" · ")}
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Bandeja de sílabas */}
+      {/* Bandeja de sílabas — se oculta al bloquear la ronda (las fichas ya no
+          sirven) para que el banner verde de "Correcto" no se le encime. */}
       <div data-qa="bandeja" style={{
         position: "absolute", bottom: 30, left: "50%", transform: "translateX(-50%)",
-        display: "flex", gap: 12, flexWrap: "wrap", maxWidth: 560, justifyContent: "center",
+        display: locked ? "none" : "flex", gap: 12, flexWrap: "wrap", maxWidth: 560, justifyContent: "center",
       }}>
         {pick.tray.map((syll, idx) => {
           const used = slots.includes(idx);
@@ -1007,7 +1071,7 @@ function ClasificaCard({ pick, placed, selected, locked, onSelect, onPlace, onUn
 }
 
 // ─────────────────────────────────────────────────────────────
-// R3 · Memoria de parejas — 12 cartas (6 dibujos + 6 palabras). El niño
+// R3 · Memoria de parejas — 8 cartas (4 dibujos + 4 palabras). El niño
 // destapa de a 2; si la imagen coincide con su palabra, quedan fijas.
 // Al emparejar todas, avisa al padre (onComplete) con el nº de fallos.
 // ─────────────────────────────────────────────────────────────
@@ -1030,12 +1094,9 @@ function MemoryCard({ pick, locked, onComplete }) {
       const isMatch = ca.pairId === cb.pairId && ca.kind !== cb.kind;
       if (isMatch) {
         setTimeout(() => {
+          // Actualizador puro: el aviso de completado se hace en un efecto.
           setMatched((m) => {
             const nm = new Set(m); nm.add(a); nm.add(b);
-            if (nm.size === pick.cards.length && !doneRef.current) {
-              doneRef.current = true;
-              onComplete && onComplete(errorsRef.current);
-            }
             return nm;
           });
           setFlipped([]);
@@ -1047,6 +1108,15 @@ function MemoryCard({ pick, locked, onComplete }) {
       }
     }
   }
+
+  // Aviso de completado FUERA del actualizador de estado (mantiene puro a
+  // setMatched). doneRef evita doble disparo (incl. doble invocación de efectos).
+  useEffectG(() => {
+    if (pick.cards.length > 0 && matched.size === pick.cards.length && !doneRef.current) {
+      doneRef.current = true;
+      onComplete && onComplete(errorsRef.current);
+    }
+  }, [matched]);
 
   const matchedPairs = matched.size / 2;
 
@@ -1065,7 +1135,7 @@ function MemoryCard({ pick, locked, onComplete }) {
         🧠 Parejas: {matchedPairs} / {pick.pairs}
       </div>
 
-      {/* Tablero 4 columnas × 3 filas */}
+      {/* Tablero 4 columnas × 2 filas (4 parejas = 8 cartas) */}
       <div data-qa="bandeja" style={{
         display: "grid", gridTemplateColumns: "repeat(4, 100px)", gap: 10, justifyContent: "center",
       }}>
