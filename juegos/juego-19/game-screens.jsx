@@ -1126,9 +1126,11 @@ function EntremesGame({ app, setApp, go, onRestart }) {
     onNextRound: () => setRonda((r) => r + 1),
   });
 
-  // R1 (ruleta + elegir) conserva VERIFICAR manual (§10): el niño gira, elige
-  // un personaje y confirma con el botón. Solo el shooter R3 auto-evalúa (§13).
-  // Califica la R1 con la opción elegida (se dispara desde VERIFICAR).
+  // R1 (ruleta + elegir) se AUTO-EVALÚA: al tocar un personaje se resalta y,
+  // tras una breve ventana para recapacitar (~700 ms), se califica sola (sin
+  // VERIFICAR). Califica la R1 con la opción tocada.
+  const r1AutoRef = useRefG(null);
+  useEffectG(() => () => clearTimeout(r1AutoRef.current), []);
   function gradeR1(choice) {
     if (r1Locked) return;
     setR1Locked(true);
@@ -1138,12 +1140,11 @@ function EntremesGame({ app, setApp, go, onRestart }) {
 
   const canVerify =
     feedback ? false :
-    ronda === 0 ? (r1Choice !== null && !r1Locked) :
+    ronda === 0 ? false :
     ronda === 1 ? (r2Slots.every(Boolean) && !r2Locked) : false;
 
   function handleVerify() {
     if (!canVerify) return;
-    if (ronda === 0) { gradeR1(r1Choice); return; }
     if (ronda === 1) {
       setR2Locked(true);
       const correct = r2Slots.every((id, i) => r2ById[id] && r2ById[id].n === i + 1);
@@ -1190,9 +1191,11 @@ function EntremesGame({ app, setApp, go, onRestart }) {
           <RuletaPersonajes pick={r1Opts} landed={r1Landed} choice={r1Choice} locked={r1Locked}
             onLanded={() => setR1Landed(true)}
             onChoose={(opt) => {
-              // Solo selecciona/resalta; el niño confirma con VERIFICAR (§10).
               if (r1Locked) return;
               setR1Choice(opt);
+              // Resalta y, si no cambia de idea en ~700 ms, califica sola.
+              clearTimeout(r1AutoRef.current);
+              r1AutoRef.current = setTimeout(() => gradeR1(opt), 700);
             }} />
         </div>
       )}
@@ -1225,7 +1228,7 @@ function EntremesGame({ app, setApp, go, onRestart }) {
 
       <ActionRail
         canVerify={canVerify} onVerify={handleVerify}
-        hideVerify={ronda === 2}
+        hideVerify={ronda === 0 || ronda === 2}
         showErase={ronda === 1} onErase={handleErase}
         onRestart={() => setConfirmingRestart(true)} onExit={() => setConfirmingExit(true)}
       />
@@ -1452,9 +1455,12 @@ function CienciaFiccionGame({ app, setApp, go, onRestart }) {
 
   const r1AllPlaced = r1Fichas.every((f) => r1Placed[f.id]);
 
-  // Las 3 rondas (R1 clasificar, R2 identificar, R3 detective) conservan
-  // VERIFICAR manual (§10): el niño elige/clasifica/investiga y confirma con
-  // el botón. Califica la R2 con la opción elegida (se dispara desde VERIFICAR).
+  // R1 (clasificar en 2 cajas) conserva VERIFICAR manual (§10). R2 (identificar)
+  // y R3 (detective) se AUTO-EVALÚAN: al tocar la opción/veredicto se resalta y,
+  // tras ~700 ms se califica sola, sin VERIFICAR.
+  const r2AutoRef = useRefG(null);
+  const r3AutoRef = useRefG(null);
+  useEffectG(() => () => { clearTimeout(r2AutoRef.current); clearTimeout(r3AutoRef.current); }, []);
   function gradeR2(choice) {
     if (r2Locked) return;
     setR2Locked(true);
@@ -1472,9 +1478,7 @@ function CienciaFiccionGame({ app, setApp, go, onRestart }) {
 
   const canVerify =
     feedback ? false :
-    ronda === 0 ? (r1AllPlaced && !r1Locked) :
-    ronda === 1 ? (r2Choice !== null && !r2Locked) :
-    ronda === 2 ? (r3Choice !== null && !r3Locked) : false;
+    ronda === 0 ? (r1AllPlaced && !r1Locked) : false;
 
   function handleVerify() {
     if (!canVerify) return;
@@ -1483,10 +1487,6 @@ function CienciaFiccionGame({ app, setApp, go, onRestart }) {
       const correct = r1Fichas.every((f) => r1Placed[f.id] === f.tipo);
       const u = `${r1Fichas.filter((f) => r1Placed[f.id] === f.tipo).length}/${r1Fichas.length} bien clasificados`;
       setTimeout(() => answer(correct, u, "Cada mundo en su caja", "🗂️", "¿Utopía o distopía?"), correct ? 450 : 2400);
-    } else if (ronda === 1) {
-      gradeR2(r2Choice);
-    } else if (ronda === 2) {
-      gradeR3(r3Choice);
     }
   }
 
@@ -1545,9 +1545,10 @@ function CienciaFiccionGame({ app, setApp, go, onRestart }) {
                 <OptionButton label={opt} locked={r2Locked}
                   isCorrect={opt === r2Pick.answer} isPicked={r2Choice === opt}
                   onClick={() => {
-                    // Solo selecciona; el niño confirma con VERIFICAR (§10).
                     if (r2Locked) return;
                     setR2Choice(opt);
+                    clearTimeout(r2AutoRef.current);
+                    r2AutoRef.current = setTimeout(() => gradeR2(opt), 700);
                   }}
                   color={["#4fa0ff", "#e0a23a", "#2ecc8f"][i % 3]} />
                 {CF_DEFS[opt] && (
@@ -1573,16 +1574,19 @@ function CienciaFiccionGame({ app, setApp, go, onRestart }) {
           <FuenteDetective fuente={r3Pick} marks={r3Marks} toggleMark={toggleMark}
             choice={r3Choice}
             onChoose={(v) => {
-              // Marca criterios y elige veredicto; confirma con VERIFICAR (§10).
+              // El niño marca criterios; al tocar el veredicto se califica sola
+              // tras ~700 ms (sin VERIFICAR).
               if (r3Locked) return;
               setR3Choice(v);
+              clearTimeout(r3AutoRef.current);
+              r3AutoRef.current = setTimeout(() => gradeR3(v), 700);
             }} locked={r3Locked} />
         </div>
       )}
 
       <ActionRail
         canVerify={canVerify} onVerify={handleVerify}
-        hideVerify={false}
+        hideVerify={ronda === 1 || ronda === 2}
         showErase={ronda === 0} onErase={handleErase}
         onRestart={() => setConfirmingRestart(true)} onExit={() => setConfirmingExit(true)}
       />

@@ -17,14 +17,14 @@ Las edades NO se muestran al niño (botones = nombre del tema; descripción = de
 
 ## Mecánica (6 distintas, sin repetir; 1 sola ronda con arrastre por nivel)
 ### Nivel 1 — El entremés
-- **R1 La ruleta de los personajes** (RULETA). Gira la rueda decorativa → se revela una escena original → el niño elige (3 opciones) qué personaje típico la protagoniza (sacristán, bobo, soldado fanfarrón, estudiante, viejo engañado). `T1_ESCENAS` (10, FIFO). VERIFICAR manual.
+- **R1 La ruleta de los personajes** (RULETA). Gira la rueda decorativa → se revela una escena original → el niño elige (3 opciones) qué personaje típico la protagoniza (sacristán, bobo, soldado fanfarrón, estudiante, viejo engañado). `T1_ESCENAS` (10, FIFO). Auto-evalúa al tocar (sin VERIFICAR; aprobado por la autora 2026-06-22).
 - **R2 Arma tu entremés** (ORDENAR — único arrastre del nivel). 3 escenas a casillas Introducción/Nudo/Desenlace (`OrderRound` con `slotLabels`). `T2_OBRAS` (6 sets, FIFO).
 - **R3 Atrapa la comedia** (SHOOTER, auto-evaluado §13). Caen rasgos: del entremés = atrapar; del teatro moderno = dejar caer. Gana con aciertos≥4 y errores≤2. `T3_ENTREMES` / `T3_MODERNO`.
 
 ### Nivel 2 — La ciencia ficción
 - **R1 ¿Utopía o distopía?** (CLASIFICAR — único arrastre del nivel). 6 mini-mundos → 2 cajas (`BinsRound`). `CF_MUNDOS` (3 sets, FIFO). Drag + tap-seleccionar + re-arrastre.
-- **R2 El analista narrativo** (IDENTIFICAR opción múltiple). Fragmento → identifica narrador / tiempo / actante. `CF_FRAGMENTOS` (10, FIFO). Feedback §11.
-- **R3 Detective de fuentes** (DETECTIVE/investigación). Ficha de fuente (título + autor/año/entidad) → el niño marca los criterios que cumple (investigación) y da veredicto CONFIABLE / NO CONFIABLE (lo que se puntúa). Al verificar se revelan los criterios reales (verde/rojo). `CF_FUENTES` (6, FIFO) + `CF_CRITERIOS`.
+- **R2 El analista narrativo** (IDENTIFICAR opción múltiple). Fragmento → identifica narrador / tiempo / actante. `CF_FRAGMENTOS` (10, FIFO). Auto-evalúa al tocar (sin VERIFICAR). Feedback §11.
+- **R3 Detective de fuentes** (DETECTIVE/investigación). Ficha de fuente (título + autor/año/entidad) → el niño marca los criterios que cumple (investigación) y da veredicto CONFIABLE / NO CONFIABLE (lo que se puntúa). Al tocar el veredicto se auto-evalúa (sin VERIFICAR) y se revelan los criterios reales (verde/rojo). `CF_FUENTES` (6, FIFO) + `CF_CRITERIOS`.
 
 ## Glifos del fondo
 - Chalkboard (juego, 10): 🎭 🚀 🤖 🌌 🎬 ⚛ 👽 ? 🛸 ★
@@ -36,6 +36,6 @@ Las edades NO se muestran al niño (botones = nombre del tema; descripción = de
 - FIFO key: `edinun_telon_galaxia_recientes_v2`.
 
 ## Decisiones abiertas / riesgos
-- En R3 (detective de fuentes) lo puntuado es el veredicto; el marcado de criterios es la investigación (se revela al verificar). Decisión tomada para mantener una mecánica clara y verificable.
-- El shooter R3 del entremés es auto-evaluado (sin VERIFICAR) como en juego-17.
+- En R3 (detective de fuentes) lo puntuado es el veredicto; el marcado de criterios es la investigación (se revela al elegir el veredicto). Decisión tomada para mantener una mecánica clara.
+- Las rondas de OPCIÓN (ruleta N1-R1, analista N2-R2, detective N2-R3) y el shooter N1-R3 son auto-evaluadas al tocar (sin VERIFICAR; excepción §10 aprobada por la autora, confirmada en vivo 2026-06-22). Solo las rondas de ARRASTRE (ordenar N1-R2, clasificar N2-R1) conservan VERIFICAR manual.
 - QA visual (Playwright, 1280×800): los 6 rondas renderizan sin overflow; flujo completo de ambos temas = 3/3, 0 errores de consola. El lienzo 900×540 escala uniforme, así que el ajuste desktop garantiza el resto de viewports.
