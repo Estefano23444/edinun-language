@@ -106,7 +106,8 @@ No se cambiaron al añadir poemas para no tocar el shell compartido de fondo.
 
 ## Arquitectura
 
-`GameScreen` enruta por `app.level` → `BibliotecaGame` | `PoemasGame`. Shell
+`GameScreen` enruta por `app.level` → `BibliotecaGame` | `PoemasGame` |
+`VocesGame` | `OpinionGame`. Shell
 compartido: GameHUD, CharacterCorner (§1, bocadillo ed-float-soft), ActionRail,
 FeedbackOverlay, ConfirmModal, EnunciadoInline, makeAnswer (scoring/log/results).
 `ResultsScreen` única y genérica para ambos niveles.
@@ -117,8 +118,8 @@ FeedbackOverlay, ConfirmModal, EnunciadoInline, makeAnswer (scoring/log/results)
   fragmentos con marcas claras y el feedback §11 muestra el tipo correcto al fallar.
   Si en aula resulta difícil, considerar reemplazar "copla" por "arrullo" (religioso),
   que contrasta más, o cambiar R1 a clasificación por región (Costa/Sierra/Amazonía).
-- **Niveles 3 y 4** pendientes (otras edades). Al añadirlos, el selector de Home
-  crece a 3–4 tarjetas (ya es un grid `1fr 1fr`, escalable).
+- **Los 4 niveles están implementados** (biblioteca/poemas/voces/opinión). El
+  selector de Home es un grid `1fr 1fr` con las 4 tarjetas por edad.
 - Emojis modernos (🦭 foca, 🪀 yoyo, 🧘 yoga) pueden no renderizar en sistemas muy
   viejos; sustituibles en WORD_BANK si surgen quejas.
 

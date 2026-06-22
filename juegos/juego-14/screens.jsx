@@ -1,7 +1,7 @@
 // screens.jsx — HomeScreen + CharacterScreen + CosmosBg para JUEGO-14
-// "Explorando la biblioteca" (TEMA 1 del libro EDINUN, 6 años).
-// 1 nivel único: completar palabras con la letra y y la letra f.
-// Home sin chips de dificultad. HUD del juego sin tabs de nivel.
+// "Explorando la biblioteca" (TEMA 1 del libro EDINUN).
+// 4 niveles por edad (biblioteca 6a · poemas 10a · voces 12a · opinión 14a)
+// con selector en Home; CharacterScreen elige guía. HUD con cambio de nivel.
 
 const { useState, useEffect, useRef, useMemo } = React;
 
@@ -116,13 +116,15 @@ async function fetchVisitorCount(opts) {
 }
 
 function readLocalVisitorCount() {
-  const raw = localStorage.getItem(VISITOR_KEY);
-  const v = raw ? parseInt(raw, 10) : 0;
-  return isNaN(v) ? 0 : v;
+  try {
+    const raw = localStorage.getItem(VISITOR_KEY);
+    const v = raw ? parseInt(raw, 10) : 0;
+    return isNaN(v) ? 0 : v;
+  } catch { return 0; }
 }
 
 function writeLocalVisitorCount(n) {
-  localStorage.setItem(VISITOR_KEY, String(n));
+  try { localStorage.setItem(VISITOR_KEY, String(n)); } catch {}
 }
 
 function useVisitorCount() {
@@ -155,8 +157,10 @@ function useVisitorCount() {
 }
 
 function markFirstAttempt() {
-  if (sessionStorage.getItem(VISITOR_SESSION_FLAG) === "1") return;
-  sessionStorage.setItem(VISITOR_SESSION_FLAG, "1");
+  try {
+    if (sessionStorage.getItem(VISITOR_SESSION_FLAG) === "1") return;
+    sessionStorage.setItem(VISITOR_SESSION_FLAG, "1");
+  } catch {}
 
   fetchVisitorCount({ increment: true })
     .then((count) => {
@@ -172,9 +176,12 @@ function markFirstAttempt() {
 
 function incrementGamesCompleted() {
   const KEY = "edinun_games_completed_v1";
-  const raw = localStorage.getItem(KEY);
-  const next = (raw ? parseInt(raw, 10) : 0) + 1;
-  localStorage.setItem(KEY, String(next));
+  let next = 1;
+  try {
+    const raw = localStorage.getItem(KEY);
+    next = (raw ? parseInt(raw, 10) : 0) + 1;
+    localStorage.setItem(KEY, String(next));
+  } catch {}
   window.dispatchEvent(new Event("edinun:games-updated"));
   return next;
 }
@@ -191,9 +198,9 @@ function PeopleIcon({ size = 18, color = "#fce9a8" }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Configuración del nivel único. Es 1 sólo nivel → en Home no se
-// muestran chips de dificultad y el HUD del juego no tiene tabs.
-// El catLabel se inyecta como "currentCatLabel" para ResultsScreen.
+// Configuración de los 4 niveles por edad. Home muestra un selector de
+// nivel (tarjetas) y app.level enruta el juego. El catLabel se inyecta
+// como "currentCatLabel" para ResultsScreen.
 // ─────────────────────────────────────────────────────────────
 const LEVELS_CFG = [
   {
@@ -239,9 +246,8 @@ const LEVELS_CFG = [
 ];
 
 // ─────────────────────────────────────────────────────────────
-// 1. HOME — saludo + nombre + ENTRAR. Sin chips de nivel (juego de
-// 1 solo nivel). Conserva el layout 2 columnas (logo izq, formulario
-// der) del shell.
+// 1. HOME — saludo + selector de nivel + nombre + ENTRAR. Conserva el
+// layout 2 columnas (logo izq, formulario der) del shell.
 // ─────────────────────────────────────────────────────────────
 function HomeScreen({ app, setApp, go }) {
   const visitors = useVisitorCount();

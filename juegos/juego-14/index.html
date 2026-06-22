@@ -235,9 +235,9 @@ Object.assign(window, {
 });
 
 // screens.jsx — HomeScreen + CharacterScreen + CosmosBg para JUEGO-14
-// "Explorando la biblioteca" (TEMA 1 del libro EDINUN, 6 años).
-// 1 nivel único: completar palabras con la letra y y la letra f.
-// Home sin chips de dificultad. HUD del juego sin tabs de nivel.
+// "Explorando la biblioteca" (TEMA 1 del libro EDINUN).
+// 4 niveles por edad (biblioteca 6a · poemas 10a · voces 12a · opinión 14a)
+// con selector en Home; CharacterScreen elige guía. HUD con cambio de nivel.
 
 const { useState, useEffect, useRef, useMemo } = React;
 
@@ -352,13 +352,15 @@ async function fetchVisitorCount(opts) {
 }
 
 function readLocalVisitorCount() {
-  const raw = localStorage.getItem(VISITOR_KEY);
-  const v = raw ? parseInt(raw, 10) : 0;
-  return isNaN(v) ? 0 : v;
+  try {
+    const raw = localStorage.getItem(VISITOR_KEY);
+    const v = raw ? parseInt(raw, 10) : 0;
+    return isNaN(v) ? 0 : v;
+  } catch { return 0; }
 }
 
 function writeLocalVisitorCount(n) {
-  localStorage.setItem(VISITOR_KEY, String(n));
+  try { localStorage.setItem(VISITOR_KEY, String(n)); } catch {}
 }
 
 function useVisitorCount() {
@@ -391,8 +393,10 @@ function useVisitorCount() {
 }
 
 function markFirstAttempt() {
-  if (sessionStorage.getItem(VISITOR_SESSION_FLAG) === "1") return;
-  sessionStorage.setItem(VISITOR_SESSION_FLAG, "1");
+  try {
+    if (sessionStorage.getItem(VISITOR_SESSION_FLAG) === "1") return;
+    sessionStorage.setItem(VISITOR_SESSION_FLAG, "1");
+  } catch {}
 
   fetchVisitorCount({ increment: true })
     .then((count) => {
@@ -408,9 +412,12 @@ function markFirstAttempt() {
 
 function incrementGamesCompleted() {
   const KEY = "edinun_games_completed_v1";
-  const raw = localStorage.getItem(KEY);
-  const next = (raw ? parseInt(raw, 10) : 0) + 1;
-  localStorage.setItem(KEY, String(next));
+  let next = 1;
+  try {
+    const raw = localStorage.getItem(KEY);
+    next = (raw ? parseInt(raw, 10) : 0) + 1;
+    localStorage.setItem(KEY, String(next));
+  } catch {}
   window.dispatchEvent(new Event("edinun:games-updated"));
   return next;
 }
@@ -427,9 +434,9 @@ function PeopleIcon({ size = 18, color = "#fce9a8" }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Configuración del nivel único. Es 1 sólo nivel → en Home no se
-// muestran chips de dificultad y el HUD del juego no tiene tabs.
-// El catLabel se inyecta como "currentCatLabel" para ResultsScreen.
+// Configuración de los 4 niveles por edad. Home muestra un selector de
+// nivel (tarjetas) y app.level enruta el juego. El catLabel se inyecta
+// como "currentCatLabel" para ResultsScreen.
 // ─────────────────────────────────────────────────────────────
 const LEVELS_CFG = [
   {
@@ -475,9 +482,8 @@ const LEVELS_CFG = [
 ];
 
 // ─────────────────────────────────────────────────────────────
-// 1. HOME — saludo + nombre + ENTRAR. Sin chips de nivel (juego de
-// 1 solo nivel). Conserva el layout 2 columnas (logo izq, formulario
-// der) del shell.
+// 1. HOME — saludo + selector de nivel + nombre + ENTRAR. Conserva el
+// layout 2 columnas (logo izq, formulario der) del shell.
 // ─────────────────────────────────────────────────────────────
 function HomeScreen({ app, setApp, go }) {
   const visitors = useVisitorCount();
@@ -742,12 +748,13 @@ function CharacterScreen({ app, setApp, go }) {
 Object.assign(window, { HomeScreen, CharacterScreen, CosmosBg, incrementGamesCompleted, useVisitorCount, markFirstAttempt, LEVELS_CFG });
 
 // game-screens.jsx — GameScreen + ResultsScreen para JUEGO-14
-// "Explorando la biblioteca" (TEMA 1 del libro EDINUN). Juego de 2 niveles:
+// "Explorando la biblioteca" (TEMA 1 del libro EDINUN). Juego de 4 niveles por
+// edad (selector en Home):
 //   • NIVEL 1 (6 años) — BibliotecaGame: completar palabra con la sílaba
 //     inicial (letra y / letra f). 3 rondas, misma mecánica.
-//   • NIVEL 2 (10 años) — PoemasGame: "Poemas populares". 3 rondas DISTINTAS
-//     (estándar 7+): R1 Ruleta (clasifica el tipo), R2 Completa la rima,
-//     R3 Detective de versos (halla el verso que no rima).
+//   • NIVEL 2 (10 años) — PoemasGame: ruleta · completa la rima · detective.
+//   • NIVEL 3 (12 años) — VocesGame: figura literaria · clasifica rima · 3ª ronda.
+//   • NIVEL 4 (14 años) — OpinionGame: tipo de texto · hecho/opinión · oración sin verbo.
 //
 // GameScreen enruta por app.level. El shell (HUD, personaje §1, enunciado,
 // action rail, modales, feedback, reporte académico, scoring por tiempo) se
@@ -1165,6 +1172,7 @@ function ConfirmModal({ open, onClose, label, labelColor, title, body, confirmTe
 // closure ligado al estado del juego que lo llama.
 function makeAnswer(ctx) {
   return function answer(isCorrect, userText, correctText, opIcon, reto) {
+    if (ctx.aliveRef && !ctx.aliveRef.current) return;
     if (typeof window.markFirstAttempt === "function") window.markFirstAttempt();
     const exerciseSec = Math.max(0, Math.floor((Date.now() - ctx.exerciseStart.current) / 1000));
     const earned = calcStars(isCorrect, exerciseSec);
@@ -1190,6 +1198,7 @@ function makeAnswer(ctx) {
 
     const wait = isCorrect ? 1000 : 1450;
     setTimeout(() => {
+      if (ctx.aliveRef && !ctx.aliveRef.current) return;
       ctx.setFeedback(null);
       ctx.setFeedbackMsg("");
       if (newAttempted >= 3) {
@@ -1216,11 +1225,6 @@ const WORD_BANK = [
   { word: "yegua",  syll: "ye", emoji: "🐴", set: "y" },
   { word: "yoga",   syll: "yo", emoji: "🧘", set: "y" },
   { word: "yuca",   syll: "yu", emoji: "🥔", set: "y" },
-  { word: "yema",   syll: "ye", emoji: "🥚", set: "y" },
-  { word: "yeso",   syll: "ye", emoji: "🩹", set: "y" },
-  { word: "yogur",  syll: "yo", emoji: "🍦", set: "y" },
-  { word: "yunque", syll: "yu", emoji: "⚒️", set: "y" },
-  { word: "yacare", syll: "ya", emoji: "🐊", set: "y" },
   { word: "foca",    syll: "fo", emoji: "🦭", set: "f" },
   { word: "foco",    syll: "fo", emoji: "💡", set: "f" },
   { word: "foto",    syll: "fo", emoji: "📷", set: "f" },
@@ -1228,11 +1232,6 @@ const WORD_BANK = [
   { word: "fiesta",  syll: "fi", emoji: "🎉", set: "f" },
   { word: "familia", syll: "fa", emoji: "👪", set: "f" },
   { word: "fuego",   syll: "fu", emoji: "🔥", set: "f" },
-  { word: "falda",   syll: "fa", emoji: "👗", set: "f" },
-  { word: "faro",    syll: "fa", emoji: "🗼", set: "f" },
-  { word: "fila",    syll: "fi", emoji: "🚶", set: "f" },
-  { word: "fino",    syll: "fi", emoji: "🧵", set: "f" },
-  { word: "fecha",   syll: "fe", emoji: "📅", set: "f" },
 ];
 const SYLL_SETS = {
   y: ["ya", "ye", "yi", "yo", "yu"],
@@ -1285,6 +1284,11 @@ function BibliotecaGame({ app, setApp, go, onRestart }) {
     return p;
   });
   const [picked, setPicked] = useStateG(null);
+  // Fase de revelado al fallar: muestra la sílaba correcta en verde ✓ SIN el
+  // overlay "¡UPS!" durante REVEAL_MS, para dar tiempo a ver cuál era la
+  // respuesta (mismo patrón que el juego-9; N3/N4 ya tienen retardo propio).
+  const [reveal, setReveal] = useStateG(false);
+  const REVEAL_MS = 1800;
   const [elapsed, setElapsed] = useStateG(0);
   const [stars, setStars] = useStateG(0);
   const [solved, setSolved] = useStateG(0);
@@ -1297,15 +1301,19 @@ function BibliotecaGame({ app, setApp, go, onRestart }) {
   const [log, setLog] = useStateG([]);
   const started = useRefG(Date.now());
   const exerciseStart = useRefG(Date.now());
+  // Vivo mientras el componente esté montado; los timeouts pendientes lo
+  // consultan y abortan al desmontar (SALIR/REINICIAR/cambio de nivel) para no
+  // disparar navegación/estado sobre una sesión que ya no existe.
+  const aliveRef = useRefG(true);
 
   useEffectG(() => {
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - started.current) / 1000)), 500);
-    return () => clearInterval(id);
+    return () => { clearInterval(id); aliveRef.current = false; };
   }, []);
 
   const answer = makeAnswer({
     attempted, solved, stars, starsSession, log, elapsed, catLabel,
-    exerciseStart, setApp, go,
+    exerciseStart, setApp, go, aliveRef,
     setFeedback, setFeedbackMsg, setAttempted, setSolved, setStars, setStarsSession, setLog,
     onNextRound: () => {
       const p = makeProblemBib(attempted + 1, usedRef.current, lastSyllRef.current);
@@ -1316,14 +1324,23 @@ function BibliotecaGame({ app, setApp, go, onRestart }) {
   });
 
   function verify() {
-    if (feedback) return;
+    if (feedback || reveal) return;
     if (!picked) {
       setFeedback("err"); setFeedbackMsg("Toca una sílaba primero");
       setTimeout(() => { setFeedback(null); setFeedbackMsg(""); }, 700);
       return;
     }
-    const isCorrect = picked === problem.syll;
-    answer(isCorrect, picked, problem.syll, problem.emoji, problem.word);
+    if (picked !== problem.syll) {
+      // Revela la correcta en verde ✓ (sin overlay) y luego muestra "¡UPS!".
+      setReveal(true);
+      setTimeout(() => {
+        if (!aliveRef.current) return;
+        setReveal(false);
+        answer(false, picked, problem.syll, problem.emoji, problem.word);
+      }, REVEAL_MS);
+      return;
+    }
+    answer(true, picked, problem.syll, problem.emoji, problem.word);
   }
 
   const restLetters = problem.word.slice(problem.syll.length).split("");
@@ -1354,9 +1371,9 @@ function BibliotecaGame({ app, setApp, go, onRestart }) {
         }}>{problem.emoji}</div>
 
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: SLOT_GAP, padding: "4px 6px" }}>
-          <button onClick={() => { if (picked && !feedback) setPicked(null); }} style={{
+          <button onClick={() => { if (picked && !feedback && !reveal) setPicked(null); }} style={{
             width: SLOT_W * 1.6, height: SLOT_H, borderRadius: 12,
-            border: `2.5px solid ${feedback === "ok" ? "#2ecc8f" : feedback === "err" ? "#ff6b6b" : picked ? "#fce9a8" : "rgba(242,194,96,0.55)"}`,
+            border: `2.5px solid ${feedback === "ok" ? "#2ecc8f" : (feedback === "err" || reveal) ? "#ff6b6b" : picked ? "#fce9a8" : "rgba(242,194,96,0.55)"}`,
             background: picked ? "linear-gradient(180deg, rgba(252,233,168,0.95), rgba(217,164,65,0.85))" : "rgba(10,6,35,0.55)",
             color: picked ? "#3a2608" : "rgba(252,233,168,0.5)",
             fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: SLOT_H * 0.55,
@@ -1383,8 +1400,8 @@ function BibliotecaGame({ app, setApp, go, onRestart }) {
         {problem.traySylls.map((syll, trayIdx) => {
           const color = ["#ef5a5a", "#4fa0ff", "#2ecc8f"][trayIdx % 3];
           const isPicked = picked === syll;
-          const showCorrect = feedback === "err" && syll === problem.syll;
-          const showWrong = feedback === "err" && isPicked && syll !== problem.syll;
+          const showCorrect = (feedback === "err" || reveal) && syll === problem.syll;
+          const showWrong = (feedback === "err" || reveal) && isPicked && syll !== problem.syll;
           let borderColor = isPicked ? "#fce9a8" : color;
           let bg, boxShadow, transform = "none";
           if (showCorrect) { borderColor = "#2ecc8f"; bg = "linear-gradient(180deg, rgba(46,204,143,0.95), rgba(34,160,108,0.95))"; boxShadow = "0 0 18px rgba(46,204,143,0.6)"; }
@@ -1392,11 +1409,11 @@ function BibliotecaGame({ app, setApp, go, onRestart }) {
           else if (isPicked) { bg = "linear-gradient(180deg, rgba(252,233,168,0.25), rgba(217,164,65,0.18))"; boxShadow = "0 0 18px rgba(252,233,168,0.55), inset 0 1px 0 rgba(255,255,255,0.2)"; transform = "translateY(-2px)"; }
           return (
             <button key={trayIdx} className="ed-numpad-key"
-              onClick={() => { if (!feedback) setPicked(syll); }}
+              onClick={() => { if (!feedback && !reveal) setPicked(syll); }}
               style={{
                 position: "relative", width: 92, height: 72, fontSize: 28,
                 borderColor, borderWidth: (isPicked || showCorrect || showWrong) ? 3 : 2, borderStyle: "solid",
-                cursor: feedback ? "default" : "pointer", fontWeight: 800, letterSpacing: "0.04em",
+                cursor: (feedback || reveal) ? "default" : "pointer", fontWeight: 800, letterSpacing: "0.04em",
                 color: (showCorrect || showWrong) ? "#fff" : undefined,
                 background: bg, boxShadow, transform, transition: "all 0.15s ease",
               }}>
@@ -1414,8 +1431,8 @@ function BibliotecaGame({ app, setApp, go, onRestart }) {
       </div>
 
       <ActionRail
-        canVerify={!feedback} onVerify={verify}
-        showErase onErase={() => { if (!feedback) setPicked(null); }}
+        canVerify={!feedback && !reveal} onVerify={verify}
+        showErase onErase={() => { if (!feedback && !reveal) setPicked(null); }}
         onRestart={() => setConfirmingRestart(true)} onExit={() => setConfirmingExit(true)}
       />
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />
@@ -1621,10 +1638,14 @@ function PoemasGame({ app, setApp, go, onRestart }) {
   const [log, setLog] = useStateG([]);
   const started = useRefG(Date.now());
   const exerciseStart = useRefG(Date.now());
+  // Vivo mientras el componente esté montado; los timeouts pendientes lo
+  // consultan y abortan al desmontar (SALIR/REINICIAR/cambio de nivel) para no
+  // disparar navegación/estado sobre una sesión que ya no existe.
+  const aliveRef = useRefG(true);
 
   useEffectG(() => {
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - started.current) / 1000)), 500);
-    return () => clearInterval(id);
+    return () => { clearInterval(id); aliveRef.current = false; };
   }, []);
 
   // Comportamiento B (AUTO): las 3 rondas son de "1 toque = respuesta", así que
@@ -1641,7 +1662,7 @@ function PoemasGame({ app, setApp, go, onRestart }) {
 
   const answer = makeAnswer({
     attempted, solved, stars, starsSession, log, elapsed, catLabel,
-    exerciseStart, setApp, go,
+    exerciseStart, setApp, go, aliveRef,
     setFeedback, setFeedbackMsg, setAttempted, setSolved, setStars, setStarsSession, setLog,
     onNextRound: () => setRonda((r) => r + 1),
   });
@@ -1893,29 +1914,29 @@ const R3_DISCURSOS = [
   { id: "lectura", partes: [
     { id: "lec1", n: 1, parte: "El exordio",      cue: "“Amigos, hoy les hablo de un tesoro.”" },
     { id: "lec2", n: 2, parte: "La proposición",  cue: "“Leer cada día nos hace libres.”" },
-    { id: "lec3", n: 3, parte: "La refutación",   cue: "“Dirán que aburre; aún no hallan su libro.”" },
-    { id: "lec4", n: 4, parte: "La confirmación", cue: "“Quien lee en mi aula escribe mejor.”" },
+    { id: "lec4", n: 3, parte: "La confirmación", cue: "“Quien lee en mi aula escribe mejor.”" },
+    { id: "lec3", n: 4, parte: "La refutación",   cue: "“Dirán que aburre; aún no hallan su libro.”" },
     { id: "lec5", n: 5, parte: "El epílogo",      cue: "“Abramos un libro y un mundo.”" },
   ] },
   { id: "deporte", partes: [
     { id: "dep1", n: 1, parte: "El exordio",      cue: "“Compañeros, hablemos de movernos.”" },
     { id: "dep2", n: 2, parte: "La proposición",  cue: "“Hacer deporte nos da salud.”" },
-    { id: "dep3", n: 3, parte: "La refutación",   cue: "“Hay quien dice no tener tiempo.”" },
-    { id: "dep4", n: 4, parte: "La confirmación", cue: "“Bastan quince minutos al día.”" },
+    { id: "dep4", n: 3, parte: "La confirmación", cue: "“Bastan quince minutos al día.”" },
+    { id: "dep3", n: 4, parte: "La refutación",   cue: "“Hay quien dice no tener tiempo.”" },
     { id: "dep5", n: 5, parte: "El epílogo",      cue: "“¡Salgamos hoy a jugar!”" },
   ] },
   { id: "ambiente", partes: [
     { id: "amb1", n: 1, parte: "El exordio",      cue: "“Vecinos, nuestro río nos llama.”" },
     { id: "amb2", n: 2, parte: "La proposición",  cue: "“Cuidar el agua es tarea de todos.”" },
-    { id: "amb3", n: 3, parte: "La refutación",   cue: "“Algunos creen que no sirve de nada.”" },
-    { id: "amb4", n: 4, parte: "La confirmación", cue: "“Mi barrio ya recicla y se nota.”" },
+    { id: "amb4", n: 3, parte: "La confirmación", cue: "“Mi barrio ya recicla y se nota.”" },
+    { id: "amb3", n: 4, parte: "La refutación",   cue: "“Algunos creen que no sirve de nada.”" },
     { id: "amb5", n: 5, parte: "El epílogo",      cue: "“Empecemos por una sola acción.”" },
   ] },
   { id: "amistad", partes: [
     { id: "ami1", n: 1, parte: "El exordio",      cue: "“Quiero contarles algo del cariño.”" },
     { id: "ami2", n: 2, parte: "La proposición",  cue: "“Un buen amigo se cultiva.”" },
-    { id: "ami3", n: 3, parte: "La refutación",   cue: "“No todo es estar siempre de acuerdo.”" },
-    { id: "ami4", n: 4, parte: "La confirmación", cue: "“Mi mejor amiga me escucha de verdad.”" },
+    { id: "ami4", n: 3, parte: "La confirmación", cue: "“Mi mejor amiga me escucha de verdad.”" },
+    { id: "ami3", n: 4, parte: "La refutación",   cue: "“No todo es estar siempre de acuerdo.”" },
     { id: "ami5", n: 5, parte: "El epílogo",      cue: "“Cuidemos a quien nos acompaña.”" },
   ] },
 ];
@@ -1970,15 +1991,19 @@ function VocesGame({ app, setApp, go, onRestart }) {
   const [log, setLog] = useStateG([]);
   const started = useRefG(Date.now());
   const exerciseStart = useRefG(Date.now());
+  // Vivo mientras el componente esté montado; los timeouts pendientes lo
+  // consultan y abortan al desmontar (SALIR/REINICIAR/cambio de nivel) para no
+  // disparar navegación/estado sobre una sesión que ya no existe.
+  const aliveRef = useRefG(true);
 
   useEffectG(() => {
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - started.current) / 1000)), 500);
-    return () => clearInterval(id);
+    return () => { clearInterval(id); aliveRef.current = false; };
   }, []);
 
   const answer = makeAnswer({
     attempted, solved, stars, starsSession, log, elapsed, catLabel,
-    exerciseStart, setApp, go,
+    exerciseStart, setApp, go, aliveRef,
     setFeedback, setFeedbackMsg, setAttempted, setSolved, setStars, setStarsSession, setLog,
     onNextRound: () => setRonda((r) => r + 1),
   });
@@ -2324,7 +2349,7 @@ const R3_ORA = {
   ],
   interjeccion: [
     { id: "i1", text: "¡Bravo!" }, { id: "i2", text: "¡Cuidado!" },
-    { id: "i3", text: "¡Qué alegría!" }, { id: "i4", text: "¡Auxilio!" },
+    { id: "i3", text: "¡Achachay!" }, { id: "i4", text: "¡Auxilio!" },
   ],
   nominal: [
     { id: "n1", text: "El partido del domingo." }, { id: "n2", text: "El tren de las seis." },
@@ -2373,15 +2398,19 @@ function OpinionGame({ app, setApp, go, onRestart }) {
   const [log, setLog] = useStateG([]);
   const started = useRefG(Date.now());
   const exerciseStart = useRefG(Date.now());
+  // Vivo mientras el componente esté montado; los timeouts pendientes lo
+  // consultan y abortan al desmontar (SALIR/REINICIAR/cambio de nivel) para no
+  // disparar navegación/estado sobre una sesión que ya no existe.
+  const aliveRef = useRefG(true);
 
   useEffectG(() => {
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - started.current) / 1000)), 500);
-    return () => clearInterval(id);
+    return () => { clearInterval(id); aliveRef.current = false; };
   }, []);
 
   const answer = makeAnswer({
     attempted, solved, stars, starsSession, log, elapsed, catLabel,
-    exerciseStart, setApp, go,
+    exerciseStart, setApp, go, aliveRef,
     setFeedback, setFeedbackMsg, setAttempted, setSolved, setStars, setStarsSession, setLog,
     onNextRound: () => setRonda((r) => r + 1),
   });
