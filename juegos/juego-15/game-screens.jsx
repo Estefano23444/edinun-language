@@ -209,8 +209,8 @@ const R2_BANK = [
     "Ahora la noche es mi momento favorito.",
   ] },
   { id: "bici", frags: [
-    "Aprendí a montar bicicleta en el patio.",
-    "Me caí muchas veces antes de lograrlo.",
+    "De pequeño me caía mucho aprendiendo a montar bicicleta.",
+    "Con práctica logré dar mi primera vuelta al patio.",
     "Hoy le enseño a mi hermana a no rendirse.",
   ] },
   { id: "banos", frags: [
@@ -306,7 +306,6 @@ function pickFresh(bank, prefix, idOf) {
   let pool = bank.filter((b) => !blocked.has(idOf(b)));
   if (pool.length === 0) pool = bank;
   const p = pool[Math.floor(Math.random() * pool.length)];
-  pushRecent(pre + idOf(p));
   return p;
 }
 
@@ -318,14 +317,13 @@ function pickFreshN(bank, prefix, n, idOf) {
   let pool = bank.filter((b) => !blocked.has(idOf(b)));
   if (pool.length < n) pool = bank.slice();
   const picks = shuffle(pool).slice(0, n);
-  for (const p of picks) pushRecent(pre + idOf(p));
   return picks;
 }
 
 function makeProblemR1() {
   const picks = pickFreshN(R1_BANK, "cam", 4, (q) => q.id);
   const steps = picks.map((q) => ({ q: q.q, options: shuffle(q.options) }));
-  return { steps, total: steps.length };
+  return { steps, total: steps.length, ids: picks.map((q) => q.id) };
 }
 
 function makeProblemR2() {
@@ -340,7 +338,7 @@ function makeProblemR2() {
 
 function makeProblemR3() {
   const item = pickFresh(R3_BANK, "tono", (it) => it.id);
-  return { stem: item.stem, options: shuffle(item.options) };
+  return { id: item.id, stem: item.stem, options: shuffle(item.options) };
 }
 
 // ═════════════════════════════════════════════════════════════
@@ -689,17 +687,28 @@ function MemoriasGame({ app, setApp, go, onRestart }) {
   // ── Estados de completitud por ronda
   const r2AllPlaced = [0, 1, 2].every((s) => r2Placed[s] !== undefined && r2Placed[s] !== null);
 
-  // R1 (camino, 1 toque por casilla) y R3 (tono, 1 toque) se AUTO-EVALÚAN: al
-  // tocar una opción se resalta y, tras una breve ventana para recapacitar
-  // (~700 ms), se califican solas. Por eso su VERIFICAR se oculta y su
-  // canVerify queda en false. Solo la R2 (ordenar, drag) conserva VERIFICAR.
+  // R1 (camino, 1 toque por casilla) se AUTO-EVALÚA: al tocar una opción se
+  // resalta y, tras una breve ventana para recapacitar (~700 ms), se califica
+  // sola (excepción §10 aprobada por la autora solo para R1). R2 (ordenar) y
+  // R3 (tono) conservan VERIFICAR manual: el niño elige y confirma con el botón.
   const canVerify =
     ronda === 1 ? (r2AllPlaced && !r2Locked) :
+    ronda === 2 ? (r3Choice !== null && !r3Locked) :
     false;
 
   const r1AutoRef = useRefG(null);
-  const r3AutoRef = useRefG(null);
-  useEffectG(() => () => { clearTimeout(r1AutoRef.current); clearTimeout(r3AutoRef.current); }, []);
+  // Guard de montaje: evita que los timers diferidos hagan setState / naveguen
+  // sobre una instancia ya desmontada (tras REINICIAR o SALIR durante el feedback).
+  const aliveRef = useRefG(true);
+  useEffectG(() => () => { clearTimeout(r1AutoRef.current); aliveRef.current = false; }, []);
+
+  // Registrar en el FIFO los picks elegidos como EFECTO (no en el render):
+  // evita escribir en localStorage durante la inicialización (pureza de render).
+  useEffectG(() => {
+    r1Pick.ids.forEach((id) => pushRecent("cam:" + id));
+    pushRecent("tl:" + r2Pick.memId);
+    pushRecent("tono:" + r3Pick.id);
+  }, []);
 
   // Califica la casilla actual de la R1 con la opción tocada (mismo flujo que
   // tenía VERIFICAR: marca verde/rojo y SIEMPRE avanza al siguiente paso).
@@ -712,6 +721,7 @@ function MemoriasGame({ app, setApp, go, onRestart }) {
     setR1Phase("feedback");
     setR1Results(willResults);
     setTimeout(() => {
+      if (!aliveRef.current) return;
       const next = r1StepIdx + 1;
       if (next >= r1Pick.total) {
         finishR1(willResults.filter(Boolean).length, r1Pick.total);
@@ -720,10 +730,10 @@ function MemoriasGame({ app, setApp, go, onRestart }) {
         setR1Chosen(null);
         setR1Phase("answering");
       }
-    }, ok ? 760 : 1150);
+    }, ok ? 760 : 2000);
   }
 
-  // Califica la R3 con la opción tocada (mismo flujo que tenía VERIFICAR).
+  // Califica la R3 con la opción elegida (se dispara desde VERIFICAR).
   function gradeR3(choiceIdx) {
     if (r3Locked) return;
     setR3Locked(true);
@@ -732,7 +742,7 @@ function MemoriasGame({ app, setApp, go, onRestart }) {
     const okOpt = r3Pick.options.find((o) => o.ok);
     const correctText = okOpt ? okOpt.t : "—";
     // Al fallar, unos segundos para ver cuál era el final correcto (verde ✓).
-    setTimeout(() => answer(correct, userText, correctText, "🎭", "El tono justo"), correct ? 420 : 2200);
+    setTimeout(() => { if (!aliveRef.current) return; answer(correct, userText, correctText, "🎭", "El tono justo"); }, correct ? 420 : 2200);
   }
 
   function handleVerify() {
@@ -742,7 +752,9 @@ function MemoriasGame({ app, setApp, go, onRestart }) {
       const correct = [0, 1, 2].every((s) => r2Placed[s] === s);
       const userText = [0, 1, 2].map((s) => (r2Placed[s] != null ? r2Placed[s] + 1 : "?")).join("-");
       const correctText = "1-2-3 (antes → ahora)";
-      setTimeout(() => answer(correct, userText, correctText, "🕰", "La línea del tiempo"), 420);
+      setTimeout(() => { if (!aliveRef.current) return; answer(correct, userText, correctText, "🕰️", "La línea del tiempo"); }, 420);
+    } else if (ronda === 2) {
+      gradeR3(r3Choice);
     }
   }
 
@@ -751,14 +763,19 @@ function MemoriasGame({ app, setApp, go, onRestart }) {
     const ok = correctCount === total;
     const userText = `${correctCount} de ${total} casillas`;
     const correctText = `${total} de ${total} casillas`;
-    answer(ok, userText, correctText, "🧭", "El camino de los recuerdos");
+    // Al no llegar a la meta, decirle al niño exactamente cuánto le faltó (en
+    // vez del ánimo genérico) porque vio casi todo el camino en verde.
+    const faltan = total - correctCount;
+    const failMsg = `Te faltó ${faltan === 1 ? "1 casilla" : faltan + " casillas"} para llegar a la meta.`;
+    answer(ok, userText, correctText, "🧭", "El camino de los recuerdos", failMsg);
   }
 
   function handleErase() {
     if (ronda === 1) { if (r2Locked) return; setR2Placed({}); setR2Selected(null); }
   }
 
-  function answer(isCorrect, userText, correctText, opIcon, reto) {
+  function answer(isCorrect, userText, correctText, opIcon, reto, failMsg) {
+    if (!aliveRef.current) return;
     if (typeof window.markFirstAttempt === "function") window.markFirstAttempt();
     const exerciseSec = Math.max(0, Math.floor((Date.now() - exerciseStart.current) / 1000));
     const earned = calcStars(isCorrect, exerciseSec);
@@ -776,7 +793,7 @@ function MemoriasGame({ app, setApp, go, onRestart }) {
     const newLog = [...log, entry];
 
     setFeedback(isCorrect ? "ok" : "err");
-    setFeedbackMsg(isCorrect ? `+${earned} ⭐` : ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)]);
+    setFeedbackMsg(isCorrect ? `+${earned} ⭐` : (failMsg || ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)]));
     setAttempted(newAttempted);
     setSolved(newSolved);
     setStars(newStarsTotal);
@@ -785,6 +802,7 @@ function MemoriasGame({ app, setApp, go, onRestart }) {
 
     const wait = isCorrect ? 1000 : 1450;
     setTimeout(() => {
+      if (!aliveRef.current) return;
       setFeedback(null);
       setFeedbackMsg("");
       if (newAttempted >= 3) {
@@ -809,7 +827,7 @@ function MemoriasGame({ app, setApp, go, onRestart }) {
   const bocadillo =
     ronda === 0 ? "Toca la opción correcta\npara avanzar." :
     ronda === 1 ? "Coloca cada parte:\nantes, después y ahora." :
-    "Lee la memoria y elige\nel final que emociona.";
+    "Lee la frase y toca\nla opción más viva.";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
@@ -871,11 +889,9 @@ function MemoriasGame({ app, setApp, go, onRestart }) {
           chosen={r3Choice}
           locked={r3Locked}
           onPick={(i) => {
+            // Solo selecciona/resalta; el niño confirma con VERIFICAR (§10).
             if (r3Locked) return;
             setR3Choice(i);
-            // Resalta y, si no cambia de idea en ~700 ms, califica sola.
-            clearTimeout(r3AutoRef.current);
-            r3AutoRef.current = setTimeout(() => gradeR3(i), 700);
           }}
         />
       )}
@@ -883,7 +899,7 @@ function MemoriasGame({ app, setApp, go, onRestart }) {
       <ActionRail
         canVerify={canVerify}
         onVerify={handleVerify}
-        showVerify={ronda === 1}
+        showVerify={ronda === 1 || ronda === 2}
         showErase={ronda === 1}
         onErase={handleErase}
         onRestart={() => setConfirmingRestart(true)}
