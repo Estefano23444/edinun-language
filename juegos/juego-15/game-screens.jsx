@@ -687,20 +687,19 @@ function MemoriasGame({ app, setApp, go, onRestart }) {
   // ── Estados de completitud por ronda
   const r2AllPlaced = [0, 1, 2].every((s) => r2Placed[s] !== undefined && r2Placed[s] !== null);
 
-  // R1 (camino, 1 toque por casilla) se AUTO-EVALÚA: al tocar una opción se
-  // resalta y, tras una breve ventana para recapacitar (~700 ms), se califica
-  // sola (excepción §10 aprobada por la autora solo para R1). R2 (ordenar) y
-  // R3 (tono) conservan VERIFICAR manual: el niño elige y confirma con el botón.
+  // R1 (camino) y R3 (tono) se AUTO-EVALÚAN: al tocar una opción se resalta y,
+  // tras una breve ventana para recapacitar (~700 ms), se califica sola (sin
+  // VERIFICAR, aprobado por la autora). Solo R2 (ordenar, drag) conserva VERIFICAR.
   const canVerify =
     ronda === 1 ? (r2AllPlaced && !r2Locked) :
-    ronda === 2 ? (r3Choice !== null && !r3Locked) :
     false;
 
   const r1AutoRef = useRefG(null);
+  const r3AutoRef = useRefG(null);
   // Guard de montaje: evita que los timers diferidos hagan setState / naveguen
   // sobre una instancia ya desmontada (tras REINICIAR o SALIR durante el feedback).
   const aliveRef = useRefG(true);
-  useEffectG(() => () => { clearTimeout(r1AutoRef.current); aliveRef.current = false; }, []);
+  useEffectG(() => () => { clearTimeout(r1AutoRef.current); clearTimeout(r3AutoRef.current); aliveRef.current = false; }, []);
 
   // Registrar en el FIFO los picks elegidos como EFECTO (no en el render):
   // evita escribir en localStorage durante la inicialización (pureza de render).
@@ -733,7 +732,7 @@ function MemoriasGame({ app, setApp, go, onRestart }) {
     }, ok ? 760 : 2000);
   }
 
-  // Califica la R3 con la opción elegida (se dispara desde VERIFICAR).
+  // Califica la R3 con la opción tocada (se dispara sola tras ~700 ms).
   function gradeR3(choiceIdx) {
     if (r3Locked) return;
     setR3Locked(true);
@@ -753,8 +752,6 @@ function MemoriasGame({ app, setApp, go, onRestart }) {
       const userText = [0, 1, 2].map((s) => (r2Placed[s] != null ? r2Placed[s] + 1 : "?")).join("-");
       const correctText = "1-2-3 (antes → ahora)";
       setTimeout(() => { if (!aliveRef.current) return; answer(correct, userText, correctText, "🕰️", "La línea del tiempo"); }, 420);
-    } else if (ronda === 2) {
-      gradeR3(r3Choice);
     }
   }
 
@@ -889,9 +886,11 @@ function MemoriasGame({ app, setApp, go, onRestart }) {
           chosen={r3Choice}
           locked={r3Locked}
           onPick={(i) => {
-            // Solo selecciona/resalta; el niño confirma con VERIFICAR (§10).
             if (r3Locked) return;
             setR3Choice(i);
+            // Resalta y, si no cambia de idea en ~700 ms, califica sola.
+            clearTimeout(r3AutoRef.current);
+            r3AutoRef.current = setTimeout(() => gradeR3(i), 700);
           }}
         />
       )}
@@ -899,7 +898,7 @@ function MemoriasGame({ app, setApp, go, onRestart }) {
       <ActionRail
         canVerify={canVerify}
         onVerify={handleVerify}
-        showVerify={ronda === 1 || ronda === 2}
+        showVerify={ronda === 1}
         showErase={ronda === 1}
         onErase={handleErase}
         onRestart={() => setConfirmingRestart(true)}

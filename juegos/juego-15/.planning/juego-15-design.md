@@ -40,9 +40,10 @@ memorias, FIFO `tl:`. Enseña pasado+presente y orden temporal.
 
 ### R3 — El tono justo (fresca: elegir palabra evocadora)
 Una memoria con un hueco y 3 finales: 1 evocador/emotivo (correcto), 1 plano,
-1 frío/de manual. El niño elige el final "más vivo". VERIFICAR manual;
-feedback §11 (correcto en verde ✓). Banco de 6, FIFO `tono:`. Enseña el
-lenguaje personal y evocador de las memorias.
+1 frío/de manual. El niño elige el final "más vivo". Auto-evalúa al tocar
+(sin VERIFICAR, igual que R1; aprobado por la autora 2026-06-22), con ~2.2 s
+al fallar para ver el final correcto en verde ✓ (§11). Banco de 6, FIFO
+`tono:`. Enseña el lenguaje personal y evocador de las memorias.
 
 Contrato `lastResult` genérico (Reto / Tu respuesta / Respuesta correcta /
 Estado / Tiempo). Scoring decreciente por tiempo (`calcStars`). 3 entradas en
@@ -70,8 +71,9 @@ Palabras y símbolos del recuerdo (neutros para lenguaje):
   meta (4/4). Las preguntas son fáciles (2-3 opciones claras) para que 4/4 sea
   alcanzable a 10 años; el reporte muestra "X de 4 casillas". Si en aula resulta
   estricto, se puede bajar el umbral a 3/4 en `finishR1`.
-- **R1 sin VERIFICAR** (excepción del estándar §10/§13 para mecánicas tipo
-  quiz/tablero; documentado y aprobado por la autora).
+- **R1 y R3 sin VERIFICAR** (excepción del estándar §10/§13 para mecánicas tipo
+  quiz/tablero/elección; documentado y aprobado por la autora — R3 confirmado
+  en vivo el 2026-06-22). Solo R2 (ordenar) conserva VERIFICAR manual.
 - Emojis (📖 🏁 🧭 🕰) pueden no renderizar en sistemas muy viejos; sustituibles.
 
 ## QA visual
