@@ -74,21 +74,21 @@ COSMIC 15, CHALK 10.
 - Home label: "Un diálogo para conocernos". Descripción: "Descubre las lenguas
   del Ecuador y aprende a dialogar para conocernos."
 - Enunciados (QUÉ): R1 "Atrapa solo las lenguas originarias del Ecuador." · R2
-  "Modera el coloquio eligiendo la mejor decisión en cada fase." · R3 "Lleva
-  cada situación a la causa que explica la desaparición de la lengua."
+  "Modera el coloquio eligiendo la mejor decisión en cada fase." · R3
+  "Encuentra las parejas de causa y ejemplo."
 - Bocadillos (CÓMO): R1 "¡Rápido! Toca las lenguas del Ecuador y deja caer las
   de otros países." · R2 "El coloquio comparte ideas, no busca ganar como el
-  debate." · R3 "Arrastra cada caso a su causa correcta."
+  debate." · R3 "Voltea dos cartas y une cada causa con un ejemplo suyo."
 - FIFO key: `edinun_juego22_recientes_v1`.
 
 ## Decisiones / riesgos
 - Diseño aprobado por la autora vía bocetos ASCII y elección de la ronda estrella
   (simulador "El coloquio en vivo").
-- 3 componentes nuevos (LenguasShooter, ColoquioSim, CausasBins); el shell (HUD,
+- 3 componentes nuevos (LenguasShooter, ColoquioSim, MemoriaLenguas); el shell (HUD,
   personaje, enunciado, action rail, modales, feedback, reporte) se hereda intacto
   del estándar (juego-21).
 - QA visual con Playwright (1280×800): flujo completo Home → Personaje → R1
-  (shooter) → R2 (simulador, 3 fases) → R3 (clasificar 4 causas) → Resultados.
+  (shooter) → R2 (simulador, 3 fases) → R3 (memoria: parejas causa↔ejemplo) → Resultados.
   0 errores de consola/página.
 - QA GEOMÉTRICA (qa-geom22.js, viewports 1920×1080 / 1280×800 / 1024×768): mide
   bounding boxes en coords lógicas y detecta solapes / overflow / invasión del riel.

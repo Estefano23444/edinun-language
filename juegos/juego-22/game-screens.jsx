@@ -122,11 +122,11 @@ function calcStars(isCorrect, exerciseSec) {
 }
 
 const ENCOURAGEMENTS = [
-  "¡Casi! Vuelve a leer con calma.",
+  "¡Casi! Mira con atención.",
   "Cada lengua guarda una cultura 🌎",
   "Equivocarse también es aprender.",
   "Respira y vuelve a intentarlo.",
-  "Un buen lector mira los detalles.",
+  "Observa bien y sigue intentando.",
   "¡La próxima es tuya!",
   "Dialogar también es escuchar.",
 ];
@@ -222,7 +222,7 @@ const R2_COLOQUIOS = [
           { t: "Declaro un ganador del debate.", ok: false },
           { t: "Corto y me voy sin decir nada.", ok: false },
         ],
-        explica: "El cierre reformula las ideas más destacadas y se sugiere terminar con una pregunta que motive la reflexión.",
+        explica: "El cierre reformula las ideas más destacadas y sugiere terminar con una pregunta que motive la reflexión.",
       },
     ],
   },
@@ -785,7 +785,18 @@ function DialogoGame({ app, setApp, go, onRestart }) {
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - started.current) / 1000)), 500);
     return () => clearInterval(id);
   }, []);
-  useEffectG(() => () => clearTimeout(r2AutoRef.current), []);
+  // Guard de montaje + limpieza de timers diferidos: evita setState / navegación
+  // (go("results"), avance de fase) sobre una instancia desmontada tras SALIR o
+  // REINICIAR durante el feedback.
+  const aliveRef = useRefG(true);
+  const r2GradeRef = useRefG(null);
+  const answerRef = useRefG(null);
+  useEffectG(() => () => {
+    aliveRef.current = false;
+    clearTimeout(r2AutoRef.current);
+    clearTimeout(r2GradeRef.current);
+    clearTimeout(answerRef.current);
+  }, []);
 
   // Las 3 rondas se auto-evalúan (R1 shooter, R2 coloquio al elegir, R3 memoria),
   // así que no hay VERIFICAR manual en ninguna.
@@ -816,7 +827,8 @@ function DialogoGame({ app, setApp, go, onRestart }) {
     setR2Locked(true);
     const last = r2PhaseIdx + 1 >= r2Pick.phases.length;
     // Al fallar, más tiempo para leer la opción correcta y la explicación.
-    setTimeout(() => {
+    r2GradeRef.current = setTimeout(() => {
+      if (!aliveRef.current) return;
       if (last) {
         handleSimFinish({ correct: r2CorrectRef.current, total: r2Pick.phases.length });
       } else {
@@ -838,6 +850,7 @@ function DialogoGame({ app, setApp, go, onRestart }) {
   }
 
   function answer(isCorrect, userText, correctText, opIcon, reto, note) {
+    if (!aliveRef.current) return;
     if (typeof window.markFirstAttempt === "function") window.markFirstAttempt();
     const exerciseSec = Math.max(0, Math.floor((Date.now() - exerciseStart.current) / 1000));
     const earned = calcStars(isCorrect, exerciseSec);
@@ -863,7 +876,8 @@ function DialogoGame({ app, setApp, go, onRestart }) {
     setLog(newLog);
 
     const wait = isCorrect ? 1100 : 1600;
-    setTimeout(() => {
+    answerRef.current = setTimeout(() => {
+      if (!aliveRef.current) return;
       setFeedback(null);
       setFeedbackMsg("");
       if (newAttempted >= 3) {
@@ -914,9 +928,10 @@ function DialogoGame({ app, setApp, go, onRestart }) {
           onChoose={(i) => {
             if (r2Locked) return;
             setR2Chosen(i);
-            // Resalta y, si no cambia de idea en ~700 ms, califica la fase sola.
+            // Resalta y, si no cambia de idea en ~1.5 s, califica la fase sola
+            // (ventana amplia para leer y reconsiderar las 3 opciones del coloquio).
             clearTimeout(r2AutoRef.current);
-            r2AutoRef.current = setTimeout(() => gradeR2Phase(i), 700);
+            r2AutoRef.current = setTimeout(() => gradeR2Phase(i), 1500);
           }}
         />
       )}
@@ -1209,7 +1224,7 @@ function MemoriaLenguas({ pick, onFinish }) {
       } else {
         errorsRef.current += 1;
         setLock(true);
-        timerRef.current = setTimeout(() => { setFlipped([]); setLock(false); }, 950);
+        timerRef.current = setTimeout(() => { setFlipped([]); setLock(false); }, 1600);
       }
     }
   }
