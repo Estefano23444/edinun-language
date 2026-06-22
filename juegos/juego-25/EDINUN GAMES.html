@@ -997,12 +997,12 @@ const R3_NUMEROS = [
 // makeProblem por ronda (una sola vez por montaje del juego)
 // ─────────────────────────────────────────────────────────────
 function makeProblemR1() {
-  const est = pickFreshN(R1_ESTEREOTIPOS, "est", (x) => x.id, 4);
-  const inc = pickFreshN(R1_INCLUSIVOS, "inc", (x) => x.id, 4);
+  const est = pickFreshN(R1_ESTEREOTIPOS, "est", (x) => x.id, 2);
+  const inc = pickFreshN(R1_INCLUSIVOS, "inc", (x) => x.id, 2);
   const deck = shuffle([
     ...est.map((c) => ({ ...c, isEstereotipo: true })),
     ...inc.map((c) => ({ ...c, isEstereotipo: false })),
-  ]); // mazo de 8 cartas balanceado: 4 estereotipo + 4 inclusivo
+  ]); // mazo de 4 cartas balanceado: 2 estereotipo + 2 inclusivo
   return { deck };
 }
 function makeProblemR2() {
@@ -1346,7 +1346,7 @@ function LenguaGame({ app, setApp, go, onRestart }) {
   function handleSwipeFinish(s) {
     if (r1DoneRef.current) return;
     r1DoneRef.current = true;
-    const correct = s.aciertos >= 6;
+    const correct = s.aciertos >= 3;
     const u = `${s.aciertos}/${s.total} bien clasificadas`;
     answer(correct, u, "Distinguir estereotipo vs inclusión", "📺", "Detector de estereotipos", null);
   }
@@ -1461,7 +1461,7 @@ function LenguaGame({ app, setApp, go, onRestart }) {
 // R1 · Detector de estereotipos (DESLIZAR, §13). Aparece un mensaje
 // publicitario; el estudiante lo desliza a la izquierda (ESTEREOTIPO) o a la
 // derecha (INCLUSIVO). También hay dos botones para tocar. Auto-evaluado:
-// se logra con aciertos ≥ 6 de 8.
+// se logra con aciertos ≥ 3 de 4.
 // ─────────────────────────────────────────────────────────────
 function EstereotipoSwipe({ deck, onFinish }) {
   const [idx, setIdx] = useStateG(0);
@@ -1682,8 +1682,8 @@ function EstereotipoSwipe({ deck, onFinish }) {
 // ─────────────────────────────────────────────────────────────
 // R2 · Rescata la lengua (TOCAR, §13). Tablero de 6 acciones (3 que la
 // salvan, 3 que la debilitan). Toca las buenas: la barra de vitalidad sube;
-// si tocas una mala, baja y cuenta error. Auto-evaluado: se logra encontrando
-// las 3 buenas con ≤ 1 error.
+// si tocas una mala NO baja (el progreso se mantiene): solo cuenta como error.
+// Auto-evaluado: se logra encontrando las 3 buenas con ≤ 1 error.
 // ─────────────────────────────────────────────────────────────
 function RescateLengua({ cards, onFinish }) {
   const goodTotal = cards.filter((c) => c.good).length;
@@ -1711,9 +1711,8 @@ function RescateLengua({ cards, onFinish }) {
     } else {
       erroresRef.current += 1;
       setPicked((p) => ({ ...p, [c.id]: "bad" }));
-      // Tocar una acción que debilita la lengua BAJA la barra de vitalidad
-      // (la metáfora del juego: la lengua se debilita). Acotado a 0.
-      setVit((v) => Math.max(0, v - Math.ceil(100 / goodTotal)));
+      // Al fallar NO se baja la barra: el progreso se MANTIENE (preferencia de la
+      // autora). La carta queda roja con ✗ y cuenta como error para el cierre.
     }
   }
 

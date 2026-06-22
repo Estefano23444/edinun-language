@@ -30,7 +30,7 @@ Aparece un mensaje publicitario y el estudiante **desliza la carta**: a la
 izquierda si refuerza un **ESTEREOTIPO**, a la derecha si es **INCLUSIVO**.
 También hay dos botones (alternativa al gesto). La carta se inclina y sale
 volando; feedback verde/rojo y avanza sola. Auto-evaluado, sin VERIFICAR.
-Mazo de **8 cartas** (4 estereotipo + 4 inclusivo). Se logra con **aciertos ≥ 6**.
+Mazo de **4 cartas** (2 estereotipo + 2 inclusivo). Se logra con **aciertos ≥ 3**.
 Banco SÍ (estereotipo): los **8 estereotipos listados textualmente** en la
 página "Los estereotipos en la publicidad" (la mujer y la limpieza, solo los
 hombres y el deporte, niños celeste / niñas rosado, etc.). Banco NO (inclusivo):
@@ -39,9 +39,9 @@ su versión justa (aplicar el concepto del libro). Componente: `EstereotipoSwipe
 ### R2 · Rescata la lengua — TOCAR acciones (§13, auto-evaluado) — ronda elegida
 Tablero de **6 acciones** (3 que mantienen viva la lengua, 3 que la debilitan)
 con una **barra de vitalidad**. El estudiante **toca las acciones buenas**: la
-barra sube y la carta queda verde (✓); si toca una mala, la barra baja, la carta
-tiembla y queda roja (✗). Termina al encontrar las 3 buenas; se logra con
-**≤ 1 error**. Auto-evaluado, sin VERIFICAR.
+barra sube y la carta queda verde (✓); si toca una mala, la carta tiembla y queda
+roja (✗) **pero la barra no baja** (el progreso se mantiene). Termina al encontrar
+las 3 buenas; se logra con **≤ 1 error**. Auto-evaluado, sin VERIFICAR.
 Banco: BUENAS = transmitir/usar/celebrar la lengua y sus tradiciones; MALAS =
 asimilación cultural, reemplazo por un idioma dominante, abandono de tradiciones,
 no transmitirla. Todo ligado a la captura: "la urbanización o la asimilación
