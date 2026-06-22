@@ -41,7 +41,8 @@ Tablero de **6 acciones** (3 que mantienen viva la lengua, 3 que la debilitan)
 con una **barra de vitalidad**. El estudiante **toca las acciones buenas**: la
 barra sube y la carta queda verde (✓); si toca una mala, la carta tiembla y queda
 roja (✗) **pero la barra no baja** (el progreso se mantiene). Termina al encontrar
-las 3 buenas; se logra con **≤ 1 error**. Auto-evaluado, sin VERIFICAR.
+las 3 buenas; **encontrarlas YA es éxito** (los errores no reprueban). Auto-evaluado,
+sin VERIFICAR.
 Banco: BUENAS = transmitir/usar/celebrar la lengua y sus tradiciones; MALAS =
 asimilación cultural, reemplazo por un idioma dominante, abandono de tradiciones,
 no transmitirla. Todo ligado a la captura: "la urbanización o la asimilación

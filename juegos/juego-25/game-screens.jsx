@@ -676,7 +676,9 @@ function LenguaGame({ app, setApp, go, onRestart }) {
   function handleRescateFinish(res) {
     if (r2DoneRef.current) return;
     r2DoneRef.current = true;
-    const correct = res.errores <= 1;
+    // Encontrar las 3 acciones buenas YA es éxito: los errores no reprueban
+    // (la ronda solo termina al hallar las 3). El progreso no se penaliza.
+    const correct = res.salvadas >= res.total;
     const u = `${res.salvadas}/${res.total} acciones que la salvan`;
     answer(correct, u, "Elegir solo acciones que la mantienen viva", "🪶", "Rescata la lengua", null);
   }
@@ -1004,8 +1006,8 @@ function EstereotipoSwipe({ deck, onFinish }) {
 // ─────────────────────────────────────────────────────────────
 // R2 · Rescata la lengua (TOCAR, §13). Tablero de 6 acciones (3 que la
 // salvan, 3 que la debilitan). Toca las buenas: la barra de vitalidad sube;
-// si tocas una mala NO baja (el progreso se mantiene): solo cuenta como error.
-// Auto-evaluado: se logra encontrando las 3 buenas con ≤ 1 error.
+// si tocas una mala NO baja (el progreso se mantiene): solo se marca en rojo.
+// Auto-evaluado: se logra al encontrar las 3 buenas; los errores no reprueban.
 // ─────────────────────────────────────────────────────────────
 function RescateLengua({ cards, onFinish }) {
   const goodTotal = cards.filter((c) => c.good).length;
