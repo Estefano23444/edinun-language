@@ -25,6 +25,7 @@ qa-*.png
 .tmp-screenshots/
 .tmp-*.js
 v?-*.png
+.qa-*
 
 # Contador de visitas server-side (estado de producción, no se commitea)
 juegos/*/visits.txt
