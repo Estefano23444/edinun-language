@@ -50,8 +50,8 @@ Regla: enunciado = QUÉ, bocadillo = CÓMO, **sin repetir términos** entre ambo
   GameEnunciado, ActionRail, modales, FeedbackOverlay, makeDragHandler, ResultsScreen,
   reporte imprimible, scoring por tiempo `calcStars`).
 - `GameScreen` → wrapper con `restartTick` que remonta `RefranesGame`; despacho
-  `ronda === 0/1/2` a `LaboratorioCard` / `ClasificaCard` / `DetectiveCard`.
-- FIFO anti-repetición: 1 key `edinun_juego11_recientes_v1`, prefijos `lab:`/`clas:`/`det:`.
+  `ronda === 0/1/2` a `LaboratorioCard` / `ClasificaCard` / `MemoryCard`.
+- FIFO anti-repetición: 1 key `edinun_juego11_recientes_v1`, prefijos `lab:`/`clas:`/`mem:`.
 
 ## QA
 `node .planning/qa-checks.js` (repo servido en :8765). Recorre Home→Personaje→R1→R2→R3→
@@ -61,4 +61,4 @@ errores.** Portrait 375×667 muestra el overlay "Gira tu teléfono" (invariante 
 ## Decisiones abiertas / riesgos
 - R2 usa arrastre por punteros (`makeDragHandler`) con fallback tap-tap; el QA
   automático requiere `page.mouse` real (un `.click()` sintético no dispara onTap fiable).
-- Bancos ampliables: R1 (16 palabras), R2 (2 sets × 4 grupos × 4 palabras), R3 (8 frases).
+- Bancos: R1 (24 palabras: 16 de 2 sílabas + 8 de 3), R2 (2 sets × 4 grupos × 4 palabras), R3 (banco de 14 palabras; se muestran 4 parejas = 8 cartas).

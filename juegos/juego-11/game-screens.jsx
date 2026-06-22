@@ -156,22 +156,22 @@ function pushRecent(key) {
 // Todo en minúsculas y sin tildes (regla de "completar palabra").
 const R1_BANK = [
   // 2 sílabas
-  { word: "plato",  syll: ["pla", "to"],  emoji: "🍽️", hint: "Donde te sirven la comida." },
+  { word: "plato",  syll: ["pla", "to"],  emoji: "🍽️", hint: "Donde te sirven la comida.", avoid: ["ta"] }, // "ta" formaría "plata"
   { word: "prado",  syll: ["pra", "do"],  emoji: "🌳", hint: "Campo verde lleno de hierba." },
   { word: "fresa",  syll: ["fre", "sa"],  emoji: "🍓", hint: "Fruta roja y dulce." },
-  { word: "grano",  syll: ["gra", "no"],  emoji: "🌾", hint: "Semillita del trigo o el maíz.", avoid: ["do"] }, // "do" formaría "grado"
+  { word: "grano",  syll: ["gra", "no"],  emoji: "🌾", hint: "Semillita del trigo o el maíz.", avoid: ["do", "sa", "ma"] }, // "do"→grado, "sa"→grasa, "ma"→grama
   { word: "brazo",  syll: ["bra", "zo"],  emoji: "💪", hint: "Con él das un abrazo." },
   { word: "globo",  syll: ["glo", "bo"],  emoji: "🎈", hint: "Se infla y sale volando." },
   { word: "blusa",  syll: ["blu", "sa"],  emoji: "👚", hint: "Prenda para la parte de arriba." },
   { word: "bloque", syll: ["blo", "que"], emoji: "🧱", hint: "Pieza grande para construir o armar." },
   { word: "flecha", syll: ["fle", "cha"], emoji: "🏹", hint: "La disparas con el arco." },
   { word: "fruta",  syll: ["fru", "ta"],  emoji: "🍎", hint: "Alimento dulce que da el árbol.", avoid: ["to"] }, // "to" formaría "fruto" (también válido)
-  { word: "trono",  syll: ["tro", "no"],  emoji: "🪑", hint: "La silla del rey." },
+  { word: "trono",  syll: ["tro", "no"],  emoji: "🪑", hint: "La silla del rey.", avoid: ["zo"] }, // "zo" formaría "trozo"
   { word: "pluma",  syll: ["plu", "ma"],  emoji: "🪶", hint: "Cae suave del ave." },
   { word: "crema",  syll: ["cre", "ma"],  emoji: "🍦", hint: "Suave y dulce para el postre." },
   { word: "grillo", syll: ["gri", "llo"], emoji: "🦗", hint: "Insecto que canta de noche." },
   { word: "broche", syll: ["bro", "che"], emoji: "🧷", hint: "Sujeta o adorna la ropa." },
-  { word: "plaza",  syll: ["pla", "za"],  emoji: "🏛️", hint: "Lugar abierto del pueblo." },
+  { word: "plaza",  syll: ["pla", "za"],  emoji: "🏛️", hint: "Lugar abierto del pueblo.", avoid: ["ta"] }, // "ta" formaría "plata"
   // 3 sílabas
   { word: "trompeta", syll: ["trom", "pe", "ta"], emoji: "🎺", hint: "Instrumento dorado que suena fuerte." },
   { word: "princesa", syll: ["prin", "ce", "sa"], emoji: "👸", hint: "La hija de un rey." },
@@ -465,29 +465,29 @@ function ActionRail({ canVerify, onVerify, showErase, onErase, onRestart, onExit
   return (
     <div data-qa="acciones" style={{
       position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
-      display: "flex", flexDirection: "column", gap: 10, width: 148,
+      display: "flex", flexDirection: "column", gap: 10, width: 150,
     }}>
       <button className="ed-btn ed-btn-verify"
         onClick={() => { if (canVerify && onVerify) onVerify(); }}
         disabled={!canVerify}
         style={{
-          fontSize: 14, padding: "0 8px", height: 52, fontWeight: 800, letterSpacing: "0.04em",
+          fontSize: 15, padding: "0 8px", height: 56, fontWeight: 800, letterSpacing: "0.04em",
           opacity: canVerify ? 1 : 0.45, cursor: canVerify ? "pointer" : "not-allowed",
         }}>
         ¡VERIFICAR!
       </button>
       {showErase && (
         <button className="ed-btn ed-btn-erase" onClick={onErase}
-          style={{ fontSize: 14, padding: "0 8px", height: 52, fontWeight: 800, letterSpacing: "0.04em" }}>
+          style={{ fontSize: 15, padding: "0 8px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}>
           BORRAR
         </button>
       )}
       <button className="ed-btn ed-btn-restart" onClick={onRestart}
-        style={{ fontSize: 14, padding: "0 8px", height: 52, fontWeight: 800, letterSpacing: "0.04em" }}>
+        style={{ fontSize: 15, padding: "0 8px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}>
         REINICIAR
       </button>
       <button className="ed-btn ed-btn-ghost" onClick={onExit}
-        style={{ fontSize: 14, padding: "0 8px", height: 52, fontWeight: 800, letterSpacing: "0.04em" }}>
+        style={{ fontSize: 15, padding: "0 8px", height: 56, fontWeight: 800, letterSpacing: "0.04em" }}>
         SALIR
       </button>
     </div>
@@ -534,19 +534,18 @@ function FeedbackOverlay({ feedback, feedbackMsg, charName }) {
 
 function CharacterCorner({ char, message }) {
   return (
-    <div data-qa="personaje" className="ed-float-soft" style={{
+    <div data-qa="personaje" style={{
       position: "absolute", left: 8, bottom: 90, width: 220,
       pointerEvents: "none", textAlign: "center",
     }}>
-      <div data-qa="bocadillo" style={{
+      <div data-qa="bocadillo" className="ed-float-soft" style={{
         position: "absolute", left: 0, right: 0, bottom: "100%",
         display: "flex", justifyContent: "center",
         pointerEvents: "none",
       }}>
         <div style={{
           position: "relative",
-          width: "fit-content",
-          maxWidth: 200,
+          maxWidth: 208,
           background: "linear-gradient(180deg, rgba(20,12,55,0.95), rgba(10,6,35,0.95))",
           border: "1.5px solid rgba(242,194,96,0.65)",
           borderRadius: 16, padding: "10px 14px",
@@ -573,7 +572,7 @@ function CharacterCorner({ char, message }) {
           background: "radial-gradient(ellipse, rgba(242,194,96,0.45), transparent 70%)",
           filter: "blur(5px)",
         }} />
-        <char.Component size={190} floating={false} />
+        <char.Component size={190} floating />
       </div>
       <div style={{
         marginTop: -2,
@@ -646,10 +645,14 @@ function RefranesGame({ app, setApp, go, onRestart }) {
   const [log, setLog] = useStateG([]);
   const started = useRefG(Date.now());
   const exerciseStart = useRefG(Date.now());
+  // Vivo mientras el componente esté montado; los setTimeout pendientes lo
+  // consultan y abortan al desmontar (SALIR/REINICIAR) para no disparar
+  // navegación/estado sobre una sesión que ya no existe.
+  const aliveRef = useRefG(true);
 
   useEffectG(() => {
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - started.current) / 1000)), 500);
-    return () => clearInterval(id);
+    return () => { clearInterval(id); aliveRef.current = false; };
   }, []);
 
   // FIFO: confirma la escena en el historial recién cuando se juega su ronda
@@ -712,6 +715,7 @@ function RefranesGame({ app, setApp, go, onRestart }) {
   }
 
   function answer(isCorrect, userText, correctText, opIcon) {
+    if (!aliveRef.current) return;
     if (typeof window.markFirstAttempt === "function") window.markFirstAttempt();
     const exerciseSec = Math.max(0, Math.floor((Date.now() - exerciseStart.current) / 1000));
     const earned = calcStars(isCorrect, exerciseSec);
@@ -739,6 +743,7 @@ function RefranesGame({ app, setApp, go, onRestart }) {
     // El revelado ya se mostró en el tablero → el "¡UPS!" va corto.
     const wait = isCorrect ? 1000 : 1100;
     setTimeout(() => {
+      if (!aliveRef.current) return;
       setFeedback(null);
       setFeedbackMsg("");
       if (newAttempted >= 3) {
@@ -1041,7 +1046,14 @@ function ClasificaCard({ pick, placed, selected, locked, onSelect, onPlace, onUn
                   const correctBin = (locked && ok === false) ? pick.wordGroup[w] : null;
                   return (
                     <div key={w}
-                      onClick={(e) => { e.stopPropagation(); if (!locked) onUnplace(w); }}
+                      className={locked ? "" : "ed-draggable"}
+                      onPointerDown={locked ? undefined : makeDragHandler({
+                        item: w,
+                        ghostHtml: `<div style="background:#fce9a8;color:#3a2608;padding:6px 12px;border-radius:10px;font-family:Fredoka,Nunito,sans-serif;font-weight:800;font-size:14px;border:2px solid #4fd8ff;box-shadow:0 6px 18px rgba(0,0,0,0.5);">${w}</div>`,
+                        onTap: (it) => onUnplace(it),
+                        onDrop: (zone, it) => onPlace(zone, it),
+                      })}
+                      onClick={(e) => e.stopPropagation()}
                       style={{
                         fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 14,
                         padding: "4px 8px", borderRadius: 8, lineHeight: 1.05,
@@ -1049,11 +1061,11 @@ function ClasificaCard({ pick, placed, selected, locked, onSelect, onPlace, onUn
                           ? (ok ? "linear-gradient(180deg,#2ecc8f,#22a06c)" : "linear-gradient(180deg,#ff6b6b,#dc5050)")
                           : "rgba(255,255,255,0.92)",
                         color: locked ? "#fff" : "#3a2608",
-                        cursor: locked ? "default" : "pointer",
+                        cursor: locked ? "default" : "grab",
                         boxShadow: "0 2px 5px rgba(0,0,0,0.25)",
                         whiteSpace: "nowrap", textAlign: "center",
                       }}
-                      title={locked ? "" : "Toca para sacar"}>
+                      title={locked ? "" : "Arrástrala a otra casilla o tócala para sacar"}>
                       {locked ? (ok ? "✓ " : "✗ ") : ""}{w}
                       {correctBin && (
                         <span style={{ display: "block", marginTop: 2, fontSize: 10.5, fontWeight: 800, color: "#eafff4" }}>→ {correctBin}</span>
