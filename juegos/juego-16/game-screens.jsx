@@ -416,6 +416,7 @@ function ConfirmModal({ open, onClose, label, labelColor, title, body, confirmTe
 // answer() compartido: registra el log y avanza/termina.
 function makeAnswer(ctx) {
   return function answer(isCorrect, userText, correctText, opIcon, reto) {
+    if (ctx.aliveRef && !ctx.aliveRef.current) return;
     if (typeof window.markFirstAttempt === "function") window.markFirstAttempt();
     const exerciseSec = Math.max(0, Math.floor((Date.now() - ctx.exerciseStart.current) / 1000));
     const earned = calcStars(isCorrect, exerciseSec);
@@ -441,6 +442,7 @@ function makeAnswer(ctx) {
 
     const wait = isCorrect ? 1000 : 1450;
     setTimeout(() => {
+      if (ctx.aliveRef && !ctx.aliveRef.current) return;
       ctx.setFeedback(null);
       ctx.setFeedbackMsg("");
       if (newAttempted >= 3) {
@@ -631,7 +633,7 @@ const R3_SETS = [
   { id: "viaje", pairs: [
     { c: "Un mapa mostraba una isla lejana", e: "zarparon a explorarla" },
     { c: "El casco del barco se rompió", e: "lo repararon en el puerto" },
-    { c: "Hallaron oro en la orilla", e: "volvieron a casa muy ricos" },
+    { c: "Hallaron oro en la orilla", e: "vendieron el oro y se hicieron ricos" },
   ] },
   { id: "ciudad", pairs: [
     { c: "La ciudad creció muy rápido", e: "construyeron casas más altas" },
@@ -639,8 +641,8 @@ const R3_SETS = [
     { c: "Llegó un sabio extranjero", e: "enseñó cosas nuevas a todos" },
   ] },
   { id: "saber", pairs: [
-    { c: "Los libros eran muy caros", e: "inventaron la imprenta" },
-    { c: "Casi nadie sabía leer", e: "abrieron escuelas para niños" },
+    { c: "Los libros eran muy caros", e: "inventaron la imprenta para hacerlos baratos" },
+    { c: "Casi nadie sabía leer", e: "abrieron escuelas para enseñar a leer" },
     { c: "Las cartas tardaban meses", e: "crearon el correo a caballo" },
   ] },
   { id: "civismo", pairs: [
@@ -700,15 +702,19 @@ function RelatosGame({ app, setApp, go, onRestart }) {
   const [log, setLog] = useStateG([]);
   const started = useRefG(Date.now());
   const exerciseStart = useRefG(Date.now());
+  // Vivo mientras el componente esté montado; los timeouts pendientes lo
+  // consultan y abortan al desmontar (SALIR/REINICIAR/cambio de nivel) para no
+  // disparar navegación/estado sobre una sesión que ya no existe.
+  const aliveRef = useRefG(true);
 
   useEffectG(() => {
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - started.current) / 1000)), 500);
-    return () => clearInterval(id);
+    return () => { clearInterval(id); aliveRef.current = false; };
   }, []);
 
   const answer = makeAnswer({
     attempted, solved, stars, starsSession, log, elapsed, catLabel,
-    exerciseStart, setApp, go,
+    exerciseStart, setApp, go, aliveRef,
     setFeedback, setFeedbackMsg, setAttempted, setSolved, setStars, setStarsSession, setLog,
     onNextRound: () => setRonda((r) => r + 1),
   });
@@ -1030,7 +1036,7 @@ function RelatosGame({ app, setApp, go, onRestart }) {
 // NIVEL 2 — HERRAMIENTAS DEL ESCRITOR (10 años): 3 rondas distintas
 //   R1 atrapa la interjección (shooter) · R2 ruleta de conectores · R3 el deseo (subjuntivo)
 // ═════════════════════════════════════════════════════════════
-const INTERJ_BANK = ["ay", "uf", "huy", "bah", "epa", "ojalá", "caramba", "achachay", "ananay", "guácala", "ayayay", "arrarray"]
+const INTERJ_BANK = ["ay", "uf", "huy", "bah", "epa", "hurra", "caramba", "achachay", "ananay", "guácala", "ayayay", "arrarray"]
   .map((w, i) => ({ id: "i" + i, w }));
 const NORMAL_BANK = ["mesa", "correr", "azul", "perro", "casa", "verde", "libro", "nube", "comer", "flor", "lápiz", "río", "saltar", "camino", "reloj", "puente"]
   .map((w, i) => ({ id: "n" + i, w }));
@@ -1044,11 +1050,11 @@ const BUBBLE_SLOTS = [
 function cap(w) { return w.charAt(0).toUpperCase() + w.slice(1); }
 
 const R2_CONECT = [
-  { id: "co1", before: "Quería salir a jugar,", after: "estaba lloviendo.", answer: "pero", options: ["pero", "porque", "luego"] },
+  { id: "co1", before: "Quería salir a jugar,", after: "estaba lloviendo.", answer: "pero", options: ["pero", "por eso", "luego"] },
   { id: "co2", before: "Llegué tarde", after: "el bus se dañó.", answer: "porque", options: ["porque", "aunque", "después"] },
   { id: "co3", before: "Primero hago la tarea y", after: "salgo a jugar.", answer: "luego", options: ["luego", "porque", "pero"] },
   { id: "co4", before: "Estudié mucho,", after: "aprobé el examen.", answer: "por eso", options: ["por eso", "sin embargo", "mientras"] },
-  { id: "co5", before: "Mi hermano es alto; yo,", after: ", soy bajito.", answer: "en cambio", options: ["en cambio", "porque", "luego"] },
+  { id: "co5", before: "Mi hermano es alto; yo,", after: "soy bajito.", answer: "en cambio", options: ["en cambio", "porque", "luego"] },
   { id: "co6", before: "", after: "terminó la lluvia, salió el sol.", answer: "Cuando", options: ["Cuando", "Aunque", "Por eso"] },
   { id: "co7", before: "Practicamos mucho;", after: ", ganamos el concurso.", answer: "finalmente", options: ["finalmente", "sin embargo", "porque"] },
   { id: "co8", before: "", after: ", quiero darles una buena noticia.", answer: "Para empezar", options: ["Para empezar", "En cambio", "Porque"] },
@@ -1117,15 +1123,19 @@ function HerramientasGame({ app, setApp, go, onRestart }) {
   const [log, setLog] = useStateG([]);
   const started = useRefG(Date.now());
   const exerciseStart = useRefG(Date.now());
+  // Vivo mientras el componente esté montado; los timeouts pendientes lo
+  // consultan y abortan al desmontar (SALIR/REINICIAR/cambio de nivel) para no
+  // disparar navegación/estado sobre una sesión que ya no existe.
+  const aliveRef = useRefG(true);
 
   useEffectG(() => {
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - started.current) / 1000)), 500);
-    return () => clearInterval(id);
+    return () => { clearInterval(id); aliveRef.current = false; };
   }, []);
 
   const answer = makeAnswer({
     attempted, solved, stars, starsSession, log, elapsed, catLabel,
-    exerciseStart, setApp, go,
+    exerciseStart, setApp, go, aliveRef,
     setFeedback, setFeedbackMsg, setAttempted, setSolved, setStars, setStarsSession, setLog,
     onNextRound: () => setRonda((r) => r + 1),
   });
@@ -1370,7 +1380,7 @@ const R1_INFER = [
   { id: "in1", scene: "Suena la sirena de los bomberos y los ves pasar muy rápido por la calle.", answer: "Hay un incendio cerca.", options: ["Hay un incendio cerca.", "Es un día de fiesta.", "Va a salir el sol."] },
   { id: "in2", scene: "Mucha gente camina con camisetas amarillas rumbo al estadio.", answer: "Hoy juega la selección.", options: ["Hoy juega la selección.", "Empezó a nevar.", "Cerraron el estadio."] },
   { id: "in3", scene: "Las entradas del concierto se agotaron en una hora.", answer: "El concierto estará lleno.", options: ["El concierto estará lleno.", "Nadie irá al concierto.", "El concierto se canceló."] },
-  { id: "in4", scene: "La calle está mojada y el cielo todavía se ve gris.", answer: "Acaba de llover.", options: ["Acaba de llover.", "Hace mucho calor.", "Es de madrugada."] },
+  { id: "in4", scene: "La calle está mojada y el cielo todavía se ve gris.", answer: "Acaba de llover.", options: ["Acaba de llover.", "Hace mucho calor.", "El piso está totalmente seco."] },
   { id: "in5", scene: "Tu vecino sale con maleta, gorra y bloqueador solar.", answer: "Se va de viaje a la playa.", options: ["Se va de viaje a la playa.", "Se va a dormir.", "Está cocinando."] },
   { id: "in6", scene: "Sale humo por la ventana de la cocina y huele a quemado.", answer: "Algo se está quemando.", options: ["Algo se está quemando.", "Están barriendo.", "Hace frío."] },
   { id: "in7", scene: "El cielo se llenó de nubes negras y empezó a soplar viento fuerte.", answer: "Pronto va a llover.", options: ["Pronto va a llover.", "Saldrá el arcoíris.", "Hará mucho sol."] },
@@ -1382,7 +1392,7 @@ const ELEM_COLOR = { detective: "#4fa0ff", victimario: "#e0a23a", pista: "#2ecc8
 const R2_ELEM = {
   detective: [
     { id: "d1", text: "Une las pistas con su razonamiento." },
-    { id: "d2", text: "Observa todo y no es policía." },
+    { id: "d2", text: "Investiga el caso y busca al culpable." },
     { id: "d3", text: "Resuelve el caso usando la lógica." },
     { id: "d4", text: "Analiza cada detalle de la escena." },
     { id: "d5", text: "Sigue cada rastro hasta el final." },
@@ -1391,14 +1401,14 @@ const R2_ELEM = {
     { id: "vc1", text: "Cometió el crimen sin que se note." },
     { id: "vc2", text: "Parece inocente hasta el final." },
     { id: "vc3", text: "Es astuto y pasa inadvertido." },
-    { id: "vc4", text: "Esconde la verdad del caso." },
+    { id: "vc4", text: "Es la persona que cometió el delito." },
     { id: "vc5", text: "Engaña a todos con su calma." },
   ],
   pista: [
     { id: "p1", text: "Un objeto que parece sin importancia." },
     { id: "p2", text: "Un detalle pequeño que revela la verdad." },
     { id: "p3", text: "Una huella olvidada en la escena." },
-    { id: "p4", text: "Algo que solo el detective sabe leer." },
+    { id: "p4", text: "Un rastro que ayuda a resolver el caso." },
     { id: "p5", text: "Una marca que delata al culpable." },
   ],
 };
@@ -1527,15 +1537,19 @@ function DetectivesGame({ app, setApp, go, onRestart }) {
   const [log, setLog] = useStateG([]);
   const started = useRefG(Date.now());
   const exerciseStart = useRefG(Date.now());
+  // Vivo mientras el componente esté montado; los timeouts pendientes lo
+  // consultan y abortan al desmontar (SALIR/REINICIAR/cambio de nivel) para no
+  // disparar navegación/estado sobre una sesión que ya no existe.
+  const aliveRef = useRefG(true);
 
   useEffectG(() => {
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - started.current) / 1000)), 500);
-    return () => clearInterval(id);
+    return () => { clearInterval(id); aliveRef.current = false; };
   }, []);
 
   const answer = makeAnswer({
     attempted, solved, stars, starsSession, log, elapsed, catLabel,
-    exerciseStart, setApp, go,
+    exerciseStart, setApp, go, aliveRef,
     setFeedback, setFeedbackMsg, setAttempted, setSolved, setStars, setStarsSession, setLog,
     onNextRound: () => setRonda((r) => r + 1),
   });
