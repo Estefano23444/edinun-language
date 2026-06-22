@@ -857,18 +857,19 @@ function pickFreshSet(bank, prefix, idOf, n) {
 // ═════════════════════════════════════════════════════════════
 
 // R0 — EMPAREJAR. Pares nacionalidad ↔ lengua tal como aparecen en la tabla
-// del libro ("La riqueza lingüística del Ecuador"). Se excluyen los pares en
-// que nacionalidad y lengua se escriben igual (achuar, andoa) y las lenguas
-// repetidas, para que el emparejamiento no sea trivial.
+// del libro ("La riqueza lingüística del Ecuador"). Se excluyen los pares cuya
+// nacionalidad y lengua se escriben igual (p.ej. achuar→achuar chicham comparte
+// raíz) y los de lengua repetida o difícil verificación (andoa→shimingae se
+// omite por recortar a 9 pares), para que el emparejamiento no sea trivial.
 const R0_PAIRS = [
   { id: "awa",      nac: "awa",      lang: "awapit" },
   { id: "chachi",   nac: "chachi",   lang: "cha'palaa" },
-  { id: "tsachila", nac: "tsáchila", lang: "tsa'fiqui" },
-  { id: "epera",    nac: "épera",    lang: "epera pedede" },
+  { id: "tsachila", nac: "tsáchila", lang: "tsafiki" },
+  { id: "epera",    nac: "épera",    lang: "sia pedee" },
   { id: "cofan",    nac: "cofán",    lang: "a'ingae" },
   { id: "secoya",   nac: "secoya",   lang: "paicoca" },
-  { id: "zaparo",   nac: "záparo",   lang: "kayapi" },
-  { id: "waorani",  nac: "waorani",  lang: "waotededo" },
+  { id: "zaparo",   nac: "záparo",   lang: "sápara" },
+  { id: "waorani",  nac: "waorani",  lang: "wao terero" },
   { id: "shiwiar",  nac: "shiwiar",  lang: "shiwiar chicham" },
 ];
 
@@ -882,9 +883,9 @@ const R1_CATS = [
   { id: "coloq",  label: "Coloquial",           emoji: "🗣️", color: "#f2a73b" },
 ];
 const R1_BANK = {
-  kichwa: ["ñaño", "chapak", "rucu", "guagua", "cancha", "choclo", "minga"],
-  extr:   ["streaming", "gamer", "hardware", "software", "wifi", "selfie", "online", "mouse"],
-  coloq:  ["¿Qué más?", "¿Quiubo?", "Habla y te salvas", "bacán", "chévere", "pana", "full", "chao"],
+  kichwa: ["ñaño", "taita", "rucu", "guagua", "mote", "choclo", "minga"],
+  extr:   ["streaming", "gamer", "hardware", "software", "wifi", "selfie", "online", "mouse", "full"],
+  coloq:  ["¿Qué más?", "¿Quiubo?", "Habla y te salvas", "bacán", "chévere", "pana", "de una"],
 };
 
 // R2 — CLASIFICAR. 4 materias (cajas) y palabras que son TECNICISMOS en ellas
@@ -897,14 +898,18 @@ const R2_BINS = [
   { id: "eco", label: "Economía",    emoji: "💰", color: "#f2a73b", hint: "dinero y valores" },
   { id: "inf", label: "Informática", emoji: "💻", color: "#4fa0ff", hint: "computadoras" },
   { id: "mat", label: "Matemáticas", emoji: "➗", color: "#a78bfa", hint: "números" },
-  { id: "len", label: "Lengua",      emoji: "📖", color: "#5fe0b0", hint: "metalenguaje" },
+  { id: "len", label: "Lengua",      emoji: "📖", color: "#5fe0b0", hint: "lenguaje" },
 ];
 const R2_BANK = {
-  eco: ["bolsa", "interés", "mercado", "capital", "déficit", "deuda"],
+  eco: ["bolsa", "interés", "mercado", "inflación", "déficit", "deuda"],
   inf: ["RAM", "hardware", "software", "byte", "píxel", "archivo"],
   mat: ["ecuación", "potencia", "ángulo", "fracción", "vértice", "decimal"],
   len: ["sujeto", "sílaba", "acento", "verbo", "tilde", "predicado"],
 };
+// Palabras comunes que NO son tecnicismo de ninguna de las 4 materias. El niño
+// debe reconocer que no encajan y dejarlas en la bandeja (no toda palabra es un
+// tecnicismo). Llevan tipo "none" → su respuesta correcta es quedar SIN ubicar.
+const R2_DISTRACTORS = ["mariposa", "bicicleta", "montaña", "naranja", "ventana", "guitarra", "elefante", "almohada"];
 
 // Colores de enlace para los pares de R0 (uno por fila de nacionalidad).
 const LINK_COLORS = ["#4fd8ff", "#ffb454", "#a78bfa", "#2ecc8f", "#ff6b9d"];
@@ -929,10 +934,14 @@ function makeProblemR1() {
 }
 
 function makeProblemR2() {
+  // 4 tecnicismos (uno por materia) + 1 palabra común que NO es tecnicismo de
+  // ninguna (tipo "none"): el niño debe dejarla en la bandeja, sin ubicarla.
   const fichas = R2_BINS.map((bin) => {
     const picked = pickFreshSet(R2_BANK[bin.id], "tec-" + bin.id, (x) => x, 1)[0];
     return { id: bin.id + ":" + picked, text: picked, tipo: bin.id };
   });
+  const distractor = pickFreshSet(R2_DISTRACTORS, "tec-none", (x) => x, 1)[0];
+  fichas.push({ id: "none:" + distractor, text: distractor, tipo: "none" });
   return { fichas: shuffle(fichas), bins: R2_BINS };
 }
 
@@ -956,7 +965,7 @@ function GameEnunciado({ text, top = 82 }) {
   );
 }
 
-function GameHUD({ elapsed, stars, attempted, solved, total = 3 }) {
+function GameHUD({ elapsed, stars, attempted, solved, total = 3, roundResults = [] }) {
   return (
     <>
       <div data-qa="hud" style={{
@@ -990,14 +999,21 @@ function GameHUD({ elapsed, stars, attempted, solved, total = 3 }) {
         display: "flex", alignItems: "center", gap: 8,
       }}>
         <span className="ed-label" style={{ color: "rgba(255,255,255,0.7)" }}>Ronda</span>
-        {Array.from({ length: total }).map((_, i) => (
-          <div key={i} style={{
-            width: 10, height: 10, borderRadius: "50%",
-            background: i < attempted ? (i < solved ? "#fce9a8" : "#ff6b6b") : "rgba(255,255,255,0.2)",
-            boxShadow: i < attempted ? "0 0 10px currentColor" : "none",
-            color: i < solved ? "#fce9a8" : "#ff6b6b",
-          }} />
-        ))}
+        {Array.from({ length: total }).map((_, i) => {
+          // Color por RESULTADO REAL de cada ronda (roundResults[i]), no por
+          // conteo acumulado: si la ronda 1 falla y la 2 acierta, el punto 1
+          // debe quedar rojo y el 2 dorado (no al revés).
+          const played = i < attempted;
+          const ok = roundResults[i];
+          return (
+            <div key={i} style={{
+              width: 10, height: 10, borderRadius: "50%",
+              background: played ? (ok ? "#fce9a8" : "#ff6b6b") : "rgba(255,255,255,0.2)",
+              boxShadow: played ? "0 0 10px currentColor" : "none",
+              color: ok ? "#fce9a8" : "#ff6b6b",
+            }} />
+          );
+        })}
       </div>
     </>
   );
@@ -1253,38 +1269,60 @@ function VocesGame({ app, setApp, go, onRestart }) {
   const [log, setLog] = useStateG([]);
   const started = useRefG(Date.now());
   const exerciseStart = useRefG(Date.now());
+  // REINICIAR remonta VocesGame con key nueva; aliveRef evita que los timers
+  // de revelado/avance pendientes disparen setState/navegación sobre el árbol
+  // muerto (warning de React + navegación fantasma a results).
+  const aliveRef = useRefG(true);
 
   useEffectG(() => {
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - started.current) / 1000)), 500);
-    return () => clearInterval(id);
+    return () => { aliveRef.current = false; clearInterval(id); };
   }, []);
 
   // ── Estados de completitud por ronda
   const r0AllLinked = r0Pick.pairs.every((p) => r0Links[p.id]);
-  const r2AllPlaced = r2Pick.fichas.every((f) => r2Placed[f.id]);
+  // R2: el niño deja 1 palabra en la bandeja (la que cree que NO es tecnicismo)
+  // y ubica las otras 4. VERIFICAR se habilita cuando queda como máximo 1 ficha
+  // sin ubicar, sea cual sea — puede equivocarse de cuál dejar y se le marcará.
+  const r2PlacedCount = r2Pick.fichas.filter((f) => r2Placed[f.id]).length;
+  const r2EnoughPlaced = r2PlacedCount >= r2Pick.fichas.length - 1;
 
   // R0 y R2 usan VERIFICAR manual. R1 (selector) se auto-evalúa.
   const canVerify =
     ronda === 0 ? (r0AllLinked && !r0Locked) :
-    ronda === 2 ? (r2AllPlaced && !r2Locked) :
+    ronda === 2 ? (r2EnoughPlaced && !r2Locked) :
     false;
 
   function handleVerifyR0() {
     if (!r0AllLinked || r0Locked) return;
     setR0Locked(true);
-    const okCount = r0Pick.pairs.filter((p) => r0Links[p.id] === p.lang).length;
-    const correct = okCount === r0Pick.pairs.length;
-    const u = `${okCount}/${r0Pick.pairs.length} enlaces correctos`;
-    setTimeout(() => answer(correct, u, "Cada nacionalidad con su lengua", "🗣️", "Une la nacionalidad con su lengua", null), correct ? 500 : 5000);
+    const pairs = r0Pick.pairs;
+    const okCount = pairs.filter((p) => r0Links[p.id] === p.lang).length;
+    const correct = okCount === pairs.length;
+    const wrong = pairs.filter((p) => r0Links[p.id] !== p.lang);
+    // Reporte reconstruible: al fallar, lista qué enlazó el niño vs lo correcto.
+    const u = correct ? `${okCount}/${pairs.length} ✓` : wrong.map((p) => `${p.nac}→${r0Links[p.id] || "—"}`).join(" · ");
+    const c = correct ? "Cada nacionalidad con su lengua" : wrong.map((p) => `${p.nac}→${p.lang}`).join(" · ");
+    const reto = "Empareja: " + pairs.map((p) => p.nac).join(", ");
+    setTimeout(() => answer(correct, u, c, "🗣️", reto, null), correct ? 500 : 5000);
   }
 
   function handleVerifyR2() {
-    if (!r2AllPlaced || r2Locked) return;
+    if (!r2EnoughPlaced || r2Locked) return;
     setR2Locked(true);
-    const okCount = r2Pick.fichas.filter((f) => r2Placed[f.id] === f.tipo).length;
-    const correct = okCount === r2Pick.fichas.length;
-    const u = `${okCount}/${r2Pick.fichas.length} bien ubicadas`;
-    setTimeout(() => answer(correct, u, "Cada tecnicismo en su materia", "🧩", "Cada tecnicismo a su mundo", null), correct ? 500 : 5000);
+    const fichas = r2Pick.fichas;
+    const blbl = {}; r2Pick.bins.forEach((b) => { blbl[b.id] = b.label; });
+    // El distractor (tipo "none") acierta si quedó SIN ubicar; los tecnicismos
+    // aciertan si están en su materia.
+    const isOk = (f) => f.tipo === "none" ? !r2Placed[f.id] : r2Placed[f.id] === f.tipo;
+    const okCount = fichas.filter(isOk).length;
+    const correct = okCount === fichas.length;
+    const wrong = fichas.filter((f) => !isOk(f));
+    // Reporte reconstruible: ficha→materia elegida (o "(sin ubicar)") vs la correcta.
+    const u = correct ? `${okCount}/${fichas.length} ✓` : wrong.map((f) => `${f.text}→${blbl[r2Placed[f.id]] || "(sin ubicar)"}`).join(" · ");
+    const c = correct ? "Cada palabra en su lugar" : wrong.map((f) => `${f.text}→${f.tipo === "none" ? "ninguna" : blbl[f.tipo]}`).join(" · ");
+    const reto = "Clasifica: " + fichas.map((f) => f.text).join(", ");
+    setTimeout(() => answer(correct, u, c, "🧩", reto, null), correct ? 500 : 5000);
   }
 
   function handleVerify() {
@@ -1294,8 +1332,14 @@ function VocesGame({ app, setApp, go, onRestart }) {
 
   function handleR1Finish(res) {
     const correct = res.correct >= res.total - 1; // permite 1 fallo entre las 6
-    const u = `${res.correct}/${res.total} aciertos`;
-    answer(correct, u, "Clasificar el origen de cada palabra", "🔤", "¿De dónde viene la palabra?", null);
+    const misses = res.misses || [];
+    const LBL = { kichwa: "Kichwa", extr: "Extranjerismo", coloq: "Coloquial" };
+    // Reporte reconstruible: si hubo fallo(s), lista palabra→origen elegido vs
+    // correcto (visible incluso cuando la ronda se cuenta "Correcto" con 1 error).
+    const u = misses.length === 0 ? `${res.correct}/${res.total} ✓` : misses.map((m) => `${m.word}→${LBL[m.picked] || m.picked}`).join(" · ");
+    const c = misses.length === 0 ? "Cada palabra en su origen" : misses.map((m) => `${m.word}→${LBL[m.correct] || m.correct}`).join(" · ");
+    const reto = "Origen de: " + r1Pick.cards.map((cd) => cd.word).join(", ");
+    answer(correct, u, c, "🔤", reto, null);
   }
 
   function handleErase() {
@@ -1304,6 +1348,7 @@ function VocesGame({ app, setApp, go, onRestart }) {
   }
 
   function answer(isCorrect, userText, correctText, opIcon, reto, note) {
+    if (!aliveRef.current) return;
     if (typeof window.markFirstAttempt === "function") window.markFirstAttempt();
     const exerciseSec = Math.max(0, Math.floor((Date.now() - exerciseStart.current) / 1000));
     const earned = calcStars(isCorrect, exerciseSec);
@@ -1330,12 +1375,13 @@ function VocesGame({ app, setApp, go, onRestart }) {
 
     const wait = isCorrect ? 1100 : 1600;
     setTimeout(() => {
+      if (!aliveRef.current) return;
       setFeedback(null);
       setFeedbackMsg("");
       if (newAttempted >= 3) {
         setApp((s) => ({
           ...s, stars: newStarsTotal,
-          lastResult: { category: catLabel, solved: newSolved, total: 3, time: elapsed, starsEarned: newStarsSession, log: newLog },
+          lastResult: { category: catLabel, solved: newSolved, total: 3, time: Math.floor((Date.now() - started.current) / 1000), starsEarned: newStarsSession, log: newLog },
         }));
         window.incrementGamesCompleted && window.incrementGamesCompleted();
         go("results");
@@ -1350,15 +1396,15 @@ function VocesGame({ app, setApp, go, onRestart }) {
   const enunciado =
     ronda === 0 ? "Une cada nacionalidad con la lengua que habla." :
     ronda === 1 ? "Clasifica cada palabra según su origen." :
-    "Lleva cada palabra a la materia donde es un tecnicismo.";
+    "Arrástrala a su materia.";
   const bocadillo =
     ronda === 0 ? "Toca una nacionalidad\ny luego su lengua\npara enlazarlas." :
     ronda === 1 ? "Toca el origen: kichwa,\nextranjerismo o\ncoloquial ecuatoriano." :
-    "Arrástrala a su materia:\ncambia de sentido\nen cada una.";
+    "Arrástrala a su materia.\nUna no es tecnicismo:\ndéjala en la bandeja.";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
-      <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} />
+      <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} roundResults={log.map((e) => e.isCorrect)} />
       <CharacterCorner char={char} message={bocadillo} />
       <GameEnunciado text={enunciado} top={104} />
 
@@ -1447,10 +1493,11 @@ function EmparejaCard({ pick, links, setLinks, selected, setSelected, locked }) 
         const a = ne.getBoundingClientRect();
         const b = le.getBoundingClientRect();
         const pair = pairs.find((p) => p.id === nacId);
+        const wrongLink = !!(locked && pair && pair.lang !== lang);
         let color = colorOf(nacId);
         if (locked && pair) color = pair.lang === lang ? "#2ecc8f" : "#ff6b6b";
         next.push({
-          key: nacId, color,
+          key: nacId, color, wrong: wrongLink, correctLang: pair ? pair.lang : "",
           x1: (a.right - w.left) / scale, y1: (a.top - w.top + a.height / 2) / scale,
           x2: (b.left - w.left) / scale, y2: (b.top - w.top + b.height / 2) / scale,
         });
@@ -1484,13 +1531,16 @@ function EmparejaCard({ pick, links, setLinks, selected, setSelected, locked }) 
   }
 
   const BOX_W = 150;
+  // La columna LENGUA es más ancha: algunas lenguas son de dos palabras
+  // ("shiwiar chicham") y se recortaban en 150px de ancho fijo.
+  const LANG_W = 168;
 
   return (
     <div data-qa="zona-central" style={{
       position: "absolute", top: 150, bottom: 18, left: "50%", transform: "translateX(-50%)",
       width: 470, display: "flex", flexDirection: "column", alignItems: "center",
     }}>
-      <div ref={wrapRef} style={{ position: "relative", display: "flex", gap: 96, justifyContent: "center", flex: 1, width: "100%", alignItems: "stretch" }}>
+      <div ref={wrapRef} style={{ position: "relative", display: "flex", gap: 78, justifyContent: "center", flex: 1, width: "100%", alignItems: "stretch" }}>
         {/* Líneas de enlace */}
         <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", overflow: "visible", zIndex: 1 }}>
           {lines.map((ln) => (
@@ -1504,14 +1554,28 @@ function EmparejaCard({ pick, links, setLinks, selected, setSelected, locked }) 
           ))}
         </svg>
 
+        {/* Etiqueta de corrección SOBRE el enlace: la lengua correcta del fallo,
+            centrada en el espacio entre columnas, a la altura de su nacionalidad
+            (una por fila → no se solapan). No añade altura a las columnas. */}
+        {lines.filter((ln) => ln.wrong).map((ln) => (
+          <div key={"fix-" + ln.key} style={{
+            position: "absolute", left: (ln.x1 + ln.x2) / 2, top: ln.y1, transform: "translate(-50%,-50%)",
+            zIndex: 4, pointerEvents: "none", whiteSpace: "nowrap",
+            background: "rgba(8,28,26,0.94)", border: "1.5px solid #2ecc8f", borderRadius: 9,
+            padding: "2px 9px", boxShadow: "0 3px 10px rgba(0,0,0,0.5)",
+            fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11.5, lineHeight: 1.15,
+            color: "#7dffc4",
+          }}>✓ {ln.correctLang}</div>
+        ))}
+
         {/* Columna NACIONALIDAD */}
         <div style={{ display: "flex", flexDirection: "column", width: BOX_W, position: "relative", zIndex: 2 }}>
           <div style={{
             fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11,
             letterSpacing: "0.08em", color: "rgba(252,233,168,0.85)", textAlign: "center",
-            textTransform: "uppercase", marginBottom: 6,
+            textTransform: "uppercase", marginBottom: 4,
           }}>Nacionalidad</div>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-start", gap: 18 }}>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 8 }}>
           {pairs.map((p) => {
             const linked = !!links[p.id];
             const sel = selected === p.id;
@@ -1527,7 +1591,7 @@ function EmparejaCard({ pick, links, setLinks, selected, setSelected, locked }) 
               <div key={p.id}>
                 <button ref={(el) => { nacRefs.current[p.id] = el; }} onClick={() => tapNac(p.id)} disabled={locked}
                   style={{
-                    position: "relative", width: "100%", height: 40, borderRadius: 11,
+                    position: "relative", width: "100%", height: 44, borderRadius: 11,
                     border: `2.5px solid ${border}`, background: bg, color: ink,
                     cursor: locked ? "default" : "pointer",
                     fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 15,
@@ -1545,12 +1609,6 @@ function EmparejaCard({ pick, links, setLinks, selected, setSelected, locked }) 
                     }}>✓</span>
                   )}
                 </button>
-                {wrong && (
-                  <div style={{
-                    marginTop: 3, fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 11,
-                    color: "#7dffc4", textAlign: "center",
-                  }}>→ {p.lang}</div>
-                )}
               </div>
             );
           })}
@@ -1558,13 +1616,13 @@ function EmparejaCard({ pick, links, setLinks, selected, setSelected, locked }) 
         </div>
 
         {/* Columna LENGUA */}
-        <div style={{ display: "flex", flexDirection: "column", width: BOX_W, position: "relative", zIndex: 2 }}>
+        <div style={{ display: "flex", flexDirection: "column", width: LANG_W, position: "relative", zIndex: 2 }}>
           <div style={{
             fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 11,
             letterSpacing: "0.08em", color: "rgba(252,233,168,0.85)", textAlign: "center",
-            textTransform: "uppercase", marginBottom: 6,
+            textTransform: "uppercase", marginBottom: 4,
           }}>Lengua</div>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-start", gap: 18 }}>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 8 }}>
           {langs.map((lang) => {
             const nacId = langToNac[lang];
             const linked = !!nacId;
@@ -1580,11 +1638,11 @@ function EmparejaCard({ pick, links, setLinks, selected, setSelected, locked }) 
             return (
               <button key={lang} ref={(el) => { langRefs.current[lang] = el; }} onClick={() => tapLang(lang)} disabled={locked}
                 style={{
-                  position: "relative", width: "100%", height: 40, borderRadius: 11,
+                  position: "relative", width: "100%", minHeight: 44, borderRadius: 11,
                   border: `2.5px solid ${border}`, background: bg, color: ink,
                   cursor: clickable ? "pointer" : "default",
-                  fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 14.5,
-                  boxShadow: "0 3px 8px rgba(0,0,0,0.22)",
+                  fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13.5, lineHeight: 1.12,
+                  boxShadow: "0 3px 8px rgba(0,0,0,0.22)", padding: "4px 8px",
                   transition: "all 0.14s ease", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                 }}>
                 <span>{lang}</span>
@@ -1613,6 +1671,11 @@ function OrigenSelector({ pick, onFinish }) {
   const [locked, setLocked] = useStateG(false);
   const correctRef = useRefG(0);
   const doneRef = useRefG(false);
+  // Acumula los fallos por carta {word, picked, correct} para el reporte
+  // reconstruible; aliveRef evita onFinish/setState tras desmontar (REINICIAR).
+  const missesRef = useRefG([]);
+  const aliveRef = useRefG(true);
+  useEffectG(() => () => { aliveRef.current = false; }, []);
 
   const card = cards[idx];
 
@@ -1622,12 +1685,14 @@ function OrigenSelector({ pick, onFinish }) {
     setLocked(true);
     const ok = catId === card.cat;
     if (ok) correctRef.current += 1;
+    else missesRef.current.push({ word: card.word, picked: catId, correct: card.cat });
     const wait = ok ? 650 : 1250;
     setTimeout(() => {
+      if (!aliveRef.current) return;
       if (idx + 1 >= cards.length) {
         if (doneRef.current) return;
         doneRef.current = true;
-        onFinish({ correct: correctRef.current, total: cards.length });
+        onFinish({ correct: correctRef.current, total: cards.length, misses: missesRef.current });
       } else {
         setIdx((i) => i + 1);
         setChosen(null);
@@ -1741,7 +1806,9 @@ function TecnicismoBins({ pick, placed, setPlaced, locked }) {
   }
 
   const trayFichas = fichas.filter((f) => !placed[f.id]);
-  const allPlaced = fichas.every((f) => placed[f.id]);
+  // El niño deja 1 palabra en la bandeja (la que cree que no es tecnicismo);
+  // el hint aparece cuando ya solo queda esa por decidir.
+  const oneLeft = !locked && trayFichas.length === 1 && fichas.filter((f) => placed[f.id]).length >= fichas.length - 1;
 
   const ghost = (text) => `<div style="background:linear-gradient(180deg,#fce9a8,#e9c45a);color:#3a2608;padding:8px 14px;border-radius:12px;font-family:Fredoka,Nunito,sans-serif;font-weight:800;font-size:15px;border:2px solid #4fd8ff;box-shadow:0 8px 20px rgba(0,0,0,0.5);text-align:center;">${text}</div>`;
 
@@ -1758,6 +1825,9 @@ function TecnicismoBins({ pick, placed, setPlaced, locked }) {
       }}>
         {trayFichas.map((f) => {
           const sel = selected === f.id;
+          // Al verificar, el distractor que quedó en la bandeja es ACIERTO:
+          // se marca verde con "✓ no es tecnicismo".
+          const okLeft = locked && f.tipo === "none";
           return (
             <div key={f.id}
               className={locked ? "" : "ed-draggable"}
@@ -1767,21 +1837,24 @@ function TecnicismoBins({ pick, placed, setPlaced, locked }) {
               })}
               style={{
                 padding: "8px 16px", borderRadius: 11, textAlign: "center",
-                background: sel ? "linear-gradient(180deg,#fce9a8,#e9c45a)" : "rgba(255,255,255,0.94)",
-                color: "#3a2608", border: `2px solid ${sel ? "#4fd8ff" : "rgba(116,72,32,0.25)"}`,
+                background: okLeft ? "linear-gradient(180deg,#2ecc8f,#22a06c)" : sel ? "linear-gradient(180deg,#fce9a8,#e9c45a)" : "rgba(255,255,255,0.94)",
+                color: okLeft ? "#fff" : "#3a2608", border: `2px solid ${okLeft ? "#2ecc8f" : sel ? "#4fd8ff" : "rgba(116,72,32,0.25)"}`,
                 boxShadow: sel ? "0 0 16px rgba(79,216,255,0.6)" : "0 3px 8px rgba(0,0,0,0.25)",
                 transform: sel ? "translateY(-2px)" : "none",
                 fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 16, lineHeight: 1.2,
-                cursor: "grab", touchAction: "none",
+                cursor: locked ? "default" : "grab", touchAction: "none",
                 transition: "all 0.15s ease",
               }}>
-              {f.text}
+              {okLeft ? "✓ " : ""}{f.text}
+              {okLeft && (
+                <span style={{ display: "block", marginTop: 2, fontSize: 11, fontWeight: 800, color: "#eafff4", letterSpacing: "0.02em" }}>no es tecnicismo</span>
+              )}
             </div>
           );
         })}
-        {allPlaced && (
-          <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13, color: "rgba(255,255,255,0.7)", pointerEvents: "none" }}>
-            ¡Listo! Pulsa VERIFICAR.
+        {oneLeft && (
+          <div style={{ fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 12.5, color: "rgba(255,255,255,0.75)", pointerEvents: "none", maxWidth: 150, lineHeight: 1.2 }}>
+            ¿No es tecnicismo? Déjala aquí y pulsa VERIFICAR.
           </div>
         )}
       </div>
@@ -1817,10 +1890,11 @@ function TecnicismoBins({ pick, placed, setPlaced, locked }) {
                 }}>{bin.hint}</div>
               )}
               {inside.map((f) => {
-                const ok = locked ? f.tipo === bin.id : null;
+                const isDistractor = f.tipo === "none";
+                const ok = locked ? f.tipo === bin.id : null; // el distractor nunca es correcto en una caja
                 // Al fallar, revelamos a qué materia pertenecía realmente la
-                // ficha ("→ Matemática"), no solo que estaba mal ubicada.
-                const correctBin = (locked && ok === false) ? bins.find((b) => b.id === f.tipo) : null;
+                // ficha ("→ Matemática"); si es el distractor, "→ no es tecnicismo".
+                const correctBin = (locked && ok === false && !isDistractor) ? bins.find((b) => b.id === f.tipo) : null;
                 return (
                   <div key={f.id}
                     className={locked ? "" : "ed-draggable"}
@@ -1844,6 +1918,12 @@ function TecnicismoBins({ pick, placed, setPlaced, locked }) {
                         fontSize: 11, fontWeight: 800, color: "#eafff4", letterSpacing: "0.02em",
                       }}>→ {correctBin.emoji} {correctBin.label}</span>
                     )}
+                    {locked && isDistractor && (
+                      <span style={{
+                        display: "block", marginTop: 3,
+                        fontSize: 11, fontWeight: 800, color: "#eafff4", letterSpacing: "0.02em",
+                      }}>→ no es tecnicismo</span>
+                    )}
                   </div>
                 );
               })}
@@ -1859,7 +1939,7 @@ function TecnicismoBins({ pick, placed, setPlaced, locked }) {
 // RESULTS — Reporte académico imprimible (estructura estándar).
 // ═════════════════════════════════════════════════════════════
 function formatOp(e) {
-  return `${e.op || "·"}  ${String(e.a).slice(0, 30)}`;
+  return `${e.op || "·"}  ${String(e.a).slice(0, 60)}`;
 }
 
 const printStyles = {
@@ -1930,9 +2010,9 @@ function PrintableReport({ studentName, res, dateStr, m, s, attemptedCount, tota
             {log.map((e) => (
               <tr key={e.idx} style={printStyles.tr}>
                 <td style={{ ...printStyles.td, ...printStyles.tdNum }}>{e.idx}</td>
-                <td style={{ ...printStyles.td, ...printStyles.tdOp }}>{e.op || ""} {String(e.a).slice(0, 30)}</td>
-                <td style={{ ...printStyles.td, ...printStyles.tdR }}>{String(e.userAnswer).slice(0, 40)}</td>
-                <td style={{ ...printStyles.td, ...printStyles.tdR }}>{String(e.correctAnswer).slice(0, 40)}</td>
+                <td style={{ ...printStyles.td, ...printStyles.tdOp }}>{e.op || ""} {String(e.a).slice(0, 60)}</td>
+                <td style={{ ...printStyles.td, ...printStyles.tdR }}>{String(e.userAnswer).slice(0, 90)}</td>
+                <td style={{ ...printStyles.td, ...printStyles.tdR }}>{String(e.correctAnswer).slice(0, 90)}</td>
                 <td style={{ ...printStyles.td, ...printStyles.tdC, ...(e.isCorrect ? printStyles.tdOk : printStyles.tdErr) }}>
                   {e.isCorrect ? "Correcto" : "Incorrecto"}
                 </td>
@@ -2026,8 +2106,8 @@ function ResultsScreen({ app, setApp, go }) {
                   <tr key={e.idx} style={{ borderBottom: "1px solid rgba(148,120,255,0.18)" }}>
                     <td style={{ padding: "8px 8px", color: "var(--ed-ink-soft)" }}>{e.idx}</td>
                     <td style={{ padding: "8px 8px", fontWeight: 600 }}>{formatOp(e)}</td>
-                    <td style={{ padding: "8px 8px", textAlign: "right", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis" }}>{String(e.userAnswer).slice(0, 28)}</td>
-                    <td style={{ padding: "8px 8px", textAlign: "right", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis" }}>{String(e.correctAnswer).slice(0, 28)}</td>
+                    <td style={{ padding: "8px 8px", textAlign: "right", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis" }}>{String(e.userAnswer).slice(0, 60)}</td>
+                    <td style={{ padding: "8px 8px", textAlign: "right", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis" }}>{String(e.correctAnswer).slice(0, 60)}</td>
                     <td style={{ padding: "8px 8px", textAlign: "center", fontFamily: "var(--ed-font-display)", fontWeight: 700, color: e.isCorrect ? "#2ecc8f" : "#ff6b6b" }}>
                       {e.isCorrect ? "Correcto" : "Incorrecto"}
                     </td>
