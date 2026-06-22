@@ -892,7 +892,7 @@ function EnunciadoInline({ text }) {
   );
 }
 
-function GameHUD({ elapsed, stars, attempted, solved, total = 3, app, setApp }) {
+function GameHUD({ elapsed, stars, attempted, solved, total = 3, roundResults = [], roundsTop = 58, app, setApp }) {
   const levels = (typeof LEVELS_CFG !== "undefined" && LEVELS_CFG) || (window.LEVELS_CFG || []);
   const currentId = (app && (app.currentCategory || app.level)) || "biblioteca";
   const [pendingLevel, setPendingLevel] = useStateG(null);
@@ -965,18 +965,25 @@ function GameHUD({ elapsed, stars, attempted, solved, total = 3, app, setApp }) 
       )}
 
       <div style={{
-        position: "absolute", top: 58, left: "50%", transform: "translateX(-50%)",
+        position: "absolute", top: roundsTop, left: "50%", transform: "translateX(-50%)",
         display: "flex", alignItems: "center", gap: 8,
       }}>
         <span className="ed-label" style={{ color: "rgba(255,255,255,0.7)" }}>Ronda</span>
-        {Array.from({ length: total }).map((_, i) => (
-          <div key={i} style={{
-            width: 10, height: 10, borderRadius: "50%",
-            background: i < attempted ? (i < solved ? "#fce9a8" : "#ff6b6b") : "rgba(255,255,255,0.2)",
-            boxShadow: i < attempted ? "0 0 10px currentColor" : "none",
-            color: i < solved ? "#fce9a8" : "#ff6b6b",
-          }} />
-        ))}
+        {Array.from({ length: total }).map((_, i) => {
+          // Cada punto se pinta por el resultado REAL de su ronda (roundResults[i]),
+          // no por el conteo acumulado: ronda 1 fallada + ronda 2 acertada ya no
+          // se muestra invertido. Gris si la ronda aún no se ha jugado.
+          const done = i < attempted;
+          const ok = roundResults[i];
+          return (
+            <div key={i} style={{
+              width: 10, height: 10, borderRadius: "50%",
+              background: done ? (ok ? "#fce9a8" : "#ff6b6b") : "rgba(255,255,255,0.2)",
+              boxShadow: done ? "0 0 10px currentColor" : "none",
+              color: ok ? "#fce9a8" : "#ff6b6b",
+            }} />
+          );
+        })}
       </div>
 
       <SwitchLevelModal pendingLevel={pendingLevel} levels={levels}
@@ -1224,7 +1231,7 @@ const WORD_BANK = [
   { word: "yate",   syll: "ya", emoji: "⛵", set: "y" },
   { word: "yegua",  syll: "ye", emoji: "🐴", set: "y" },
   { word: "yoga",   syll: "yo", emoji: "🧘", set: "y" },
-  { word: "yuca",   syll: "yu", emoji: "🥔", set: "y" },
+  { word: "yema",   syll: "ye", emoji: "🥚", set: "y" },
   { word: "foca",    syll: "fo", emoji: "🦭", set: "f" },
   { word: "foco",    syll: "fo", emoji: "💡", set: "f" },
   { word: "foto",    syll: "fo", emoji: "📷", set: "f" },
@@ -1271,6 +1278,10 @@ function makeProblemBib(roundIdx, usedKeys, avoidSyll) {
   return { word: pick.word, syll: pick.syll, emoji: pick.emoji, traySylls: shuffle([correct, ...others]) };
 }
 
+// Ventana (ms) para cambiar la respuesta antes de que se auto-evalúe en las
+// rondas de "1 toque = respuesta" sin botón VERIFICAR (N1 y N3-R1). Fuente única.
+const RECONSIDER_MS = 1500;
+
 function BibliotecaGame({ app, setApp, go, onRestart }) {
   const char = CHARACTERS.find((c) => c.id === app.character) || CHARACTERS[0];
   const catLabel = app.currentCatLabel || "Explorando la biblioteca";
@@ -1311,6 +1322,12 @@ function BibliotecaGame({ app, setApp, go, onRestart }) {
     return () => { clearInterval(id); aliveRef.current = false; };
   }, []);
 
+  // Auto-evaluación (sin VERIFICAR): al tocar una sílaba se califica tras
+  // RECONSIDER_MS para poder cambiar de idea (tocar otra sílaba reinicia el
+  // contador; tocar el hueco cancela). Mismo patrón que N2.
+  const autoRef = useRefG(null);
+  useEffectG(() => () => clearTimeout(autoRef.current), []);
+
   const answer = makeAnswer({
     attempted, solved, stars, starsSession, log, elapsed, catLabel,
     exerciseStart, setApp, go, aliveRef,
@@ -1323,24 +1340,20 @@ function BibliotecaGame({ app, setApp, go, onRestart }) {
     },
   });
 
-  function verify() {
+  // Califica la sílaba tocada (se llama desde el timer auto, no desde un botón).
+  function gradeBib(syll) {
     if (feedback || reveal) return;
-    if (!picked) {
-      setFeedback("err"); setFeedbackMsg("Toca una sílaba primero");
-      setTimeout(() => { setFeedback(null); setFeedbackMsg(""); }, 700);
-      return;
-    }
-    if (picked !== problem.syll) {
+    if (syll !== problem.syll) {
       // Revela la correcta en verde ✓ (sin overlay) y luego muestra "¡UPS!".
       setReveal(true);
       setTimeout(() => {
         if (!aliveRef.current) return;
         setReveal(false);
-        answer(false, picked, problem.syll, problem.emoji, problem.word);
+        answer(false, syll, problem.syll, problem.emoji, problem.word);
       }, REVEAL_MS);
       return;
     }
-    answer(true, picked, problem.syll, problem.emoji, problem.word);
+    answer(true, syll, problem.syll, problem.emoji, problem.word);
   }
 
   const restLetters = problem.word.slice(problem.syll.length).split("");
@@ -1351,7 +1364,7 @@ function BibliotecaGame({ app, setApp, go, onRestart }) {
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
-      <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} app={app} setApp={setApp} />
+      <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} roundResults={log.map((e) => e.isCorrect)} app={app} setApp={setApp} />
       <CharacterCorner char={char} message={"Toca la sílaba que falta."} />
       <EnunciadoWrap text="Completa la palabra con la sílaba." />
 
@@ -1371,7 +1384,7 @@ function BibliotecaGame({ app, setApp, go, onRestart }) {
         }}>{problem.emoji}</div>
 
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: SLOT_GAP, padding: "4px 6px" }}>
-          <button onClick={() => { if (picked && !feedback && !reveal) setPicked(null); }} style={{
+          <button onClick={() => { if (picked && !feedback && !reveal) { clearTimeout(autoRef.current); setPicked(null); } }} style={{
             width: SLOT_W * 1.6, height: SLOT_H, borderRadius: 12,
             border: `2.5px solid ${feedback === "ok" ? "#2ecc8f" : (feedback === "err" || reveal) ? "#ff6b6b" : picked ? "#fce9a8" : "rgba(242,194,96,0.55)"}`,
             background: picked ? "linear-gradient(180deg, rgba(252,233,168,0.95), rgba(217,164,65,0.85))" : "rgba(10,6,35,0.55)",
@@ -1409,7 +1422,12 @@ function BibliotecaGame({ app, setApp, go, onRestart }) {
           else if (isPicked) { bg = "linear-gradient(180deg, rgba(252,233,168,0.25), rgba(217,164,65,0.18))"; boxShadow = "0 0 18px rgba(252,233,168,0.55), inset 0 1px 0 rgba(255,255,255,0.2)"; transform = "translateY(-2px)"; }
           return (
             <button key={trayIdx} className="ed-numpad-key"
-              onClick={() => { if (!feedback && !reveal) setPicked(syll); }}
+              onClick={() => {
+                if (feedback || reveal) return;
+                setPicked(syll);
+                clearTimeout(autoRef.current);
+                autoRef.current = setTimeout(() => gradeBib(syll), RECONSIDER_MS);
+              }}
               style={{
                 position: "relative", width: 92, height: 72, fontSize: 28,
                 borderColor, borderWidth: (isPicked || showCorrect || showWrong) ? 3 : 2, borderStyle: "solid",
@@ -1431,8 +1449,8 @@ function BibliotecaGame({ app, setApp, go, onRestart }) {
       </div>
 
       <ActionRail
-        canVerify={!feedback && !reveal} onVerify={verify}
-        showErase onErase={() => { if (!feedback && !reveal) setPicked(null); }}
+        canVerify={false} hideVerify={true}
+        showErase={false} onErase={undefined}
         onRestart={() => setConfirmingRestart(true)} onExit={() => setConfirmingExit(true)}
       />
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />
@@ -1489,9 +1507,9 @@ const R2_RIMA = [
 
 // R3 — Detective: 3 versos riman y uno no (el intruso). intruder = índice.
 const R3_DET = [
-  { id: "d1", lines: ["En el campo enamorado,", "el caballo va trotando,", "canta el gallo colorado,", "y el río baja apurado."], intruder: 1 },
+  { id: "d1", lines: ["En el campo enamorado,", "el caballo va corriendo,", "canta el gallo colorado,", "y el río baja apurado."], intruder: 1 },
   { id: "d2", lines: ["Salió la luna brillante,", "el lucero va delante,", "la noche se puso oscura,", "y el sapo sale cantante."], intruder: 2 },
-  { id: "d3", lines: ["Una niña en el sembrío", "recoge el maíz con brío,", "el agua corre en el río,", "cruzando todo el camino."], intruder: 3 },
+  { id: "d3", lines: ["Una niña en el sembrío", "recoge el maíz con brío,", "el agua corre en el río,", "cruzando todo el potrero."], intruder: 3 },
   { id: "d4", lines: ["Con un ritmo muy veloz,", "lo canta el pueblo costero,", "el amorfino sincero,", "con tono dulce y ligero."], intruder: 0 },
   { id: "d5", lines: ["La copla alegre y bonita", "se baila en la fiestecita,", "la gente aplaude contenta,", "y suena la guitarrita."], intruder: 2 },
   { id: "d6", lines: ["Subió la luna al cielo,", "brillando con anhelo,", "el campo se durmió,", "cubierto por un velo."], intruder: 2 },
@@ -1654,10 +1672,12 @@ function PoemasGame({ app, setApp, go, onRestart }) {
   const r1AutoRef = useRefG(null);
   const r2AutoRef = useRefG(null);
   const r3AutoRef = useRefG(null);
+  const spinTimerRef = useRefG(null);
   useEffectG(() => () => {
     clearTimeout(r1AutoRef.current);
     clearTimeout(r2AutoRef.current);
     clearTimeout(r3AutoRef.current);
+    clearTimeout(spinTimerRef.current);
   }, []);
 
   const answer = makeAnswer({
@@ -1671,7 +1691,10 @@ function PoemasGame({ app, setApp, go, onRestart }) {
     if (r1Spinning || r1Spun) return;
     setR1Spinning(true);
     setR1Rot((r) => r + 4 * 360 + Math.floor(Math.random() * 360));
-    setTimeout(() => { setR1Spinning(false); setR1Spun(true); exerciseStart.current = Date.now(); }, 1750);
+    spinTimerRef.current = setTimeout(() => {
+      if (!aliveRef.current) return;
+      setR1Spinning(false); setR1Spun(true); exerciseStart.current = Date.now();
+    }, 1750);
   }
 
   // Califica la R1 (tipo de poema) con la opción tocada.
@@ -1697,12 +1720,8 @@ function PoemasGame({ app, setApp, go, onRestart }) {
   }
 
   // Las 3 rondas son AUTO → su VERIFICAR se oculta y canVerify queda en false.
+  // No hay BORRAR en N2 (respuesta de 1 toque), así que tampoco hay handleErase.
   const canVerify = false;
-
-  function handleErase() {
-    if (ronda === 0 && !r1Locked) setR1Choice(null);
-    else if (ronda === 1 && !r2Locked) setR2Choice(null);
-  }
 
   // §3: enunciado = QUÉ hacer (la tarea); bocadillo = CÓMO (la acción concreta).
   const enunciado =
@@ -1716,7 +1735,7 @@ function PoemasGame({ app, setApp, go, onRestart }) {
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
-      <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} app={app} setApp={setApp} />
+      <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} roundResults={log.map((e) => e.isCorrect)} app={app} setApp={setApp} />
       <CharacterCorner char={char} message={bocadillo} />
 
       {ronda === 0 && (
@@ -1851,7 +1870,7 @@ function PoemasGame({ app, setApp, go, onRestart }) {
 
       <ActionRail
         canVerify={canVerify} hideVerify={true}
-        showErase={false} onErase={handleErase}
+        showErase={false} onErase={undefined}
         onRestart={() => setConfirmingRestart(true)} onExit={() => setConfirmingExit(true)}
       />
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />
@@ -1883,7 +1902,7 @@ const R1_FIG = [
   { id: "f8", verse: "¡Plaf! cayó el plato en el suelo.", figura: "onomatopeya" },
   { id: "f9", verse: "El silencio era ensordecedor.", figura: "paradoja" },
   { id: "f10", verse: "Es tan pobre que solo tiene dinero.", figura: "paradoja" },
-  { id: "f11", verse: "Del salón en el ángulo oscuro, la guitarra dormía.", figura: "hipérbaton" },
+  { id: "f11", verse: "Del río en la orilla descansaba el viajero.", figura: "hipérbaton" },
   { id: "f12", verse: "Era del año la estación florida.", figura: "hipérbaton" },
 ];
 const TIPOS_RIMA = ["consonante", "asonante", "libre"];
@@ -2008,12 +2027,29 @@ function VocesGame({ app, setApp, go, onRestart }) {
     onNextRound: () => setRonda((r) => r + 1),
   });
 
+  // R1 (identificar la figura) es de "1 toque = respuesta": se auto-evalúa tras
+  // RECONSIDER_MS sin botón VERIFICAR. R2/R3 (arrastrar varias fichas) SÍ llevan
+  // VERIFICAR. Tocar otra figura reinicia el contador; tocar la misma cancela.
+  const r1AutoRef = useRefG(null);
+  useEffectG(() => () => clearTimeout(r1AutoRef.current), []);
+  function gradeR1Auto(choice) {
+    if (feedback || r1Locked) return;
+    setR1Locked(true);
+    const correct = choice === r1Pick.figura;
+    setTimeout(() => answer(correct, choice, r1Pick.figura, "🔎", "Figura literaria"), correct ? 450 : 1500);
+  }
+
   const r2AllPlaced = r2Pick.fichas.every((f) => r2Placed[f.id]);
   const canVerify =
     feedback ? false :
     ronda === 0 ? (r1Choice !== null && !r1Locked) :
     ronda === 1 ? (r2AllPlaced && !r2Locked) :
     ronda === 2 ? (r3Slots.every(Boolean) && !r3Locked) : false;
+  // BORRAR solo tiene sentido mientras la ronda activa no está bloqueada ni en
+  // revelado; si no, sería un botón clicable que no responde durante el "¡UPS!".
+  const roundLocked =
+    (ronda === 0 && r1Locked) || (ronda === 1 && r2Locked) || (ronda === 2 && r3Locked);
+  const canErase = !feedback && !roundLocked;
 
   function handleVerify() {
     if (!canVerify) return;
@@ -2024,8 +2060,11 @@ function VocesGame({ app, setApp, go, onRestart }) {
     } else if (ronda === 1) {
       setR2Locked(true);
       const correct = r2Pick.fichas.every((f) => r2Placed[f.id] === f.tipo);
-      const userText = r2Pick.fichas.map((f) => `${f.pair.split(" · ")[0]}→${RIMA_LABEL[r2Placed[f.id]] || "?"}`).join(" · ");
-      const correctText = r2Pick.fichas.map((f) => `${f.pair.split(" · ")[0]}→${RIMA_LABEL[f.tipo]}`).join(" · ");
+      // Reporte: mostrar el PAR completo (no solo la 1ª palabra) para que un
+      // docente reconstruya el ejercicio; separador "; " para no chocar con el
+      // " · " interno del par.
+      const userText = r2Pick.fichas.map((f) => `${f.pair} → ${RIMA_LABEL[r2Placed[f.id]] || "?"}`).join("; ");
+      const correctText = r2Pick.fichas.map((f) => `${f.pair} → ${RIMA_LABEL[f.tipo]}`).join("; ");
       setTimeout(() => answer(correct, userText, correctText, "🧲", "Clases de rima"), correct ? 450 : 1500);
     } else if (ronda === 2) {
       setR3Locked(true);
@@ -2100,7 +2139,7 @@ function VocesGame({ app, setApp, go, onRestart }) {
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
-      <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} app={app} setApp={setApp} />
+      <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} roundResults={log.map((e) => e.isCorrect)} app={app} setApp={setApp} />
       <CharacterCorner char={char} message={bocadillo} />
 
       {/* R1 — identifica la figura */}
@@ -2118,7 +2157,13 @@ function VocesGame({ app, setApp, go, onRestart }) {
             {r1Opts.map((f, i) => (
               <OptionButton key={f} label={f} locked={r1Locked}
                 isCorrect={f === r1Pick.figura} isPicked={r1Choice === f}
-                onClick={() => setR1Choice((c) => (c === f ? null : f))}
+                onClick={() => {
+                  if (feedback || r1Locked) return;
+                  const next = r1Choice === f ? null : f;
+                  setR1Choice(next);
+                  clearTimeout(r1AutoRef.current);
+                  if (next !== null) r1AutoRef.current = setTimeout(() => gradeR1Auto(next), RECONSIDER_MS);
+                }}
                 color={["#ef5a5a", "#4fa0ff", "#2ecc8f"][i % 3]} />
             ))}
           </div>
@@ -2293,8 +2338,8 @@ function VocesGame({ app, setApp, go, onRestart }) {
       })()}
 
       <ActionRail
-        canVerify={canVerify} onVerify={handleVerify}
-        showErase={true} onErase={handleErase}
+        canVerify={canVerify} onVerify={handleVerify} hideVerify={ronda === 0}
+        showErase={ronda === 0 ? false : canErase} onErase={handleErase}
         onRestart={() => setConfirmingRestart(true)} onExit={() => setConfirmingExit(true)}
       />
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />
@@ -2340,7 +2385,11 @@ const R2_FRASES = [
 ];
 
 const TIPOS_ORA = ["modificador", "interjeccion", "nominal"];
-const ORA_LABEL = { modificador: "SUST. + MODIFICADOR", interjeccion: "INTERJECCIÓN", nominal: "FRASE NOMINAL" };
+// Las dos frases nominales se distinguen por el TIPO de modificador del núcleo
+// (adjetivo vs complemento preposicional), no por "ser o no frase nominal":
+// ambas lo son. Por eso las etiquetas describen el modificador, no oponen
+// "modificador" a "frase nominal" (oposición lingüísticamente falsa).
+const ORA_LABEL = { modificador: "SUST. + ADJETIVO", interjeccion: "INTERJECCIÓN", nominal: "SUST. + COMPLEMENTO" };
 const ORA_COLOR = { modificador: "#4fa0ff", interjeccion: "#e0a23a", nominal: "#2ecc8f" };
 const R3_ORA = {
   modificador: [
@@ -2415,12 +2464,34 @@ function OpinionGame({ app, setApp, go, onRestart }) {
     onNextRound: () => setRonda((r) => r + 1),
   });
 
+  // R1 (tipo de texto) y R2 (hecho/opinión) son de "1 toque = respuesta": se
+  // auto-evalúan tras RECONSIDER_MS sin botón VERIFICAR. R3 (clasificar varias
+  // oraciones) SÍ lleva VERIFICAR. Tocar otra opción reinicia el contador.
+  const autoRef = useRefG(null);
+  useEffectG(() => () => clearTimeout(autoRef.current), []);
+  function gradeR1Auto(choice) {
+    if (feedback || r1Locked) return;
+    setR1Locked(true);
+    const correct = choice === r1Pick.cat;
+    setTimeout(() => answer(correct, CAT_OPT[choice], CAT_OPT[r1Pick.cat], "🕵️", "Tipo de texto"), correct ? 450 : 1500);
+  }
+  function gradeR2Auto(choice) {
+    if (feedback || r2Locked) return;
+    setR2Locked(true);
+    const correct = (choice === "HECHO") === r2Pick.hecho;
+    setTimeout(() => answer(correct, choice, r2Pick.hecho ? "HECHO" : "OPINIÓN", "⚖️", "Hecho u opinión"), correct ? 450 : 1500);
+  }
+
   const r3AllPlaced = r3Pick.fichas.every((f) => r3Placed[f.id]);
   const canVerify =
     feedback ? false :
     ronda === 0 ? (r1Choice !== null && !r1Locked) :
     ronda === 1 ? (r2Choice !== null && !r2Locked) :
     ronda === 2 ? (r3AllPlaced && !r3Locked) : false;
+  // BORRAR solo aplica mientras la ronda activa no está bloqueada ni en revelado.
+  const roundLocked =
+    (ronda === 0 && r1Locked) || (ronda === 1 && r2Locked) || (ronda === 2 && r3Locked);
+  const canErase = !feedback && !roundLocked;
 
   function handleVerify() {
     if (!canVerify) return;
@@ -2477,7 +2548,7 @@ function OpinionGame({ app, setApp, go, onRestart }) {
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
-      <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} app={app} setApp={setApp} />
+      <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} roundResults={log.map((e) => e.isCorrect)} roundsTop={96} app={app} setApp={setApp} />
       <CharacterCorner char={char} message={bocadillo} />
 
       {/* R1 — Acertijo del periodista: pistas → adivinar el tipo de texto */}
@@ -2526,7 +2597,13 @@ function OpinionGame({ app, setApp, go, onRestart }) {
             {["informativo", "opinion", "mixto"].map((cat) => (
               <OptionButton key={cat} label={CAT_OPT[cat]} locked={r1Locked}
                 isCorrect={cat === r1Pick.cat} isPicked={r1Choice === cat}
-                onClick={() => setR1Choice((c) => (c === cat ? null : cat))}
+                onClick={() => {
+                  if (feedback || r1Locked) return;
+                  const next = r1Choice === cat ? null : cat;
+                  setR1Choice(next);
+                  clearTimeout(autoRef.current);
+                  if (next !== null) autoRef.current = setTimeout(() => gradeR1Auto(next), RECONSIDER_MS);
+                }}
                 color={CAT_COLOR[cat]} />
             ))}
           </div>
@@ -2543,9 +2620,21 @@ function OpinionGame({ app, setApp, go, onRestart }) {
           <PoemCartel text={`"${r2Pick.text}"`} fontSize={19} maxWidth={460} />
           <div style={{ display: "flex", gap: 16, justifyContent: "center" }}>
             <OptionButton label="HECHO" locked={r2Locked} isCorrect={r2Pick.hecho} isPicked={r2Choice === "HECHO"}
-              onClick={() => setR2Choice((c) => (c === "HECHO" ? null : "HECHO"))} color="#4fa0ff" />
+              onClick={() => {
+                if (feedback || r2Locked) return;
+                const next = r2Choice === "HECHO" ? null : "HECHO";
+                setR2Choice(next);
+                clearTimeout(autoRef.current);
+                if (next !== null) autoRef.current = setTimeout(() => gradeR2Auto(next), RECONSIDER_MS);
+              }} color="#4fa0ff" />
             <OptionButton label="OPINIÓN" locked={r2Locked} isCorrect={!r2Pick.hecho} isPicked={r2Choice === "OPINIÓN"}
-              onClick={() => setR2Choice((c) => (c === "OPINIÓN" ? null : "OPINIÓN"))} color="#e0a23a" />
+              onClick={() => {
+                if (feedback || r2Locked) return;
+                const next = r2Choice === "OPINIÓN" ? null : "OPINIÓN";
+                setR2Choice(next);
+                clearTimeout(autoRef.current);
+                if (next !== null) autoRef.current = setTimeout(() => gradeR2Auto(next), RECONSIDER_MS);
+              }} color="#e0a23a" />
           </div>
         </div>
       )}
@@ -2633,6 +2722,23 @@ function OpinionGame({ app, setApp, go, onRestart }) {
                       </div>
                     );
                   })}
+                  {/* Al bloquear: si la ficha que pertenece a este cajón no está
+                      aquí (el niño la puso en otro), se muestra su "fantasma" verde
+                      con ✓ — así ve dónde la puso (rojo) Y dónde iba (verde). */}
+                  {r3Locked && (() => {
+                    const belongs = r3Pick.fichas.find((f) => f.tipo === bin);
+                    if (!belongs || r3Placed[belongs.id] === bin) return null;
+                    return (
+                      <div style={{
+                        fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 13,
+                        padding: "6px 9px", borderRadius: 8, lineHeight: 1.1, textAlign: "center",
+                        background: "rgba(46,204,143,0.16)", color: "#2ecc8f",
+                        border: "2px dashed #2ecc8f", whiteSpace: "nowrap",
+                      }} title="Esta era la que iba aquí">
+                        ✓ {belongs.text}
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })}
@@ -2641,8 +2747,8 @@ function OpinionGame({ app, setApp, go, onRestart }) {
       )}
 
       <ActionRail
-        canVerify={canVerify} onVerify={handleVerify}
-        showErase={true} onErase={handleErase}
+        canVerify={canVerify} onVerify={handleVerify} hideVerify={ronda !== 2}
+        showErase={ronda === 2 ? canErase : false} onErase={handleErase}
         onRestart={() => setConfirmingRestart(true)} onExit={() => setConfirmingExit(true)}
       />
       <FeedbackOverlay feedback={feedback} feedbackMsg={feedbackMsg} charName={char.name} />
