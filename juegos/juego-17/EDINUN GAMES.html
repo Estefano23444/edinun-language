@@ -871,7 +871,7 @@ function EnunciadoInline({ text }) {
   );
 }
 
-function GameHUD({ elapsed, stars, attempted, solved, total = 3, app, setApp }) {
+function GameHUD({ elapsed, stars, attempted, solved, total = 3, app, setApp, roundResults = [] }) {
   const levels = (typeof LEVELS_CFG !== "undefined" && LEVELS_CFG) || (window.LEVELS_CFG || []);
   const currentId = (app && (app.currentCategory || app.level)) || "escritura";
   const [pendingLevel, setPendingLevel] = useStateG(null);
@@ -948,14 +948,20 @@ function GameHUD({ elapsed, stars, attempted, solved, total = 3, app, setApp }) 
         display: "flex", alignItems: "center", gap: 8,
       }}>
         <span className="ed-label" style={{ color: "rgba(255,255,255,0.7)" }}>Ronda</span>
-        {Array.from({ length: total }).map((_, i) => (
-          <div key={i} style={{
-            width: 10, height: 10, borderRadius: "50%",
-            background: i < attempted ? (i < solved ? "#fce9a8" : "#ff6b6b") : "rgba(255,255,255,0.2)",
-            boxShadow: i < attempted ? "0 0 10px currentColor" : "none",
-            color: i < solved ? "#fce9a8" : "#ff6b6b",
-          }} />
-        ))}
+        {Array.from({ length: total }).map((_, i) => {
+          // Colorea cada punto por el resultado REAL de SU ronda (dorado si se
+          // acertó, rojo si se falló), no por el conteo acumulado.
+          const done = i < roundResults.length;
+          const ok = done && roundResults[i];
+          return (
+            <div key={i} style={{
+              width: 10, height: 10, borderRadius: "50%",
+              background: done ? (ok ? "#fce9a8" : "#ff6b6b") : "rgba(255,255,255,0.2)",
+              boxShadow: done ? "0 0 10px currentColor" : "none",
+              color: ok ? "#fce9a8" : "#ff6b6b",
+            }} />
+          );
+        })}
       </div>
 
       <SwitchLevelModal pendingLevel={pendingLevel} levels={levels}
@@ -1405,8 +1411,10 @@ const E1_TIMELINES = [
     { id: "l1", n: 1, label: "Papiro enrollado" },
     { id: "l2", n: 2, label: "Libro de pergamino" },
     { id: "l3", n: 3, label: "Libro impreso" },
-    { id: "l4", n: 4, label: "Libro digital" },
-    { id: "l5", n: 5, label: "Audiolibro" },
+    // El audiolibro (discos/casete, ~1930s) es anterior al libro digital
+    // (e-book de pantalla, ~1990s-2000s): va 4º y el digital cierra la serie.
+    { id: "l4", n: 4, label: "Audiolibro" },
+    { id: "l5", n: 5, label: "Libro digital" },
   ] },
   { id: "guardar", items: [
     { id: "g1", n: 1, label: "Rollos en un ánfora" },
@@ -1451,7 +1459,6 @@ function DigitalShooter({ onFinish }) {
   const [timeLeft, setTimeLeft] = useStateG(DURATION);
   const nextIdRef = useRefG(0);
   const finishedRef = useRefG(false);
-  const containerRef = useRefG(null);
   const usedDigRef = useRefG(new Set());
   const usedPapRef = useRefG(new Set());
   const doneRef = useRefG(false);
@@ -1518,7 +1525,9 @@ function DigitalShooter({ onFinish }) {
   useEffectG(() => {
     if (timeLeft === 0 && finishedRef.current && !doneRef.current) {
       doneRef.current = true;
-      const t = setTimeout(() => onFinish(stats), 500);
+      // Espera ~1.4s tras el "¡Tiempo!" para que el niño vea el revelado
+      // (las burbujas digitales se marcan en verde ✓) antes de cerrar.
+      const t = setTimeout(() => onFinish(stats), 1400);
       return () => clearTimeout(t);
     }
   }, [timeLeft, stats]);
@@ -1530,8 +1539,9 @@ function DigitalShooter({ onFinish }) {
     else setStats((s) => ({ ...s, errores: s.errores + 1 }));
   }
 
+  const revealing = timeLeft === 0;
   return (
-    <div ref={containerRef} style={{
+    <div style={{
       position: "relative", width: BOX_W, height: BOX_H, overflow: "hidden",
       borderRadius: 16, background: "rgba(11,58,45,0.45)",
       border: "2px solid rgba(242,194,96,0.4)",
@@ -1542,33 +1552,44 @@ function DigitalShooter({ onFinish }) {
         fontFamily: "var(--ed-font-display)", color: "#fce9a8", fontSize: 13, fontWeight: 700,
         pointerEvents: "none",
       }}>
-        <div>💻 {stats.aciertos} &nbsp; ✖ {stats.errores}</div>
+        <div>💻 {stats.aciertos} &nbsp; ✖ {stats.errores} &nbsp; ⬇ {stats.perdidas}</div>
         <div style={{ color: timeLeft <= 5 ? "#ff8b8b" : "#fce9a8" }}>⏱ {timeLeft}s</div>
       </div>
 
-      {bubbles.map((b) => (
-        <button key={b.id} onClick={() => handleTap(b)}
-          style={{
-            position: "absolute", left: b.x, top: 0,
-            // Posición vía transform + transition: la GPU interpola entre los
-            // pasos del timer (cada 40ms) → caída fluida, no a saltitos.
-            transform: `translateY(${b.y}px)`,
-            transition: "transform 0.12s linear",
-            willChange: "transform",
-            padding: "9px 14px", borderRadius: 999,
-            background: "rgba(255,255,255,0.96)", border: "2px solid #f2c260",
-            fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 15,
-            color: "#1a1a1a", cursor: "pointer", whiteSpace: "nowrap",
-            boxShadow: "0 4px 10px rgba(0,0,0,0.45)",
-          }}>{b.text}</button>
-      ))}
+      {bubbles.map((b) => {
+        // Al acabar el tiempo, REVELA: las digitales (las que había que atrapar)
+        // se marcan en verde con ✓, las de papel se atenúan.
+        const revOk = revealing && b.isDig;
+        const revPaper = revealing && !b.isDig;
+        return (
+          <button key={b.id} onClick={() => handleTap(b)}
+            style={{
+              position: "absolute", left: b.x, top: 0,
+              // Posición vía transform + transition: la GPU interpola entre los
+              // pasos del timer (cada 40ms) → caída fluida, no a saltitos.
+              transform: `translateY(${b.y}px)`,
+              transition: "transform 0.12s linear",
+              willChange: "transform",
+              padding: "9px 14px", borderRadius: 999,
+              background: revOk ? "linear-gradient(180deg,#2ecc8f,#22a06c)" : "rgba(255,255,255,0.96)",
+              border: `2px solid ${revOk ? "#2ecc8f" : revPaper ? "rgba(120,120,120,0.5)" : "#f2c260"}`,
+              fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 15,
+              color: revOk ? "#fff" : "#1a1a1a",
+              opacity: revPaper ? 0.45 : 1,
+              cursor: revealing ? "default" : "pointer", whiteSpace: "nowrap",
+              boxShadow: revOk ? "0 0 14px rgba(46,204,143,0.8)" : "0 4px 10px rgba(0,0,0,0.45)",
+            }}>{revOk ? "✓ " : ""}{b.text}</button>
+        );
+      })}
 
-      {timeLeft === 0 && (
+      {revealing && (
+        // Banner inferior (no cubre las burbujas reveladas).
         <div style={{
-          position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
-          background: "rgba(0,0,0,0.55)", color: "#fce9a8",
-          fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 22,
-        }}>¡Tiempo!</div>
+          position: "absolute", left: 0, right: 0, bottom: 0,
+          padding: "8px 12px", textAlign: "center",
+          background: "rgba(0,0,0,0.62)", color: "#fce9a8",
+          fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 15,
+        }}>¡Tiempo! Lo digital iba en <span style={{ color: "#7ef0bd" }}>verde ✓</span></div>
       )}
     </div>
   );
@@ -1624,7 +1645,10 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
   // y, tras una breve ventana para recapacitar (~700 ms), se califica sola. Por
   // eso su VERIFICAR se oculta y su canVerify queda en false.
   const r3AutoRef = useRefG(null);
-  useEffectG(() => () => clearTimeout(r3AutoRef.current), []);
+  // Timer del revelado→answer: se guarda para limpiarlo si el niño SALE /
+  // REINICIA durante la ventana (evita setState/go tras desmontar).
+  const gradeTimerRef = useRefG(null);
+  useEffectG(() => () => { clearTimeout(r3AutoRef.current); clearTimeout(gradeTimerRef.current); }, []);
 
   const canVerify =
     feedback ? false :
@@ -1634,7 +1658,9 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
     if (r3Locked) return;
     setR3Locked(true);
     const correct = choice === r3Pick.answer;
-    setTimeout(() => answer(correct, choice, r3Pick.answer, "🔎", "El asistente misterioso"), correct ? 450 : 1500);
+    // Registra cuántas pistas usó el niño en el reporte académico.
+    const u = `${choice} · ${r3Revealed} pista${r3Revealed === 1 ? "" : "s"}`;
+    gradeTimerRef.current = setTimeout(() => answer(correct, u, r3Pick.answer, "🔎", "El asistente misterioso"), correct ? 450 : 1500);
   }
 
   function handleVerify() {
@@ -1644,7 +1670,7 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
       const correct = r1Slots.every((id, i) => r1ById[id] && r1ById[id].n === i + 1);
       const u = r1Slots.map((id, i) => `${i + 1}. ${r1ById[id] ? r1ById[id].label : "?"}`).join(" · ");
       const c = r1Items.slice().sort((a, b) => a.n - b.n).map((it) => `${it.n}. ${it.label}`).join(" · ");
-      setTimeout(() => answer(correct, u, c, "⏳", "La máquina del tiempo"), correct ? 450 : 1500);
+      gradeTimerRef.current = setTimeout(() => answer(correct, u, c, "⏳", "La máquina del tiempo"), correct ? 450 : 1500);
     }
   }
 
@@ -1653,7 +1679,10 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
     r2DoneRef.current = true;
     const correct = s.aciertos >= 4 && s.errores <= 2;
     const u = `${s.aciertos} atrapadas, ${s.errores} fallos`;
-    answer(correct, u, "Atrapar solo lo digital", "🎯", "Atrapa lo digital");
+    // "Respuesta correcta" del reporte: ejemplos reales de lo digital (no una
+    // descripción genérica) para que enseñe la clasificación.
+    const c = `Digital: ${E2_DIGITAL.slice(0, 3).join(", ")}…`;
+    answer(correct, u, c, "🎯", "Atrapa lo digital");
   }
 
   function handleErase() {
@@ -1665,13 +1694,13 @@ function EscrituraGame({ app, setApp, go, onRestart }) {
     ronda === 1 ? "Atrapa las frases de la escritura digital." :
     "Adivina qué herramienta digital se describe.";
   const bocadillo =
-    ronda === 0 ? "Arrastra cada ficha\na su casilla, del 1 al 5." :
+    ronda === 0 ? `Arrastra cada ficha\na su casilla, del 1 al ${r1Items.length}.` :
     ronda === 1 ? "¡Rápido! Toca\nsolo lo digital." :
     "Toca «Otra pista» si la\nnecesitas y elige la herramienta.";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
-      <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} app={app} setApp={setApp} />
+      <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} app={app} setApp={setApp} roundResults={log.map((e) => e.isCorrect)} />
       <CharacterCorner char={char} message={bocadillo} />
 
       {/* R1 — La máquina del tiempo (ordenar) */}
@@ -1915,24 +1944,29 @@ function NoticiaGame({ app, setApp, go, onRestart }) {
   // breve ventana (~700 ms), se califica sola. Su VERIFICAR se oculta.
   const r2AutoRef = useRefG(null);
   const r3AutoRef = useRefG(null);
-  useEffectG(() => () => { clearTimeout(r2AutoRef.current); clearTimeout(r3AutoRef.current); }, []);
+  // Timer del revelado→answer: se limpia si el niño SALE / REINICIA durante la
+  // ventana (evita setState/go tras desmontar).
+  const gradeTimerRef = useRefG(null);
+  useEffectG(() => () => { clearTimeout(r2AutoRef.current); clearTimeout(r3AutoRef.current); clearTimeout(gradeTimerRef.current); }, []);
 
   const canVerify =
     feedback ? false :
-    ronda === 0 ? (r1Slots.every(Boolean) && !r1Locked) : false;
+    ronda === 0 ? (r1Slots.every(Boolean) && !r1Locked) :
+    ronda === 1 ? (r2Choice !== null && !r2Locked) :
+    false;
 
   function gradeR2(choice) {
     if (r2Locked) return;
     setR2Locked(true);
     const correct = choice === r2Pick.opinionIdx;
-    setTimeout(() => answer(correct, r2Pick.lines[choice], r2Pick.lines[r2Pick.opinionIdx], "🔍", "Caza la opinión"), correct ? 450 : 1500);
+    gradeTimerRef.current = setTimeout(() => answer(correct, r2Pick.lines[choice], r2Pick.lines[r2Pick.opinionIdx], "🔍", "Caza la opinión"), correct ? 450 : 1500);
   }
 
   function gradeR3(choice) {
     if (r3Locked) return;
     setR3Locked(true);
     const correct = (choice === "CONFIABLE") === r3Pick.confiable;
-    setTimeout(() => answer(correct, choice, r3Pick.confiable ? "CONFIABLE" : "TRAMPA", "🛡️", "¿Confiable o trampa?"), correct ? 450 : 1500);
+    gradeTimerRef.current = setTimeout(() => answer(correct, choice, r3Pick.confiable ? "CONFIABLE" : "TRAMPA", "🛡️", "¿Confiable o trampa?"), correct ? 450 : 1500);
   }
 
   function handleVerify() {
@@ -1942,7 +1976,10 @@ function NoticiaGame({ app, setApp, go, onRestart }) {
       const correct = r1Slots.every((id, i) => r1ById[id] && r1ById[id].n === i + 1);
       const u = r1Slots.map((id, i) => `${i + 1}. ${r1ById[id] ? r1ById[id].label : "?"}`).join(" · ");
       const c = r1Items.slice().sort((a, b) => a.n - b.n).map((it) => `${it.n}. ${it.label}`).join(" · ");
-      setTimeout(() => answer(correct, u, c, "📰", "Arma la noticia"), correct ? 450 : 1500);
+      gradeTimerRef.current = setTimeout(() => answer(correct, u, c, "📰", "Arma la noticia"), correct ? 450 : 1500);
+    } else if (ronda === 1) {
+      // R2 (caza la opinión) ahora se confirma con VERIFICAR.
+      gradeR2(r2Choice);
     }
   }
 
@@ -1956,12 +1993,12 @@ function NoticiaGame({ app, setApp, go, onRestart }) {
     "Decide si el titular es confiable o una trampa.";
   const bocadillo =
     ronda === 0 ? "Arrastra cada parte.\nEmpieza por lo más importante." :
-    ronda === 1 ? "Toca la parte del texto\nque opina, no informa." :
+    ronda === 1 ? "Toca la frase que opina\ny pulsa VERIFICAR." :
     "Lee el titular y toca\nconfiable o trampa.";
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
-      <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} app={app} setApp={setApp} />
+      <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} app={app} setApp={setApp} roundResults={log.map((e) => e.isCorrect)} />
       <CharacterCorner char={char} message={bocadillo} />
 
       {/* R1 — Arma la noticia (ordenar) */}
@@ -2015,14 +2052,17 @@ function NoticiaGame({ app, setApp, go, onRestart }) {
               if (showCorrect) { bg = "rgba(46,204,143,0.85)"; ink = "#0a3a25"; }
               else if (showWrong) { bg = "rgba(255,120,120,0.85)"; ink = "#5a0a0a"; }
               else if (sel) { bg = "rgba(255,221,120,0.92)"; ink = "#3a3a4a"; }
+              const choose = () => {
+                if (r2Locked) return;
+                // Solo selecciona la frase; se confirma con VERIFICAR (manual).
+                setR2Choice(i);
+              };
               return (
                 <React.Fragment key={i}>
-                  <span onClick={() => {
-                      if (r2Locked) return;
-                      setR2Choice(i);
-                      clearTimeout(r2AutoRef.current);
-                      r2AutoRef.current = setTimeout(() => gradeR2(i), 700);
-                    }}
+                  <span role="button" tabIndex={r2Locked ? -1 : 0}
+                    aria-label={`Frase: ${line}`}
+                    onClick={choose}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); choose(); } }}
                     style={{
                       cursor: r2Locked ? "default" : "pointer",
                       background: bg, color: ink, borderRadius: 4, padding: "1px 3px",
@@ -2068,7 +2108,7 @@ function NoticiaGame({ app, setApp, go, onRestart }) {
 
       <ActionRail
         canVerify={canVerify} onVerify={handleVerify}
-        hideVerify={ronda === 1 || ronda === 2}
+        hideVerify={ronda === 2}
         showErase={ronda === 0} onErase={handleErase}
         onRestart={() => setConfirmingRestart(true)} onExit={() => setConfirmingExit(true)}
       />
