@@ -201,7 +201,7 @@ function PeopleIcon({ size = 18, color = "#fce9a8" }) {
 const LEVELS_CFG = [
   {
     id: "sufijos",
-    label: "Reportaje: buenas noticias",
+    label: "De oruga a mariposa",
     grad: "linear-gradient(180deg, #ffe97a, #d7b12a)",
     ink: "#3a2608",
     description: "Forma palabras nuevas con sufijos y prefijos.",
@@ -268,7 +268,7 @@ function HomeScreen({ app, setApp, go }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 18, maxWidth: 520 }}>
           <div>
             <div className="ed-label" style={{ color: "#4fd8ff", marginBottom: 6 }}>
-              Reportaje: buenas noticias
+              De oruga a mariposa
             </div>
             <h1 className="ed-h1" style={{ fontSize: 36, lineHeight: 1.05 }}>
               ¡Bienvenido/a,{" "}

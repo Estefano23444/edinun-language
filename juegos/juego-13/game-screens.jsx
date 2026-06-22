@@ -2,7 +2,7 @@
 // "De oruga a mariposa" (TEMA 3 del libro EDINUN, 8 años). 1 nivel, 3 rondas
 // con mecánicas DISTINTAS (estándar 7+ años):
 //   R1 — Laboratorio del reportero: base + sufijo → adjetivo (formar palabra).
-//   R2 — La cámara del reportero: elegir el verbo con el sufijo correcto.
+//   R2 — La cámara del reportero: memoria de parejas palabra ↔ verbo.
 //   R3 — Clasifica la metamorfosis: arrastrar verbos al frasco de su prefijo.
 //
 // El shell (HUD, personaje, enunciado, action rail, modales, feedback,
@@ -116,7 +116,7 @@ function calcStars(isCorrect, exerciseSec) {
 
 const ENCOURAGEMENTS = [
   "¡Casi! Sigue investigando.",
-  "Los sufijos tienen su truco 🦋",
+  "Las palabras tienen su truco 🦋",
   "¡La próxima foto es perfecta!",
   "Equivocarse también es aprender.",
   "Las palabras se transforman, ¡como la oruga!",
@@ -156,16 +156,16 @@ function pushRecent(key) {
 // lee la palabra real: aquí SOLO van formaciones regulares (base + sufijo =
 // adjetivo exacto), para que el niño nunca lea una palabra inventada.
 // Palabras conocidas para 8 años.
-const SUFFIX_POOL = ["ado", "oso", "al", "ar", "áceo", "uzco"];
+const SUFFIX_POOL = ["ado", "oso", "al", "ar", "áceo", "ento"];
 const R1_BANK = [
   { base: "azul",  suffix: "ado",  adj: "azulado",   hint: "Algo de color azul es…" },
-  { base: "sal",   suffix: "ado",  adj: "salado",    hint: "Una comida con mucha sal es…" },
+  { base: "sal",   suffix: "ado",  adj: "salado",    hint: "Una comida con mucha sal es…", noDistract: ["ar"] },
   { base: "color", suffix: "ado",  adj: "colorado",  hint: "Algo muy rojo está…" },
-  { base: "amor",  suffix: "oso",  adj: "amoroso",   hint: "Alguien que da mucho amor es…" },
+  { base: "amor",  suffix: "oso",  adj: "amoroso",   hint: "Alguien que da mucho amor es…", noDistract: ["al"] },
   { base: "olor",  suffix: "oso",  adj: "oloroso",   hint: "Una flor con mucho olor es…" },
-  { base: "fin",   suffix: "al",   adj: "final",     hint: "Lo que llega al fin es lo…" },
-  { base: "sol",   suffix: "ar",   adj: "solar",     hint: "La energía que da el sol es…" },
-  { base: "gris",  suffix: "áceo", adj: "grisáceo",  hint: "Un color que tira a gris es…" },
+  { base: "fin",   suffix: "al",   adj: "final",     hint: "Lo que llega al fin es lo…", noDistract: ["ado", "ar"] },
+  { base: "sol",   suffix: "ar",   adj: "solar",     hint: "La energía que da el sol es…", noDistract: ["ado"] },
+  { base: "gris",  suffix: "áceo", adj: "grisáceo",  hint: "Un color parecido al gris es…" },
 ];
 
 // R2 — MEMORIA de parejas: base ↔ verbo formado con sufijo. El niño destapa
@@ -192,7 +192,7 @@ const R2_BANK = [
 // empieza claramente con su prefijo → validación sin ambigüedad.
 // Verbos conocidos para 8 años (amanecer, ensuciar, enfriar…).
 const R3_PREFIX = {
-  "a":  ["amanecer", "anochecer", "atardecer", "aclarar", "agrandar", "acercar"],
+  "a":  ["alargar", "anochecer", "atardecer", "aclarar", "agrandar", "acercar"],
   "en": ["endulzar", "ensuciar", "enfriar", "entristecer", "enrojecer", "engordar"],
 };
 const BIN_COLOR = { "a": "#4fa0ff", "en": "#2ecc8f" };
@@ -211,13 +211,15 @@ function pickFresh(bank, prefix, idOf) {
   let pool = bank.filter((b) => !blocked.has(idOf(b)));
   if (pool.length === 0) pool = bank;
   const p = pool[Math.floor(Math.random() * pool.length)];
-  pushRecent(pre + idOf(p));
   return p;
 }
 
 function makeProblemR1() {
   const pick = pickFresh(R1_BANK, "lab", (w) => w.base);
-  const distract = shuffle(SUFFIX_POOL.filter((s) => s !== pick.suffix)).slice(0, 3);
+  // Excluimos como distractores los sufijos que también formarían palabra real
+  // con esta base (p.ej. sal+ar=salar), para que solo haya UNA respuesta válida.
+  const banned = new Set([pick.suffix, ...(pick.noDistract || [])]);
+  const distract = shuffle(SUFFIX_POOL.filter((s) => !banned.has(s))).slice(0, 3);
   const tray = shuffle([pick.suffix, ...distract]);
   return { ...pick, tray };
 }
@@ -231,7 +233,6 @@ function makeProblemR2() {
   let pool = R2_BANK.filter((p) => !blocked.has(p.verb));
   if (pool.length < 3) pool = R2_BANK;
   const picks = shuffle(pool).slice(0, 3);
-  for (const p of picks) pushRecent("mem:" + p.verb);
   const cards = [];
   picks.forEach((p, i) => {
     cards.push({ pairId: i, kind: "base", content: p.base, verb: p.verb });
@@ -253,7 +254,7 @@ function makeProblemR3() {
     let pool = R3_PREFIX[b].filter((w) => !blocked.has(w));
     if (pool.length < 3) pool = R3_PREFIX[b];
     const picks = shuffle(pool).slice(0, 3);
-    for (const w of picks) { chosen.push(w); wordGroup[w] = b; pushRecent("clas:" + w); }
+    for (const w of picks) { chosen.push(w); wordGroup[w] = b; }
   }
   return { bins, words: shuffle(chosen), wordGroup };
 }
@@ -597,6 +598,17 @@ function ReportajeGame({ app, setApp, go, onRestart }) {
     return () => clearInterval(id);
   }, []);
 
+  const aliveRef = useRefG(true);
+  useEffectG(() => () => { aliveRef.current = false; }, []);  // desmontado → timers huérfanos no tocan estado muerto
+
+  // Registrar en el FIFO los picks elegidos como EFECTO (no en el render): evita
+  // escribir en localStorage durante la inicialización (pureza de render).
+  useEffectG(() => {
+    pushRecent("lab:" + r1Pick.base);
+    [...new Set(r2Pick.cards.map((c) => c.verb))].forEach((v) => pushRecent("mem:" + v));
+    r3Pick.words.forEach((w) => pushRecent("clas:" + w));
+  }, []);
+
   // ── Estados de completitud por ronda
   const r3AllPlaced = r3Pick.words.every((w) => r3Placed[w]);
 
@@ -613,13 +625,14 @@ function ReportajeGame({ app, setApp, go, onRestart }) {
       const correct = r1Suffix === r1Pick.suffix;
       const userText = `${r1Pick.base} ${r1Suffix}`;
       const correctText = `${r1Pick.suffix} → ${r1Pick.adj}`;
-      setTimeout(() => answer(correct, userText, correctText, "🔬", `${r1Pick.base} + sufijo`), 380);
+      setTimeout(() => answer(correct, userText, correctText, "🔬", `${r1Pick.base} + sufijo`), correct ? 380 : 2000);
     } else if (ronda === 1) {
       setR2Locked(true);
-      // Memoria: emparejar todo = ronda lograda. Las estrellas bajan con el
-      // tiempo (más fallos → más tiempo → menos estrellas).
+      // Memoria: completar el tablero = ronda lograda; las estrellas bajan 1 por
+      // cada fallo (además del tiempo) para que el desempeño se refleje.
       const userText = `${r2Pick.pairs} parejas · ${r2Errors} ${r2Errors === 1 ? "fallo" : "fallos"}`;
-      setTimeout(() => answer(true, userText, `${r2Pick.pairs} parejas base↔verbo`, "🧠", "parejas base ↔ verbo"), 380);
+      const pares = r2Pick.cards.filter((c) => c.kind === "base").map((c) => `${c.content}↔${c.verb}`).join(" · ");
+      setTimeout(() => answer(true, userText, pares, "🧠", "parejas base ↔ verbo", r2Errors), 380);
     } else if (ronda === 2) {
       setR3Locked(true);
       let correct = true;
@@ -639,10 +652,12 @@ function ReportajeGame({ app, setApp, go, onRestart }) {
     else if (ronda === 2) { if (r3Locked) return; setR3Placed({}); setR3Selected(null); }
   }
 
-  function answer(isCorrect, userText, correctText, opIcon, reto) {
+  function answer(isCorrect, userText, correctText, opIcon, reto, errorPenalty = 0) {
+    if (!aliveRef.current) return;  // componente desmontado: no tocar estado muerto
     if (typeof window.markFirstAttempt === "function") window.markFirstAttempt();
     const exerciseSec = Math.max(0, Math.floor((Date.now() - exerciseStart.current) / 1000));
-    const earned = calcStars(isCorrect, exerciseSec);
+    let earned = calcStars(isCorrect, exerciseSec);
+    if (errorPenalty > 0) earned = Math.max(isCorrect ? 1 : 0, earned - errorPenalty);
     const newAttempted = attempted + 1;
     const newSolved = solved + (isCorrect ? 1 : 0);
     const newStarsTotal = stars + earned;
@@ -666,6 +681,7 @@ function ReportajeGame({ app, setApp, go, onRestart }) {
 
     const wait = isCorrect ? 1000 : 1100;
     setTimeout(() => {
+      if (!aliveRef.current) return;  // si el niño salió/reinició, no navegar
       setFeedback(null);
       setFeedbackMsg("");
       if (newAttempted >= 3) {
@@ -686,7 +702,7 @@ function ReportajeGame({ app, setApp, go, onRestart }) {
   // Sin repetir términos entre enunciado y bocadillo.
   const enunciado =
     ronda === 0 ? "Forma el adjetivo que falta." :
-    ronda === 1 ? "Une cada palabra con su verbo." :
+    ronda === 1 ? "Encuentra la pareja de cada palabra con su verbo." :
     "Clasifica cada verbo por su prefijo.";
   const bocadillo =
     ronda === 0 ? "Toca o arrastra\nel sufijo." :
@@ -896,6 +912,8 @@ function MemoriaCard({ enunciado, pick, locked, onComplete }) {
   const [busy, setBusy] = useStateG(false);
   const errorsRef = useRefG(0);
   const doneRef = useRefG(false);
+  const timersRef = useRefG([]);
+  useEffectG(() => () => timersRef.current.forEach(clearTimeout), []);  // limpia timeouts al desmontar
 
   function click(i) {
     if (locked || busy || doneRef.current) return;
@@ -908,7 +926,7 @@ function MemoriaCard({ enunciado, pick, locked, onComplete }) {
       const ca = pick.cards[a], cb = pick.cards[b];
       const isMatch = ca.pairId === cb.pairId && ca.kind !== cb.kind;
       if (isMatch) {
-        setTimeout(() => {
+        timersRef.current.push(setTimeout(() => {
           setMatched((m) => {
             const nm = new Set(m); nm.add(a); nm.add(b);
             if (nm.size === pick.cards.length && !doneRef.current) {
@@ -918,11 +936,11 @@ function MemoriaCard({ enunciado, pick, locked, onComplete }) {
             return nm;
           });
           setFlipped([]);
-        }, 380);
+        }, 380));
       } else {
         errorsRef.current += 1;
         setBusy(true);
-        setTimeout(() => { setFlipped([]); setBusy(false); }, 800);
+        timersRef.current.push(setTimeout(() => { setFlipped([]); setBusy(false); }, 1050));
       }
     }
   }
@@ -1068,7 +1086,7 @@ function ClasificaCard({ enunciado, pick, placed, selected, locked, onSelect, on
                 color: "#fff", background: color, borderRadius: 8, padding: "2px 16px",
                 letterSpacing: "0.05em", boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
               }}>{g}</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 5, width: "100%", alignItems: "center" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", alignItems: "center" }}>
                 {inside.map((w) => {
                   const ok = locked ? pick.wordGroup[w] === g : null;
                   // Al fallar, revelamos a qué caja pertenecía realmente.
@@ -1086,8 +1104,8 @@ function ClasificaCard({ enunciado, pick, placed, selected, locked, onSelect, on
                       className="ed-draggable"
                       onPointerDown={handler ? (e) => { e.stopPropagation(); handler(e); } : undefined}
                       style={{
-                        fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 15,
-                        padding: "5px 10px", borderRadius: 8, lineHeight: 1,
+                        fontFamily: "var(--ed-font-display)", fontWeight: 700, fontSize: 16,
+                        padding: "8px 12px", borderRadius: 8, lineHeight: 1,
                         background: locked
                           ? (ok ? "linear-gradient(180deg,#2ecc8f,#22a06c)" : "linear-gradient(180deg,#ff6b6b,#dc5050)")
                           : "rgba(255,255,255,0.92)",
@@ -1099,7 +1117,7 @@ function ClasificaCard({ enunciado, pick, placed, selected, locked, onSelect, on
                       title={locked ? "" : "Arrástralo a la otra caja o tócalo para sacarlo"}>
                       {locked ? (ok ? "✓ " : "✗ ") : ""}{w}
                       {correctBin && (
-                        <span style={{ display: "block", marginTop: 2, fontSize: 11, fontWeight: 800, color: "#eafff4" }}>→ {correctBin}</span>
+                        <span style={{ display: "block", marginTop: 2, fontSize: 14, fontWeight: 800, color: "#fff" }}>→ {correctBin}</span>
                       )}
                     </div>
                   );
