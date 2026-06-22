@@ -238,7 +238,7 @@ Object.assign(window, {
 // "Otras palabras, otros mundos" (TEMA 2 del libro EDINUN, 14 años):
 // ¿Por qué el mundo se ve diferente según la lengua? ¿Realmente se ve
 // diferente? 1 nivel único, 3 rondas con mecánicas DISTINTAS (deslizar
-// estereotipos · rescatar la lengua · medidor mito/verdad). Tema: la lengua y
+// estereotipos · rescatar la lengua · descifrar otro mundo). Tema: la lengua y
 // la percepción (hipótesis de Sapir-Whorf), los estereotipos en la publicidad
 // y por qué desaparecen las lenguas. Personaje destacado por defecto: Rolli
 // (escritor). Home sin chips de dificultad.
@@ -686,9 +686,9 @@ Object.assign(window, { HomeScreen, CharacterScreen, CosmosBg, incrementGamesCom
 //   R2 — Rescata la lengua: TOCAR acciones. Un tablero de acciones; toca
 //        las que mantienen viva la lengua y evita las que la debilitan.
 //        Barra de vitalidad. Auto-evaluado (§13), sin VERIFICAR.
-//   R3 — El medidor: ¿mito o verdad? DESLIZAR el marcador. Una afirmación
-//        sobre la lengua y el pensamiento; arrastra el marcador a "Es un
-//        mito · A medias · Es verdad". VERIFICAR manual (3 afirmaciones).
+//   R3 — Descifra otro mundo: DESCIFRAR mensajes. Llega una transmisión en el
+//        idioma de un planeta (colores/tiempo/números); el estudiante usa la
+//        CLAVE del planeta para traducirla. Auto-evaluado (§13), sin VERIFICAR.
 //
 // Contenido basado SOLO en las capturas del libro (hipótesis de Sapir-Whorf,
 // relatividad lingüística, estereotipos en la publicidad y desaparición de
@@ -839,49 +839,49 @@ const R3_COLORES = [
     clave: [ { a: "TIK", es: "el / la" }, { a: "SORA", es: "cielo" }, { a: "LUM", es: "claro", color: true }, { a: "DUN", es: "oscuro", color: true } ],
     pregunta: "¿Qué dice el mensaje?",
     opciones: [ { text: "El cielo claro", ok: true }, { text: "El cielo azul", ok: false }, { text: "El mar oscuro", ok: false } ],
-    explica: "En Kael no existe la palabra «azul»: solo «claro» y «oscuro». Por eso su lengua ve el cielo como «claro»." },
+    explica: "En Kael no tienen la palabra «azul»: a ese color lo llaman «claro». Ven el mismo cielo; solo cambia cómo lo nombran." },
   { id: "kael2", planeta: "KAEL", emoji: "🪐",
     regla: "En Kael solo existen 2 colores: claro y oscuro.",
     mensaje: ["NEVA", "LUM"],
     clave: [ { a: "NEVA", es: "nieve" }, { a: "LUM", es: "claro", color: true }, { a: "DUN", es: "oscuro", color: true } ],
     pregunta: "¿Qué dice el mensaje?",
     opciones: [ { text: "Nieve clara", ok: true }, { text: "Nieve blanca", ok: false }, { text: "Nieve brillante", ok: false } ],
-    explica: "En Kael no hay «blanco» ni «brillante»: la nieve solo puede ser «clara». Su lengua distingue únicamente claro y oscuro." },
+    explica: "En Kael no tienen «blanco» ni «brillante»: a la nieve la llaman «clara». La ven igual que tú; solo le dan otro nombre." },
   { id: "vure1", planeta: "VURË", emoji: "🌑",
     regla: "En Vurë solo existen 2 colores: claro y oscuro.",
     mensaje: ["TIK", "MARU", "DUN"],
     clave: [ { a: "TIK", es: "el / la" }, { a: "MARU", es: "mar" }, { a: "LUM", es: "claro", color: true }, { a: "DUN", es: "oscuro", color: true } ],
     pregunta: "¿Qué dice el mensaje?",
     opciones: [ { text: "El mar oscuro", ok: true }, { text: "El mar azul", ok: false }, { text: "El mar verde", ok: false } ],
-    explica: "En Vurë no existen «azul» ni «verde»: el mar solo puede ser «oscuro» o «claro»." },
+    explica: "En Vurë no tienen «azul» ni «verde»: al mar lo llaman «oscuro». Es el mismo mar; cambia la palabra, no lo que ven." },
   { id: "vure2", planeta: "VURË", emoji: "🌑",
     regla: "En Vurë solo existen 2 colores: claro y oscuro.",
     mensaje: ["TIK", "FLORA", "LUM"],
     clave: [ { a: "TIK", es: "la" }, { a: "FLORA", es: "flor" }, { a: "LUM", es: "claro", color: true }, { a: "DUN", es: "oscuro", color: true } ],
     pregunta: "¿Qué dice el mensaje?",
     opciones: [ { text: "La flor clara", ok: true }, { text: "La flor roja", ok: false }, { text: "La flor amarilla", ok: false } ],
-    explica: "En Vurë no hay «roja» ni «amarilla»: la flor solo puede ser «clara» u «oscura»." },
+    explica: "En Vurë no tienen «roja» ni «amarilla»: a la flor la llaman «clara». La ven igual; solo la nombran distinto." },
   { id: "kael3", planeta: "KAEL", emoji: "🪐",
     regla: "En Kael solo existen 2 colores: claro y oscuro.",
     mensaje: ["TIK", "NOK", "DUN"],
     clave: [ { a: "TIK", es: "la" }, { a: "NOK", es: "noche" }, { a: "LUM", es: "claro", color: true }, { a: "DUN", es: "oscuro", color: true } ],
     pregunta: "¿Qué dice el mensaje?",
     opciones: [ { text: "La noche oscura", ok: true }, { text: "La noche negra", ok: false }, { text: "La noche morada", ok: false } ],
-    explica: "En Kael no hay «negra» ni «morada»: la noche solo puede ser «oscura» o «clara»." },
+    explica: "En Kael no tienen «negra» ni «morada»: a la noche la llaman «oscura». Ven lo mismo; solo cambia el nombre." },
   { id: "kael4", planeta: "KAEL", emoji: "🪐",
     regla: "En Kael solo existen 2 colores: claro y oscuro.",
     mensaje: ["TIK", "SORA", "DUN"],
     clave: [ { a: "TIK", es: "el / la" }, { a: "SORA", es: "cielo" }, { a: "LUM", es: "claro", color: true }, { a: "DUN", es: "oscuro", color: true } ],
     pregunta: "¿Qué dice el mensaje?",
     opciones: [ { text: "El cielo oscuro", ok: true }, { text: "El cielo gris", ok: false }, { text: "El cielo violeta", ok: false } ],
-    explica: "En Kael no existen «gris» ni «violeta»: el cielo solo puede ser «oscuro» o «claro»." },
+    explica: "En Kael no tienen «gris» ni «violeta»: a ese cielo lo llaman «oscuro». El cielo es el mismo; cambia cómo lo dicen." },
   { id: "vure3", planeta: "VURË", emoji: "🌑",
     regla: "En Vurë solo existen 2 colores: claro y oscuro.",
     mensaje: ["NEVA", "DUN"],
     clave: [ { a: "NEVA", es: "nieve" }, { a: "LUM", es: "claro", color: true }, { a: "DUN", es: "oscuro", color: true } ],
     pregunta: "¿Qué dice el mensaje?",
     opciones: [ { text: "Nieve oscura", ok: true }, { text: "Nieve sucia", ok: false }, { text: "Nieve azulada", ok: false } ],
-    explica: "En Vurë no hay «sucia» ni «azulada»: la nieve solo puede ser «oscura» o «clara»." },
+    explica: "En Vurë no tienen «sucia» ni «azulada»: a esa nieve la llaman «oscura». La ven igual; solo la nombran distinto." },
 ];
 const R3_TIEMPO = [
   { id: "zira1", planeta: "ZIRA", emoji: "🌌",
@@ -948,61 +948,61 @@ const R3_NUMEROS = [
     clave: [ { a: "VEK", es: "veinte (20)" }, { a: "+ 12", es: "más doce" } ],
     pregunta: "¿Qué número es «cuatro VEK y doce»?",
     opciones: [ { text: "92", ok: true }, { text: "82", ok: false }, { text: "412", ok: false } ],
-    explica: "Cuatro veintes (4×20 = 80) más doce = 92. En Nove los números se arman así." },
+    explica: "Cuatro veintenas (4×20 = 80) más doce = 92. En Nove los números se arman así." },
   { id: "nove2", planeta: "NOVE", emoji: "🛰️",
     regla: "En Nove los números se arman por veintenas: VEK = veinte (20).",
     mensaje: ["VEK", "VEK", "VEK", "+ 5"],
     clave: [ { a: "VEK", es: "veinte (20)" }, { a: "+ 5", es: "más cinco" } ],
     pregunta: "¿Qué número es «tres VEK y cinco»?",
     opciones: [ { text: "65", ok: true }, { text: "35", ok: false }, { text: "305", ok: false } ],
-    explica: "Tres veintes (3×20 = 60) más cinco = 65. Nove arma los números por veintenas." },
+    explica: "Tres veintenas (3×20 = 60) más cinco = 65. Nove arma los números por veintenas." },
   { id: "trell1", planeta: "TRELL", emoji: "☄️",
     regla: "En Trell los números se arman por veintenas: VEK = veinte (20).",
     mensaje: ["VEK", "VEK", "+ 7"],
     clave: [ { a: "VEK", es: "veinte (20)" }, { a: "+ 7", es: "más siete" } ],
     pregunta: "¿Qué número es «dos VEK y siete»?",
     opciones: [ { text: "47", ok: true }, { text: "27", ok: false }, { text: "207", ok: false } ],
-    explica: "Dos veintes (2×20 = 40) más siete = 47. En Trell los números se arman así." },
+    explica: "Dos veintenas (2×20 = 40) más siete = 47. En Trell los números se arman así." },
   { id: "trell2", planeta: "TRELL", emoji: "☄️",
     regla: "En Trell los números se arman por veintenas: VEK = veinte (20).",
     mensaje: ["VEK", "VEK", "VEK", "+ 10"],
     clave: [ { a: "VEK", es: "veinte (20)" }, { a: "+ 10", es: "más diez" } ],
     pregunta: "¿Qué número es «tres VEK y diez»?",
     opciones: [ { text: "70", ok: true }, { text: "40", ok: false }, { text: "310", ok: false } ],
-    explica: "Tres veintes (3×20 = 60) más diez = 70. En Trell los números se arman así." },
+    explica: "Tres veintenas (3×20 = 60) más diez = 70. En Trell los números se arman así." },
   { id: "nove3", planeta: "NOVE", emoji: "🛰️",
     regla: "En Nove los números se arman por veintenas: VEK = veinte (20).",
     mensaje: ["VEK", "VEK", "+ 3"],
     clave: [ { a: "VEK", es: "veinte (20)" }, { a: "+ 3", es: "más tres" } ],
     pregunta: "¿Qué número es «dos VEK y tres»?",
     opciones: [ { text: "43", ok: true }, { text: "23", ok: false }, { text: "203", ok: false } ],
-    explica: "Dos veintes (2×20 = 40) más tres = 43. En Nove los números se arman así." },
+    explica: "Dos veintenas (2×20 = 40) más tres = 43. En Nove los números se arman así." },
   { id: "nove4", planeta: "NOVE", emoji: "🛰️",
     regla: "En Nove los números se arman por veintenas: VEK = veinte (20).",
     mensaje: ["VEK", "VEK", "VEK", "VEK", "+ 1"],
     clave: [ { a: "VEK", es: "veinte (20)" }, { a: "+ 1", es: "más uno" } ],
     pregunta: "¿Qué número es «cuatro VEK y uno»?",
     opciones: [ { text: "81", ok: true }, { text: "41", ok: false }, { text: "401", ok: false } ],
-    explica: "Cuatro veintes (4×20 = 80) más uno = 81. En Nove los números se arman así." },
+    explica: "Cuatro veintenas (4×20 = 80) más uno = 81. En Nove los números se arman así." },
   { id: "trell3", planeta: "TRELL", emoji: "☄️",
     regla: "En Trell los números se arman por veintenas: VEK = veinte (20).",
     mensaje: ["VEK", "+ 8"],
     clave: [ { a: "VEK", es: "veinte (20)" }, { a: "+ 8", es: "más ocho" } ],
     pregunta: "¿Qué número es «un VEK y ocho»?",
     opciones: [ { text: "28", ok: true }, { text: "108", ok: false }, { text: "18", ok: false } ],
-    explica: "Un veinte (1×20 = 20) más ocho = 28. En Trell los números se arman así." },
+    explica: "Una veintena (1×20 = 20) más ocho = 28. En Trell los números se arman así." },
 ];
 
 // ─────────────────────────────────────────────────────────────
 // makeProblem por ronda (una sola vez por montaje del juego)
 // ─────────────────────────────────────────────────────────────
 function makeProblemR1() {
-  const est = pickFreshN(R1_ESTEREOTIPOS, "est", (x) => x.id, 2);
-  const inc = pickFreshN(R1_INCLUSIVOS, "inc", (x) => x.id, 2);
+  const est = pickFreshN(R1_ESTEREOTIPOS, "est", (x) => x.id, 4);
+  const inc = pickFreshN(R1_INCLUSIVOS, "inc", (x) => x.id, 4);
   const deck = shuffle([
     ...est.map((c) => ({ ...c, isEstereotipo: true })),
     ...inc.map((c) => ({ ...c, isEstereotipo: false })),
-  ]).slice(0, 3); // solo 3 cartas (mezcla variable de estereotipos e inclusivos)
+  ]); // mazo de 8 cartas balanceado: 4 estereotipo + 4 inclusivo
   return { deck };
 }
 function makeProblemR2() {
@@ -1327,19 +1327,26 @@ function LenguaGame({ app, setApp, go, onRestart }) {
   const started = useRefG(Date.now());
   const exerciseStart = useRefG(Date.now());
 
+  // Robustez: si el niño pulsa SALIR/REINICIAR durante la ventana de feedback,
+  // el componente se desmonta pero el setTimeout de answer() sigue vivo. aliveRef
+  // + answerRef evitan setState/navegación sobre una instancia muerta.
+  const aliveRef = useRefG(true);
+  const answerRef = useRefG(null);
+  useEffectG(() => () => { aliveRef.current = false; clearTimeout(answerRef.current); }, []);
+
   useEffectG(() => {
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - started.current) / 1000)), 500);
     return () => clearInterval(id);
   }, []);
 
-  // Las 3 rondas se AUTO-EVALÚAN (R1 deslizar, R2 rescate, R3 medidor al soltar),
+  // Las 3 rondas se AUTO-EVALÚAN (R1 deslizar, R2 rescate, R3 descifrar al tocar),
   // así que no hay VERIFICAR manual en ninguna.
   const canVerify = false;
 
   function handleSwipeFinish(s) {
     if (r1DoneRef.current) return;
     r1DoneRef.current = true;
-    const correct = s.aciertos >= 2;
+    const correct = s.aciertos >= 6;
     const u = `${s.aciertos}/${s.total} bien clasificadas`;
     answer(correct, u, "Distinguir estereotipo vs inclusión", "📺", "Detector de estereotipos", null);
   }
@@ -1361,6 +1368,7 @@ function LenguaGame({ app, setApp, go, onRestart }) {
   }
 
   function answer(isCorrect, userText, correctText, opIcon, reto, note) {
+    if (!aliveRef.current) return;
     if (typeof window.markFirstAttempt === "function") window.markFirstAttempt();
     const exerciseSec = Math.max(0, Math.floor((Date.now() - exerciseStart.current) / 1000));
     const earned = calcStars(isCorrect, exerciseSec);
@@ -1386,7 +1394,8 @@ function LenguaGame({ app, setApp, go, onRestart }) {
     setLog(newLog);
 
     const wait = isCorrect ? 1100 : 1600;
-    setTimeout(() => {
+    answerRef.current = setTimeout(() => {
+      if (!aliveRef.current) return;
       setFeedback(null);
       setFeedbackMsg("");
       if (newAttempted >= 3) {
@@ -1465,7 +1474,14 @@ function EstereotipoSwipe({ deck, onFinish }) {
   const draggingRef = useRefG(false);
   const startXRef = useRefG(0);
   const scaleRef = useRefG(1);
+  const timerRef = useRefG(null);
+  const flyRef = useRefG(null);
   const THRESH = 80;
+
+  // Limpia los timers de decide()/flyAndNext si se desmonta a mitad de animación
+  // (p. ej. SALIR/REINICIAR durante la primera ronda), evitando setState/onFinish
+  // sobre el componente ya muerto.
+  useEffectG(() => () => { clearTimeout(timerRef.current); clearTimeout(flyRef.current); }, []);
 
   const card = deck[idx];
 
@@ -1481,7 +1497,7 @@ function EstereotipoSwipe({ deck, onFinish }) {
     const flyAndNext = () => {
       setFlyOut({ dir });
       setDrag(dir * 520);
-      setTimeout(() => {
+      flyRef.current = setTimeout(() => {
         const next = idx + 1;
         setFlyOut(null);
         setResult(null);
@@ -1500,12 +1516,12 @@ function EstereotipoSwipe({ deck, onFinish }) {
       // sin la pantalla grande de feedback (eso queda solo para los errores).
       setResult({ correct: true });
       setDrag(0);
-      setTimeout(flyAndNext, 650);
+      timerRef.current = setTimeout(flyAndNext, 650);
     } else {
       // Error: mostrar la respuesta correcta (✗ + "Era…") un momento y avanzar.
       setResult({ correct, real: card.isEstereotipo });
       setDrag(0);
-      setTimeout(flyAndNext, 1700);
+      timerRef.current = setTimeout(flyAndNext, 1700);
     }
   }
 
@@ -1695,7 +1711,9 @@ function RescateLengua({ cards, onFinish }) {
     } else {
       erroresRef.current += 1;
       setPicked((p) => ({ ...p, [c.id]: "bad" }));
-      // Una acción incorrecta NO baja la barra; simplemente no la sube.
+      // Tocar una acción que debilita la lengua BAJA la barra de vitalidad
+      // (la metáfora del juego: la lengua se debilita). Acotado a 0.
+      setVit((v) => Math.max(0, v - Math.ceil(100 / goodTotal)));
     }
   }
 
@@ -1792,8 +1810,9 @@ function DescifraMundo({ retos, onFinish }) {
     if (opt.ok) aciertosRef.current += 1; else erroresRef.current += 1;
     setPicked(opt.text);
     setResult({ correct: opt.ok });
-    // Más tiempo al fallar para leer con calma la explicación (enseña el concepto).
-    const wait = opt.ok ? 2100 : 5200;
+    // Tiempo para leer la explicación (enseña el concepto Sapir-Whorf): generoso
+    // también al acertar, no solo al fallar, porque el texto premiado es el mismo.
+    const wait = opt.ok ? 3200 : 5200;
     timerRef.current = setTimeout(() => {
       const next = idx + 1;
       setResult(null);
@@ -1913,9 +1932,9 @@ function DescifraMundo({ retos, onFinish }) {
           return (
             <button key={i} onClick={() => choose(opt)} disabled={reveal}
               style={{
-                position: "relative", padding: "12px 18px", borderRadius: 12,
+                position: "relative", padding: "10px 14px", borderRadius: 12,
                 border, background: bg, color: "#fff",
-                fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 14,
+                fontFamily: "var(--ed-font-display)", fontWeight: 800, fontSize: 13,
                 cursor: reveal ? "default" : "pointer", maxWidth: 240, lineHeight: 1.15,
                 transition: "background 0.2s, border-color 0.2s",
               }}>

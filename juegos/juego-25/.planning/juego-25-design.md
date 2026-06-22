@@ -48,26 +48,30 @@ no transmitirla. Todo ligado a la captura: "la urbanización o la asimilación
 cultural afectan la transmisión de tradiciones y costumbres que sostienen las
 lenguas". Componente: `RescateLengua`.
 
-### R3 · El medidor: ¿mito o verdad? — DESLIZAR el marcador (VERIFICAR manual)
-Aparece una **afirmación** sobre la lengua y el pensamiento; el estudiante
-**arrastra un marcador** sobre una barra de 3 zonas: **Es un mito · A medias ·
-Es verdad**, y pulsa **VERIFICAR** (rail derecho, estándar #10). Feedback
-verde/rojo, se revela la zona correcta (✓) y se explica el porqué; tras un
-momento para leer, avanza sola. **3 afirmaciones**; se logra ubicando bien
-**≥ 2 de 3**. Deslizar sobre un eje continuo es una interacción NUEVA en el repo.
-Banco: 10 afirmaciones derivadas de la página de la hipótesis de Sapir-Whorf y
-de su sección "Pero…" (la lengua influye en la atención y la memoria, pero no
-determina ni impide comprender; el 92 se dice distinto en francés/español;
-amaoto; etc.), cada una etiquetada mito/medias/verdad según el propio texto.
-Componente: `MedidorLengua` (CONTROLADO: el padre maneja afirmación/bloqueo y
-dispara la calificación desde VERIFICAR).
+### R3 · Descifra otro mundo — DESCIFRAR mensajes (§13, auto-evaluado)
+> **NOTA (2026-06-22):** en la implementación esta ronda reemplazó a la diseñada
+> "El medidor: ¿mito o verdad?" (arrastre de un marcador con VERIFICAR). Aquí se
+> documenta lo que está en el código; la decisión de fondo (mantener "Descifra
+> otro mundo" o retomar "El medidor") queda **abierta para la autora**.
+
+Llega una **transmisión** en el idioma de un planeta; el estudiante usa la
+**CLAVE del planeta** para traducirla y toca la opción correcta (3 opciones).
+Cada planeta organiza la realidad distinto y encarna un ejemplo del libro: los
+**colores** (un idioma con solo «claro/oscuro»), el **tiempo** (se lee de derecha
+a izquierda) y los **números** (se arman por veintenas, como el francés). **3
+retos** (uno de cada concepto, FIFO); se logra con **aciertos ≥ 2 de 3**.
+Auto-evaluado, sin VERIFICAR. Al responder se revela la opción correcta (✓) y se
+explica el porqué; la explicación refleja la hipótesis **DÉBIL** de Sapir-Whorf
+(la lengua cambia cómo se NOMBRA el mundo, no lo que se puede ver). Componente:
+`DescifraMundo`.
 
 ## Por qué no se repiten las mecánicas
 - R1 = reflejos + criterio social (deslizar y clasificar una carta a la vez).
 - R2 = rescate (tocar varias acciones de un tablero, barra de vitalidad).
-- R3 = juicio + arrastre fino (mover un marcador en un eje continuo + VERIFICAR).
-Tres gestos físicos distintos y tres tipos de pensamiento. Ninguno coincide con
-el juego-24 (shooter · simulador · memoria).
+- R3 = descifrado (traducir un mensaje con la clave del planeta y elegir).
+Tres mecánicas distintas (deslizar · tablero con barra · descifrar con clave); R2
+y R3 comparten el gesto de tocar, pero el tipo de pensamiento difiere. Ninguna
+coincide con el juego-24 (shooter · simulador · memoria).
 
 ## Glifos del fondo
 Tema lengua + percepción + mundo: 🌎 💬 👁️ 🌈 🔤 🧠 🗣️ 📖 🔢 🕐 📺 ✍️ ✨ ✦ ⭐.
@@ -78,16 +82,16 @@ CHALK 10, COSMIC 15.
   distinto según la lengua que hablas? Descúbrelo jugando."
 - Enunciados (QUÉ): R1 "Decide si cada mensaje refuerza un estereotipo o es
   inclusivo." · R2 "Elige las acciones que mantienen viva la lengua." · R3
-  "Ubica cuánta razón tiene cada afirmación."
+  "Descifra el mensaje de otro mundo."
 - Bocadillos (CÓMO): R1 "Desliza la carta: izquierda si es estereotipo, derecha
   si es inclusiva." · R2 "Toca solo las acciones que ayudan a que la lengua siga
-  viva." · R3 "Arrastra el marcador: ¿es un mito, va a medias o es verdad?"
+  viva." · R3 "Usa la clave del planeta para traducir el mensaje."
 - FIFO key: `edinun_juego25_recientes_v1`.
 
 ## Decisiones / riesgos
 - Diseño aprobado por la autora vía bocetos ASCII de pantalla completa; eligió
   Rolli como guía y la R2 "Rescata la lengua".
-- 3 componentes nuevos (EstereotipoSwipe, RescateLengua, MedidorLengua); el
+- 3 componentes nuevos (EstereotipoSwipe, RescateLengua, DescifraMundo); el
   shell (HUD, personaje, enunciado, action rail, modales, feedback, reporte) se
   hereda intacto del estándar (juego-22).
 - Las cartas "inclusivo" (R1) y las afirmaciones "a medias" (R3) son

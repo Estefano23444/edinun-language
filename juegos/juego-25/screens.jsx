@@ -2,7 +2,7 @@
 // "Otras palabras, otros mundos" (TEMA 2 del libro EDINUN, 14 años):
 // ¿Por qué el mundo se ve diferente según la lengua? ¿Realmente se ve
 // diferente? 1 nivel único, 3 rondas con mecánicas DISTINTAS (deslizar
-// estereotipos · rescatar la lengua · medidor mito/verdad). Tema: la lengua y
+// estereotipos · rescatar la lengua · descifrar otro mundo). Tema: la lengua y
 // la percepción (hipótesis de Sapir-Whorf), los estereotipos en la publicidad
 // y por qué desaparecen las lenguas. Personaje destacado por defecto: Rolli
 // (escritor). Home sin chips de dificultad.
