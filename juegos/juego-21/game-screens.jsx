@@ -174,7 +174,7 @@ function pickFresh(bank, prefix, idOf) {
 const R1_CATS = [
   { id: "extrano",     label: "Lo extraño",     def: "Al final hay\nexplicación." },
   { id: "maravilloso", label: "Lo maravilloso", def: "La magia es\nlo normal allí." },
-  { id: "fantastico",  label: "Lo fantástico",  def: "Algo imposible,\nsin explicación." },
+  { id: "fantastico",  label: "Lo fantástico",  def: "Algo imposible que\nsiembra la duda." },
 ];
 const R1_BANK = [
   { id: "ext1", cat: "extrano",
@@ -199,16 +199,16 @@ const R1_BANK = [
     text: "Lucía cerró el libro y, al abrirlo, la última página estaba escrita con su propia letra. Jamás supo cómo.",
     clave: "Algo inexplicable irrumpe en su mundo real → es lo fantástico." },
   { id: "fan2", cat: "fantastico",
-    text: "El reloj de la cocina marcó las trece en punto y, por un instante, todo quedó detenido. No hubo explicación.",
-    clave: "Lo real se quiebra sin explicación → es lo fantástico." },
+    text: "Mateo vio el reloj de la cocina marcar las trece y, por un instante, todo quedó detenido. Nunca supo si lo había imaginado.",
+    clave: "Algo imposible irrumpe y le deja la duda → es lo fantástico." },
   { id: "fan3", cat: "fantastico",
     text: "Al mirarse al espejo, Sofía vio que su reflejo tardó un segundo en moverse. Nunca pudo entender por qué.",
     clave: "Un hecho imposible queda sin respuesta → es lo fantástico." },
 ];
 
-// R2 — Ordenar 5 escenas de un microcuento fantástico (organizador de
-// secuencia = el arte de resumir). Cada escena es breve para caber en la
-// casilla. n = posición correcta (1..5).
+// R2 — Ordenar 5 escenas de un microcuento de literatura fantástica
+// (organizador de secuencia = el arte de resumir). Cada escena es breve para
+// caber en la casilla. n = posición correcta (1..5).
 const R2_BANK = [
   { id: "brujula", title: "La brújula",
     scenes: [
@@ -222,7 +222,7 @@ const R2_BANK = [
     scenes: [
       "Valeria recibió un cuaderno totalmente en blanco.",
       "De noche, una historia se escribió sola en la hoja.",
-      "Un personaje le pedía ayuda desde el papel.",
+      "Entre esas líneas, un personaje pedía ayuda.",
       "Valeria escribió una salida para salvarlo.",
       "Al amanecer, el cuaderno apareció firmado por ella.",
     ] },
@@ -265,7 +265,7 @@ const R2_BANK = [
 // descartan). El niño debe quedarse con los 4 atributos.
 const R3_BANK = [
   { id: "cuento", concept: "El cuento fantástico",
-    correct: ["Hechos inexplicables", "Rompe con lo real", "Crea suspenso", "Personajes reales"],
+    correct: ["Hechos inexplicables", "Rompe con lo real", "Deja una duda", "Mundo cotidiano"],
     distract: ["El héroe usa capa", "Tiene cinco capítulos", "Pasa en una noche"] },
   { id: "maravilloso", concept: "Lo maravilloso",
     correct: ["La magia es normal", "Tiene leyes propias", "Nadie se asombra", "Hay seres fantásticos"],
@@ -280,7 +280,7 @@ const R3_BANK = [
     correct: ["Mezcla real y mágico", "Algo imposible irrumpe", "Siembra la duda", "Queda sin explicación"],
     distract: ["La casa es azul", "El reloj es antiguo", "Ocurre en domingo"] },
   { id: "narrador", concept: "El narrador",
-    correct: ["Cuenta la historia", "Da una voz al relato", "Guía al lector", "Ordena los hechos"],
+    correct: ["Cuenta la historia", "Da una voz al relato", "Guía al lector", "Tiene un punto de vista"],
     distract: ["Usa lentes redondos", "Habla en voz baja", "Vive junto al río"] },
 ];
 
@@ -330,7 +330,7 @@ function GameEnunciado({ text, top = 82 }) {
   );
 }
 
-function GameHUD({ elapsed, stars, attempted, solved, total = 3 }) {
+function GameHUD({ elapsed, stars, attempted, solved, total = 3, roundResults = [] }) {
   return (
     <>
       <div data-qa="hud" style={{
@@ -364,14 +364,21 @@ function GameHUD({ elapsed, stars, attempted, solved, total = 3 }) {
         display: "flex", alignItems: "center", gap: 8,
       }}>
         <span className="ed-label" style={{ color: "rgba(255,255,255,0.7)" }}>Ronda</span>
-        {Array.from({ length: total }).map((_, i) => (
-          <div key={i} style={{
-            width: 10, height: 10, borderRadius: "50%",
-            background: i < attempted ? (i < solved ? "#fce9a8" : "#ff6b6b") : "rgba(255,255,255,0.2)",
-            boxShadow: i < attempted ? "0 0 10px currentColor" : "none",
-            color: i < solved ? "#fce9a8" : "#ff6b6b",
-          }} />
-        ))}
+        {Array.from({ length: total }).map((_, i) => {
+          // Cada punto se pinta por el resultado REAL de su ronda (roundResults[i]),
+          // no por el conteo acumulado: ronda 1 fallada + ronda 2 acertada ya no
+          // se muestra invertido. Gris si la ronda aún no se ha jugado.
+          const done = i < attempted;
+          const ok = roundResults[i];
+          return (
+            <div key={i} style={{
+              width: 10, height: 10, borderRadius: "50%",
+              background: done ? (ok ? "#fce9a8" : "#ff6b6b") : "rgba(255,255,255,0.2)",
+              boxShadow: done ? "0 0 10px currentColor" : "none",
+              color: ok ? "#fce9a8" : "#ff6b6b",
+            }} />
+          );
+        })}
       </div>
     </>
   );
@@ -643,7 +650,18 @@ function MundosGame({ app, setApp, go, onRestart }) {
     false;
 
   const r1AutoRef = useRefG(null);
-  useEffectG(() => () => clearTimeout(r1AutoRef.current), []);
+  const gradeTimerRef = useRefG(null);
+  const advanceTimerRef = useRefG(null);
+  // Vivo mientras el componente esté montado; los timeouts pendientes lo
+  // consultan y abortan al desmontar (REINICIAR remonta MundosGame con key nueva)
+  // para no disparar setState/navegación sobre un árbol que ya no existe.
+  const aliveRef = useRefG(true);
+  useEffectG(() => () => {
+    aliveRef.current = false;
+    clearTimeout(r1AutoRef.current);
+    clearTimeout(gradeTimerRef.current);
+    clearTimeout(advanceTimerRef.current);
+  }, []);
 
   // Califica la R1 con la opción tocada (mismo flujo que tenía VERIFICAR).
   function gradeR1(choiceId) {
@@ -652,8 +670,9 @@ function MundosGame({ app, setApp, go, onRestart }) {
     const correct = choiceId === r1Pick.cat;
     const chosenLabel = (R1_CATS.find((c) => c.id === choiceId) || {}).label || "—";
     const correctLabel = (R1_CATS.find((c) => c.id === r1Pick.cat) || {}).label || "—";
-    // Al fallar, unos segundos para ver cuál era la correcta (verde ✓).
-    setTimeout(() => answer(correct, chosenLabel, correctLabel, "🌙", "clasificar el mundo", r1Pick.clave), correct ? 420 : 2500);
+    // Al fallar, unos segundos para ver cuál era la correcta (verde ✓). El "reto"
+    // guarda el relato clasificado (antes era genérico) para reconstruir R1.
+    gradeTimerRef.current = setTimeout(() => answer(correct, chosenLabel, correctLabel, "🌙", `«${r1Pick.text}»`, r1Pick.clave), correct ? 420 : 2500);
   }
 
   function handleVerify() {
@@ -665,19 +684,25 @@ function MundosGame({ app, setApp, go, onRestart }) {
         const id = r2Slots[i];
         if (!id || r2Pick.byId[id].n !== i + 1) { correct = false; break; }
       }
-      const userText = r2Slots.map((id, i) => `${i + 1}.${id ? r2Pick.byId[id].n : "?"}`).join(" ");
-      const correctText = `${r2Pick.title}: orden 1→5`;
+      // Reporte reconstruible: en vez de códigos opacos ("1.3 2.1…"), guardar
+      // el INICIO de cada escena, en el orden que puso el niño (userText) y en el
+      // orden correcto 1→5 (correctText), para que un docente reconstruya R2.
+      const sceneShort = (s) => s.replace(/[.,…]+$/, "").split(/\s+/).slice(0, 2).join(" ");
+      const userText = r2Slots.map((id, i) => `${i + 1}.${id ? sceneShort(r2Pick.byId[id].label) : "—"}`).join("  ");
+      const correctText = r2Pick.items.slice().sort((a, b) => a.n - b.n).map((it) => `${it.n}.${sceneShort(it.label)}`).join("  ");
       // R2 (ordenar 5 escenas): al fallar, dejamos las correcciones visibles
       // más tiempo antes del "¡UPS!" porque hay mucho texto que leer.
-      setTimeout(() => answer(correct, userText, correctText, "🧭", `ordenar "${r2Pick.title}"`, null), correct ? 420 : 3500);
+      gradeTimerRef.current = setTimeout(() => answer(correct, userText, correctText, "🧭", `ordenar "${r2Pick.title}"`, null), correct ? 420 : 3500);
     } else if (ronda === 2) {
       setR3Locked(true);
       const correct = r3Slots.every((w) => w && r3Pick.correctSet.has(w));
-      const userText = r3Slots.filter(Boolean).join(" · ");
+      // Conserva las ranuras vacías como "(vacío)" para que el reporte distinga
+      // "puso un distractor" de "dejó una ranura sin llenar".
+      const userText = r3Slots.map((w) => w || "(vacío)").join(" · ");
       const correctText = r3Pick.correct.join(" · ");
       // R3 (rueda): al fallar, dejamos las correcciones visibles más tiempo
       // (varias fichas + el ✓ del rasgo que faltó) para alcanzar a leerlas.
-      setTimeout(() => answer(correct, userText, correctText, "🎡", `rueda: ${r3Pick.concept}`, null), correct ? 420 : 3500);
+      gradeTimerRef.current = setTimeout(() => answer(correct, userText, correctText, "🎡", `rueda: ${r3Pick.concept}`, null), correct ? 420 : 3500);
     }
   }
 
@@ -688,6 +713,7 @@ function MundosGame({ app, setApp, go, onRestart }) {
   }
 
   function answer(isCorrect, userText, correctText, opIcon, reto, note) {
+    if (!aliveRef.current) return;
     if (typeof window.markFirstAttempt === "function") window.markFirstAttempt();
     const exerciseSec = Math.max(0, Math.floor((Date.now() - exerciseStart.current) / 1000));
     const earned = calcStars(isCorrect, exerciseSec);
@@ -699,7 +725,7 @@ function MundosGame({ app, setApp, go, onRestart }) {
     const entry = {
       idx: newAttempted,
       a: reto || correctText, b: userText, op: opIcon || "·",
-      correctAnswer: correctText, userAnswer: userText,
+      correctAnswer: correctText, userAnswer: userText, note: note || "",
       isCorrect, time: exerciseSec, earned,
     };
     const newLog = [...log, entry];
@@ -715,7 +741,8 @@ function MundosGame({ app, setApp, go, onRestart }) {
     setLog(newLog);
 
     const wait = isCorrect ? 1100 : 1600;
-    setTimeout(() => {
+    advanceTimerRef.current = setTimeout(() => {
+      if (!aliveRef.current) return;
       setFeedback(null);
       setFeedbackMsg("");
       if (newAttempted >= 3) {
@@ -744,7 +771,7 @@ function MundosGame({ app, setApp, go, onRestart }) {
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
-      <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} />
+      <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} roundResults={log.map((e) => e.isCorrect)} />
       <CharacterCorner char={char} message={bocadillo} />
       {/* R1 tiene poco contenido y arranca más abajo → bajamos su enunciado
           para que no quede pegado a RONDA. R2/R3 llenan más arriba, así que
@@ -873,6 +900,16 @@ function MundoCard({ pick, chosen, locked, onChoose }) {
                   border: "2px solid #fff", boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
                 }}>✓</span>
               )}
+              {/* Marca TAMBIÉN con ✗ rojo la opción que eligió el niño (no solo
+                  por color), igual que el ✓ verde de la correcta: se ven AMBAS. */}
+              {isWrongPick && (
+                <span style={{
+                  position: "absolute", top: -8, right: -8, width: 24, height: 24, borderRadius: "50%",
+                  background: "#ff6b6b", color: "#fff", fontSize: 15, fontWeight: 800,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  border: "2px solid #fff", boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
+                }}>✗</span>
+              )}
             </button>
           );
         })}
@@ -885,7 +922,7 @@ function MundoCard({ pick, chosen, locked, onChoose }) {
 // R2 · La cadena del relato — ordenar 5 escenas en casillas 1..5.
 // Drag + re-arrastre + bandeja para devolver (patrón OrderRound).
 // ─────────────────────────────────────────────────────────────
-function CadenaCard({ enunciado, pick, slots, setSlots, locked }) {
+function CadenaCard({ pick, slots, setSlots, locked }) {
   const items = pick.items;
   const byId = pick.byId;
   const TRAY = "__tray-cad";
@@ -1020,7 +1057,7 @@ function CadenaCard({ enunciado, pick, slots, setSlots, locked }) {
 // dejaron en el banco NO se marcan en rojo (estándar). Si faltó un rasgo,
 // se resalta en el banco con ✓ verde.
 // ─────────────────────────────────────────────────────────────
-function RuedaCard({ enunciado, pick, slots, setSlots, locked }) {
+function RuedaCard({ pick, slots, setSlots, locked }) {
   const TRAY = "__tray-rueda";
   const SLOT_PRE = "slot-rueda-";
 
@@ -1207,7 +1244,7 @@ function RuedaCard({ enunciado, pick, slots, setSlots, locked }) {
 // RESULTS — Reporte académico imprimible (estructura estándar).
 // ═════════════════════════════════════════════════════════════
 function formatOp(e) {
-  return `${e.op || "·"}  ${String(e.a).slice(0, 30)}`;
+  return `${e.op || "·"}  ${String(e.a).slice(0, 60)}`;
 }
 
 const printStyles = {
@@ -1278,9 +1315,9 @@ function PrintableReport({ studentName, res, dateStr, m, s, attemptedCount, tota
             {log.map((e) => (
               <tr key={e.idx} style={printStyles.tr}>
                 <td style={{ ...printStyles.td, ...printStyles.tdNum }}>{e.idx}</td>
-                <td style={{ ...printStyles.td, ...printStyles.tdOp }}>{e.op || ""} {String(e.a).slice(0, 30)}</td>
-                <td style={{ ...printStyles.td, ...printStyles.tdR }}>{String(e.userAnswer).slice(0, 40)}</td>
-                <td style={{ ...printStyles.td, ...printStyles.tdR }}>{String(e.correctAnswer).slice(0, 40)}</td>
+                <td style={{ ...printStyles.td, ...printStyles.tdOp }}>{e.op || ""} {String(e.a).slice(0, 60)}</td>
+                <td style={{ ...printStyles.td, ...printStyles.tdR }}>{String(e.userAnswer).slice(0, 90)}</td>
+                <td style={{ ...printStyles.td, ...printStyles.tdR }}>{String(e.correctAnswer).slice(0, 90)}</td>
                 <td style={{ ...printStyles.td, ...printStyles.tdC, ...(e.isCorrect ? printStyles.tdOk : printStyles.tdErr) }}>
                   {e.isCorrect ? "Correcto" : "Incorrecto"}
                 </td>
@@ -1374,8 +1411,8 @@ function ResultsScreen({ app, setApp, go }) {
                   <tr key={e.idx} style={{ borderBottom: "1px solid rgba(148,120,255,0.18)" }}>
                     <td style={{ padding: "8px 8px", color: "var(--ed-ink-soft)" }}>{e.idx}</td>
                     <td style={{ padding: "8px 8px", fontWeight: 600 }}>{formatOp(e)}</td>
-                    <td style={{ padding: "8px 8px", textAlign: "right", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis" }}>{String(e.userAnswer).slice(0, 28)}</td>
-                    <td style={{ padding: "8px 8px", textAlign: "right", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis" }}>{String(e.correctAnswer).slice(0, 28)}</td>
+                    <td style={{ padding: "8px 8px", textAlign: "right", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis" }}>{String(e.userAnswer).slice(0, 60)}</td>
+                    <td style={{ padding: "8px 8px", textAlign: "right", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis" }}>{String(e.correctAnswer).slice(0, 60)}</td>
                     <td style={{ padding: "8px 8px", textAlign: "center", fontFamily: "var(--ed-font-display)", fontWeight: 700, color: e.isCorrect ? "#2ecc8f" : "#ff6b6b" }}>
                       {e.isCorrect ? "Correcto" : "Incorrecto"}
                     </td>
