@@ -423,6 +423,7 @@ function ConfirmModal({ open, onClose, label, labelColor, title, body, confirmTe
 // answer() compartido: registra el log y avanza/termina.
 function makeAnswer(ctx) {
   return function answer(isCorrect, userText, correctText, opIcon, reto) {
+    if (ctx.aliveRef && !ctx.aliveRef.current) return;
     if (typeof window.markFirstAttempt === "function") window.markFirstAttempt();
     const exerciseSec = Math.max(0, Math.floor((Date.now() - ctx.exerciseStart.current) / 1000));
     const earned = calcStars(isCorrect, exerciseSec);
@@ -448,6 +449,7 @@ function makeAnswer(ctx) {
 
     const wait = isCorrect ? 1000 : 1450;
     setTimeout(() => {
+      if (ctx.aliveRef && !ctx.aliveRef.current) return;
       ctx.setFeedback(null);
       ctx.setFeedbackMsg("");
       if (newAttempted >= 3) {
@@ -711,9 +713,9 @@ const BLOG_TEMAS = [
   { id: "bt3", frag: "Si tu perro esconde la cabeza, está asustado: háblale bajito y con calma.", answer: TEMA_MASCOTAS, options: [TEMA_MASCOTAS, TEMA_TECNO, TEMA_DEPORTES] },
   { id: "bt4", frag: "Con tres clics puedes guardar tus fotos en la nube y no perder ninguna jamás.", answer: TEMA_TECNO, options: [TEMA_TECNO, TEMA_COCINA, TEMA_AVENTURAS] },
   { id: "bt5", frag: "El equipo entrenó penales toda la semana para llegar listo a la gran final.", answer: TEMA_DEPORTES, options: [TEMA_DEPORTES, TEMA_MASCOTAS, TEMA_COCINA] },
-  { id: "bt6", frag: "Una pizca de sal hace que el chocolate sepa aún más dulce. ¡Anímate a probarlo!", answer: TEMA_COCINA, options: [TEMA_COCINA, TEMA_AVENTURAS, TEMA_TECNO] },
+  { id: "bt6", frag: "Hoy horneamos galletas y les pusimos una pizca de sal: hace que el chocolate sepa más dulce.", answer: TEMA_COCINA, options: [TEMA_COCINA, TEMA_AVENTURAS, TEMA_TECNO] },
   { id: "bt7", frag: "Llevé brújula, linterna y mapa: en la selva es muy fácil perder el camino.", answer: TEMA_AVENTURAS, options: [TEMA_AVENTURAS, TEMA_DEPORTES, TEMA_MASCOTAS] },
-  { id: "bt8", frag: "Los gatos duermen hasta 16 horas al día; por eso buscan los rincones calientes.", answer: TEMA_MASCOTAS, options: [TEMA_MASCOTAS, TEMA_COCINA, TEMA_TECNO] },
+  { id: "bt8", frag: "Si tu gato duerme casi todo el día, es normal: descansa hasta 16 horas y busca rincones calientes.", answer: TEMA_MASCOTAS, options: [TEMA_MASCOTAS, TEMA_COCINA, TEMA_TECNO] },
   { id: "bt9", frag: "Apaga el wifi por la noche y tu celular gastará mucha menos batería.", answer: TEMA_TECNO, options: [TEMA_TECNO, TEMA_DEPORTES, TEMA_AVENTURAS] },
   { id: "bt10", frag: "Estirar antes de correr evita molestias y te ayuda a rendir mucho mejor.", answer: TEMA_DEPORTES, options: [TEMA_DEPORTES, TEMA_COCINA, TEMA_MASCOTAS] },
 ];
@@ -874,10 +876,14 @@ function BlogGame({ app, setApp, go, onRestart }) {
   const [log, setLog] = useStateG([]);
   const started = useRefG(Date.now());
   const exerciseStart = useRefG(Date.now());
+  // Vivo mientras el componente esté montado; los timeouts pendientes lo
+  // consultan y abortan al desmontar (SALIR/REINICIAR/cambio de tema) para no
+  // disparar navegación/estado sobre una sesión que ya no existe.
+  const aliveRef = useRefG(true);
 
   useEffectG(() => {
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - started.current) / 1000)), 500);
-    return () => clearInterval(id);
+    return () => { clearInterval(id); aliveRef.current = false; };
   }, []);
 
   // R2 (identificar el tema del blog) se AUTO-EVALÚA: al tocar una opción se
@@ -888,7 +894,7 @@ function BlogGame({ app, setApp, go, onRestart }) {
 
   const answer = makeAnswer({
     attempted, solved, stars, starsSession, log, elapsed, catLabel,
-    exerciseStart, setApp, go,
+    exerciseStart, setApp, go, aliveRef,
     setFeedback, setFeedbackMsg, setAttempted, setSolved, setStars, setStarsSession, setLog,
     onNextRound: () => setRonda((r) => r + 1),
   });
@@ -1037,7 +1043,7 @@ const ENT_PREGUNTAS = [
   { id: "p7", frag: "¿Naciste en Quito?", answer: "CERRADA" },
   { id: "p8", frag: "¿Tienes hermanos?", answer: "CERRADA" },
   { id: "p9", frag: "¿Te gusta el chocolate?", answer: "CERRADA" },
-  { id: "p10", frag: "¿Ganaste el campeonato del año pasado?", answer: "CERRADA" },
+  { id: "p10", frag: "¿Eres el campeón actual?", answer: "CERRADA" },
   { id: "p11", frag: "¿Vives en Ecuador?", answer: "CERRADA" },
   { id: "p12", frag: "¿Practicas todos los días?", answer: "CERRADA" },
 ];
@@ -1053,9 +1059,9 @@ const ENT_TIPOS = [
   { id: "e4", frag: "—¿Qué ocurrió anoche en el estadio?\n—Ganamos en el último minuto, fue increíble.", answer: TIPO_NOTICIAS, options: [TIPO_NOTICIAS, TIPO_PERFIL, TIPO_OPINION] },
   { id: "e5", frag: "—¿Cuándo se inaugura el nuevo parque?\n—Este sábado, abierto para toda la ciudad.", answer: TIPO_NOTICIAS, options: [TIPO_NOTICIAS, TIPO_OPINION, TIPO_PERFIL] },
   { id: "e6", frag: "—¿Qué pasó tras el temblor de hoy?\n—Revisamos las casas; por suerte no hubo heridos.", answer: TIPO_NOTICIAS, options: [TIPO_NOTICIAS, TIPO_PERFIL, TIPO_OPINION] },
-  { id: "e7", frag: "—¿Qué opina sobre leer en pantallas?\n—Creo que cada quien elige; lo importante es leer.", answer: TIPO_OPINION, options: [TIPO_OPINION, TIPO_NOTICIAS, TIPO_PERFIL] },
+  { id: "e7", frag: "—¿Qué opina sobre leer en pantallas?\n—Creo que la pantalla cansa más que el papel.", answer: TIPO_OPINION, options: [TIPO_OPINION, TIPO_NOTICIAS, TIPO_PERFIL] },
   { id: "e8", frag: "—¿Le parece bien la nueva regla?\n—Pienso que ayuda, aunque todavía podría mejorar.", answer: TIPO_OPINION, options: [TIPO_OPINION, TIPO_PERFIL, TIPO_NOTICIAS] },
-  { id: "e9", frag: "—¿Qué cree del futuro de la música?\n—Para mí, será cada vez más libre y diversa.", answer: TIPO_OPINION, options: [TIPO_OPINION, TIPO_NOTICIAS, TIPO_PERFIL] },
+  { id: "e9", frag: "—¿Qué cree sobre estudiar a distancia?\n—Para mí, puede funcionar si hay disciplina.", answer: TIPO_OPINION, options: [TIPO_OPINION, TIPO_NOTICIAS, TIPO_PERFIL] },
 ];
 
 // R3 — Arma la entrevista (ordenar los 5 momentos). Banco de
@@ -1132,10 +1138,14 @@ function EntrevistaGame({ app, setApp, go, onRestart }) {
   const [log, setLog] = useStateG([]);
   const started = useRefG(Date.now());
   const exerciseStart = useRefG(Date.now());
+  // Vivo mientras el componente esté montado; los timeouts pendientes lo
+  // consultan y abortan al desmontar (SALIR/REINICIAR/cambio de tema) para no
+  // disparar navegación/estado sobre una sesión que ya no existe.
+  const aliveRef = useRefG(true);
 
   useEffectG(() => {
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - started.current) / 1000)), 500);
-    return () => clearInterval(id);
+    return () => { clearInterval(id); aliveRef.current = false; };
   }, []);
 
   // R1 (clasificar abierta/cerrada) y R2 (identificar el tipo de entrevista)
@@ -1148,7 +1158,7 @@ function EntrevistaGame({ app, setApp, go, onRestart }) {
 
   const answer = makeAnswer({
     attempted, solved, stars, starsSession, log, elapsed, catLabel,
-    exerciseStart, setApp, go,
+    exerciseStart, setApp, go, aliveRef,
     setFeedback, setFeedbackMsg, setAttempted, setSolved, setStars, setStarsSession, setLog,
     onNextRound: () => setRonda((r) => r + 1),
   });

@@ -118,13 +118,15 @@ async function fetchVisitorCount(opts) {
 }
 
 function readLocalVisitorCount() {
-  const raw = localStorage.getItem(VISITOR_KEY);
-  const v = raw ? parseInt(raw, 10) : 0;
-  return isNaN(v) ? 0 : v;
+  try {
+    const raw = localStorage.getItem(VISITOR_KEY);
+    const v = raw ? parseInt(raw, 10) : 0;
+    return isNaN(v) ? 0 : v;
+  } catch { return 0; }
 }
 
 function writeLocalVisitorCount(n) {
-  localStorage.setItem(VISITOR_KEY, String(n));
+  try { localStorage.setItem(VISITOR_KEY, String(n)); } catch {}
 }
 
 function useVisitorCount() {
@@ -157,8 +159,10 @@ function useVisitorCount() {
 }
 
 function markFirstAttempt() {
-  if (sessionStorage.getItem(VISITOR_SESSION_FLAG) === "1") return;
-  sessionStorage.setItem(VISITOR_SESSION_FLAG, "1");
+  try {
+    if (sessionStorage.getItem(VISITOR_SESSION_FLAG) === "1") return;
+    sessionStorage.setItem(VISITOR_SESSION_FLAG, "1");
+  } catch {}
 
   fetchVisitorCount({ increment: true })
     .then((count) => {
@@ -174,9 +178,12 @@ function markFirstAttempt() {
 
 function incrementGamesCompleted() {
   const KEY = "edinun_games_completed_v1";
-  const raw = localStorage.getItem(KEY);
-  const next = (raw ? parseInt(raw, 10) : 0) + 1;
-  localStorage.setItem(KEY, String(next));
+  let next = 1;
+  try {
+    const raw = localStorage.getItem(KEY);
+    next = (raw ? parseInt(raw, 10) : 0) + 1;
+    localStorage.setItem(KEY, String(next));
+  } catch {}
   window.dispatchEvent(new Event("edinun:games-updated"));
   return next;
 }
