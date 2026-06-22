@@ -204,12 +204,12 @@ const R1_BANK = {
     "Con gusto, ¿en qué le ayudo?",
     "Disculpe, ¿podría repetirlo, por favor?",
     "Le escribo para confirmar la reunión.",
-    "Muchas gracias por su tiempo.",
+    "Gracias, muy amable.",
   ],
   culto: [
-    "La poesía transforma al lector.",
+    "La buena poesía eleva el espíritu del lector.",
     "Su discurso reveló una notable elocuencia.",
-    "El conocimiento nos dota de recursos.",
+    "El conocimiento nos confiere autonomía intelectual.",
     "La melancolía habita en sus versos.",
     "La palabra precisa ennoblece la idea.",
     "La lectura ensancha los horizontes del alma.",
@@ -233,7 +233,7 @@ const R2_CHATS = [
       { incoming: "¿Cómo estás, mijito?",
         options: [
           { text: "Muy bien, abuelita. ¿Y usted? 🥰", ok: true },
-          { text: "Todo piola, wey 😎", ok: false },
+          { text: "Todo piola, loco 😎", ok: false },
         ] },
       { incoming: "Ven a almorzar el domingo.",
         options: [
@@ -267,7 +267,7 @@ const R2_CHATS = [
       { incoming: "De acuerdo, le confirmo la cita.",
         options: [
           { text: "Muchas gracias, le agradezco su tiempo.", ok: true },
-          { text: "Bacán, gracias causa.", ok: false },
+          { text: "Bacán, gracias loco.", ok: false },
         ] },
     ],
   },
@@ -309,7 +309,7 @@ const R2_CHATS = [
         ] },
       { incoming: "¿Ha tenido fiebre?",
         options: [
-          { text: "Sí pe, un montón anoche.", ok: false },
+          { text: "Sí, full, un montón anoche.", ok: false },
           { text: "Sí, anoche tuve fiebre alta.", ok: true },
         ] },
       { incoming: "Le voy a recetar un medicamento.",
@@ -362,7 +362,7 @@ const R2_CHATS = [
         ] },
       { incoming: "Salúdame a tu mamá.",
         options: [
-          { text: "Ya pe, le aviso.", ok: false },
+          { text: "Ya, yo le aviso.", ok: false },
           { text: "Le doy su saludo, que esté bien.", ok: true },
         ] },
     ],
@@ -398,18 +398,18 @@ const R2_CHATS = [
 // adecuada a cada hueco. Los señuelos son otras palabras coloquiales.
 const R3_BANK = [
   { id: "chance",  wrong: "chance",  right: "posibilidad", pre: "No tengo ",              suf: " de salir hoy." },
-  { id: "depre",   wrong: "depre",   right: "deprimido",   pre: "Hoy me siento un poco ", suf: "." },
-  { id: "bacan",   wrong: "bacán",   right: "excelente",   pre: "El concierto estuvo ",   suf: "." },
+  { id: "depre",   wrong: "depre",   right: "desanimado",  pre: "Hoy me siento un poco ", suf: "." },
+  { id: "bacan",   wrong: "bacán",   right: "magnífico",   pre: "El concierto estuvo ",   suf: "." },
   { id: "full",    wrong: "full",    right: "muy",         pre: "Estoy ",                 suf: " cansado." },
-  { id: "pana",    wrong: "pana",    right: "amigo",       pre: "Te presento a mi ",      suf: "." },
+  { id: "pana",    wrong: "pana",    right: "amigo",       pre: "Te presento a mi ",      suf: " del colegio." },
   { id: "plata",   wrong: "plata",   right: "dinero",      pre: "Necesito ahorrar ",      suf: "." },
-  { id: "man",     wrong: "man",     right: "señor",       pre: "Ese ",                   suf: " es el profesor." },
-  { id: "chevere", wrong: "chévere", right: "agradable",   pre: "La reunión fue ",        suf: "." },
+  { id: "man",     wrong: "man",     right: "señor",       pre: "Ese ",                   suf: " de gafas es el profesor." },
+  { id: "chevere", wrong: "chévere", right: "estupenda",   pre: "La reunión fue ",        suf: "." },
   { id: "porfa",   wrong: "porfa",   right: "por favor",   pre: "Ayúdame con esto, ",     suf: "." },
   { id: "finde",   wrong: "finde",   right: "fin de semana", pre: "Nos vemos el ",        suf: "." },
   { id: "depa",    wrong: "depa",    right: "departamento", pre: "Alquilé un ",           suf: " pequeño." },
 ];
-const R3_DECOYS = ["piola", "causa", "ñaño", "vacilón", "bróder"];
+const R3_DECOYS = ["piola", "chuta", "ñaño", "vacilón", "bróder"];
 
 // ─────────────────────────────────────────────────────────────
 // makeProblem por ronda
@@ -751,10 +751,14 @@ function RegistroGame({ app, setApp, go, onRestart }) {
   const [log, setLog] = useStateG([]);
   const started = useRefG(Date.now());
   const exerciseStart = useRefG(Date.now());
+  // Vivo mientras el componente esté montado; los timeouts pendientes lo
+  // consultan y abortan al desmontar (SALIR/REINICIAR) para no disparar
+  // navegación/estado sobre una sesión que ya no existe.
+  const aliveRef = useRefG(true);
 
   useEffectG(() => {
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - started.current) / 1000)), 500);
-    return () => clearInterval(id);
+    return () => { clearInterval(id); aliveRef.current = false; };
   }, []);
 
   // ── Estados de completitud por ronda
@@ -797,6 +801,7 @@ function RegistroGame({ app, setApp, go, onRestart }) {
   }
 
   function answer(isCorrect, userText, correctText, opIcon, reto, note) {
+    if (!aliveRef.current) return;
     if (typeof window.markFirstAttempt === "function") window.markFirstAttempt();
     const exerciseSec = Math.max(0, Math.floor((Date.now() - exerciseStart.current) / 1000));
     const earned = calcStars(isCorrect, exerciseSec);
@@ -823,6 +828,7 @@ function RegistroGame({ app, setApp, go, onRestart }) {
 
     const wait = isCorrect ? 1100 : 1600;
     setTimeout(() => {
+      if (!aliveRef.current) return;
       setFeedback(null);
       setFeedbackMsg("");
       if (newAttempted >= 3) {
@@ -904,6 +910,9 @@ function RegistroDial({ pick, onFinish }) {
   const [locked, setLocked] = useStateG(false);
   const correctRef = useRefG(0);
   const doneRef = useRefG(false);
+  // Aborta el avance/onFinish si el componente se desmontó durante el delay.
+  const aliveRef = useRefG(true);
+  useEffectG(() => () => { aliveRef.current = false; }, []);
 
   const card = cards[idx];
   const chosenNivel = niveles.find((n) => n.id === chosen);
@@ -918,6 +927,7 @@ function RegistroDial({ pick, onFinish }) {
     if (ok) correctRef.current += 1;
     const wait = ok ? 750 : 1350;
     setTimeout(() => {
+      if (!aliveRef.current) return;
       if (idx + 1 >= cards.length) {
         if (doneRef.current) return;
         doneRef.current = true;
@@ -1056,6 +1066,9 @@ function ChatSim({ pick, onFinish }) {
   const correctRef = useRefG(0);
   const doneRef = useRefG(false);
   const bodyRef = useRefG(null);
+  // Aborta el avance/onFinish si el componente se desmontó durante el delay.
+  const aliveRef = useRefG(true);
+  useEffectG(() => () => { aliveRef.current = false; }, []);
 
   const turn = turns[turnIdx];
 
@@ -1073,6 +1086,7 @@ function ChatSim({ pick, onFinish }) {
     const correctOpt = turn.options.find((o) => o.ok);
     const wait = opt.ok ? 850 : 1500;
     setTimeout(() => {
+      if (!aliveRef.current) return;
       // La conversación avanza con la respuesta ADECUADA (coherencia narrativa).
       setThread((t) => {
         const next = [...t, { side: "out", text: correctOpt.text }];
