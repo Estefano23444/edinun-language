@@ -885,7 +885,7 @@ function GameEnunciado({ text, top = 84 }) {
   );
 }
 
-function GameHUD({ elapsed, stars, attempted, solved, total = 3 }) {
+function GameHUD({ elapsed, stars, attempted, solved, total = 3, roundResults = [] }) {
   return (
     <>
       <div data-qa="hud" style={{
@@ -919,14 +919,21 @@ function GameHUD({ elapsed, stars, attempted, solved, total = 3 }) {
         display: "flex", alignItems: "center", gap: 8,
       }}>
         <span className="ed-label" style={{ color: "rgba(255,255,255,0.7)" }}>Ronda</span>
-        {Array.from({ length: total }).map((_, i) => (
-          <div key={i} style={{
-            width: 10, height: 10, borderRadius: "50%",
-            background: i < attempted ? (i < solved ? "#fce9a8" : "#ff6b6b") : "rgba(255,255,255,0.2)",
-            boxShadow: i < attempted ? "0 0 10px currentColor" : "none",
-            color: i < solved ? "#fce9a8" : "#ff6b6b",
-          }} />
-        ))}
+        {Array.from({ length: total }).map((_, i) => {
+          // Cada punto se pinta por el resultado REAL de su ronda (roundResults[i]),
+          // no por el conteo acumulado: ronda 1 fallada + ronda 2 acertada ya no
+          // se muestra invertido. Gris si la ronda aún no se ha jugado.
+          const done = i < attempted;
+          const ok = roundResults[i];
+          return (
+            <div key={i} style={{
+              width: 10, height: 10, borderRadius: "50%",
+              background: done ? (ok ? "#fce9a8" : "#ff6b6b") : "rgba(255,255,255,0.2)",
+              boxShadow: done ? "0 0 10px currentColor" : "none",
+              color: ok ? "#fce9a8" : "#ff6b6b",
+            }} />
+          );
+        })}
       </div>
     </>
   );
@@ -1168,7 +1175,17 @@ function BaulGame({ app, setApp, go, onRestart }) {
   // resalta y, tras ~700 ms para recapacitar, se califica sola y avanza.
   const r1AutoRef = useRefG(null);
   const r2AutoRef = useRefG(null);
-  useEffectG(() => () => { clearTimeout(r1AutoRef.current); clearTimeout(r2AutoRef.current); }, []);
+  const verifyTimerRef = useRefG(null);
+  const advanceTimerRef = useRefG(null);
+  // Vivo mientras el componente esté montado; los timeouts pendientes lo
+  // consultan y abortan al desmontar (REINICIAR remonta BaulGame con key nueva)
+  // para no disparar setState/navegación sobre un árbol que ya no existe.
+  const aliveRef = useRefG(true);
+  useEffectG(() => () => {
+    aliveRef.current = false;
+    clearTimeout(r1AutoRef.current); clearTimeout(r2AutoRef.current);
+    clearTimeout(verifyTimerRef.current); clearTimeout(advanceTimerRef.current);
+  }, []);
 
   // Shell state
   const [elapsed, setElapsed] = useStateG(0);
@@ -1206,7 +1223,7 @@ function BaulGame({ app, setApp, go, onRestart }) {
     const correct = choice === r1Landed.correct;
     const userText = choice;
     const correctText = r1Landed.correct;
-    setTimeout(() => answer(correct, userText, correctText, "🎡"), 380);
+    verifyTimerRef.current = setTimeout(() => answer(correct, userText, correctText, "🎡"), 380);
   }
 
   // R2 (taller): califica con el afijo tocado (mismo flujo que tenía VERIFICAR).
@@ -1217,7 +1234,7 @@ function BaulGame({ app, setApp, go, onRestart }) {
     const built = r2Pick.pos === "pre" ? (choice + r2Pick.base) : (r2Pick.base + choice);
     const userText = built;
     const correctText = r2Pick.res;
-    setTimeout(() => answer(correct, userText, correctText, "🔨"), 380);
+    verifyTimerRef.current = setTimeout(() => answer(correct, userText, correctText, "🔨"), 380);
   }
 
   function handleVerify() {
@@ -1227,9 +1244,18 @@ function BaulGame({ app, setApp, go, onRestart }) {
       const okCount = r3Pick.tokens.filter((t) => r3Place[t.id] === t.person).length;
       const total = r3Pick.tokens.length;
       const correct = okCount === total;
-      const userText = `${okCount}/${total} en su grupo`;
-      const correctText = "Cada verbo en su persona";
-      setTimeout(() => answer(correct, userText, correctText, "🔎"), 380);
+      // Reporte reconstruible: en vez de "N/6 en su grupo", listar los verbos
+      // MAL colocados con la persona donde los puso el niño (userText) frente a
+      // su persona correcta (correctText), para que un docente vea qué falló.
+      const PL = { yo: "Yo", tu: "Tú", nos: "Nos" };
+      const wrong = r3Pick.tokens.filter((t) => r3Place[t.id] !== t.person);
+      const userText = correct
+        ? `Todos en su persona (${total}/${total})`
+        : wrong.map((t) => `${t.word}→${PL[r3Place[t.id]] || "?"}`).join(", ");
+      const correctText = correct
+        ? "Cada verbo en su persona"
+        : wrong.map((t) => `${t.word}→${PL[t.person]}`).join(", ");
+      verifyTimerRef.current = setTimeout(() => answer(correct, userText, correctText, "🔎"), 380);
     }
   }
 
@@ -1242,6 +1268,7 @@ function BaulGame({ app, setApp, go, onRestart }) {
   }
 
   function answer(isCorrect, userText, correctText, opIcon, earnedOverride) {
+    if (!aliveRef.current) return;
     if (typeof window.markFirstAttempt === "function") window.markFirstAttempt();
     const exerciseSec = Math.max(0, Math.floor((Date.now() - exerciseStart.current) / 1000));
     const earned = (earnedOverride != null) ? earnedOverride : calcStars(isCorrect, exerciseSec);
@@ -1267,7 +1294,8 @@ function BaulGame({ app, setApp, go, onRestart }) {
     setLog(newLog);
 
     const wait = isCorrect ? 1000 : 1500;
-    setTimeout(() => {
+    advanceTimerRef.current = setTimeout(() => {
+      if (!aliveRef.current) return;
       setFeedback(null);
       setFeedbackMsg("");
       if (newAttempted >= 3) {
@@ -1296,7 +1324,7 @@ function BaulGame({ app, setApp, go, onRestart }) {
 
   return (
     <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
-      <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} />
+      <GameHUD elapsed={elapsed} stars={stars} attempted={attempted} solved={solved} total={3} roundResults={log.map((e) => e.isCorrect)} />
       <CharacterCorner char={char} message={bocadillo} />
       <GameEnunciado text={enunciado} top={ronda === 2 ? 104 : 86} />
 
@@ -1438,6 +1466,16 @@ function DeseoRuletaCard({ pick, landed, choice, locked, onLanded, onChoose }) {
       } else if (isChoice) {
         bg = "linear-gradient(180deg, rgba(255,107,107,0.95), rgba(220,80,80,0.95))";
         border = "#ff6b6b"; color = "#fff";
+        // Revela TAMBIÉN lo que puso el niño con ✗ rojo (no solo color), junto al
+        // ✓ verde del correcto: así se ven AMBAS y no es feedback solo cromático.
+        badge = (
+          <div style={{
+            position: "absolute", top: -10, right: -10, width: 24, height: 24, borderRadius: "50%",
+            background: "#ff6b6b", border: "2px solid #fff", color: "#fff",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 13, fontWeight: 900, boxShadow: "0 2px 6px rgba(0,0,0,0.35)",
+          }}>✗</div>
+        );
       } else {
         bg = "rgba(255,255,255,0.5)"; color = "rgba(58,38,8,0.6)";
       }
@@ -1634,6 +1672,16 @@ function TallerCard({ pick, placed, locked, onPlace }) {
             } else if (isChoice) {
               bg = "linear-gradient(180deg, rgba(255,107,107,0.95), rgba(220,80,80,0.95))";
               border = "#ff6b6b"; color = "#fff";
+              // Muestra TAMBIÉN la pieza que eligió el niño con ✗ rojo (no solo
+              // color), junto al ✓ verde de la correcta: se ven AMBAS.
+              badge = (
+                <div style={{
+                  position: "absolute", top: -9, right: -9, width: 22, height: 22, borderRadius: "50%",
+                  background: "#ff6b6b", border: "2px solid #fff", color: "#fff",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 12, fontWeight: 900,
+                }}>✗</div>
+              );
             } else {
               bg = "rgba(255,255,255,0.45)"; color = "rgba(58,38,8,0.55)";
             }
