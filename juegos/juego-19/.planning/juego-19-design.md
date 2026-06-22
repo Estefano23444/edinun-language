@@ -17,8 +17,8 @@ Las edades NO se muestran al niño (botones = nombre del tema; descripción = de
 
 ## Mecánica (6 distintas, sin repetir; 1 sola ronda con arrastre por nivel)
 ### Nivel 1 — El entremés
-- **R1 La ruleta de los personajes** (RULETA). Gira la rueda decorativa → se revela una escena original → el niño elige (3 opciones) qué personaje típico la protagoniza (sacristán, bobo, soldado fanfarrón, estudiante, viejo engañado). `T1_ESCENAS` (8, FIFO). VERIFICAR manual.
-- **R2 Arma tu entremés** (ORDENAR — único arrastre del nivel). 3 escenas a casillas Introducción/Nudo/Desenlace (`OrderRound` con `slotLabels`). `T2_OBRAS` (5 sets, FIFO).
+- **R1 La ruleta de los personajes** (RULETA). Gira la rueda decorativa → se revela una escena original → el niño elige (3 opciones) qué personaje típico la protagoniza (sacristán, bobo, soldado fanfarrón, estudiante, viejo engañado). `T1_ESCENAS` (10, FIFO). VERIFICAR manual.
+- **R2 Arma tu entremés** (ORDENAR — único arrastre del nivel). 3 escenas a casillas Introducción/Nudo/Desenlace (`OrderRound` con `slotLabels`). `T2_OBRAS` (6 sets, FIFO).
 - **R3 Atrapa la comedia** (SHOOTER, auto-evaluado §13). Caen rasgos: del entremés = atrapar; del teatro moderno = dejar caer. Gana con aciertos≥4 y errores≤2. `T3_ENTREMES` / `T3_MODERNO`.
 
 ### Nivel 2 — La ciencia ficción
@@ -33,7 +33,7 @@ Las edades NO se muestran al niño (botones = nombre del tema; descripción = de
 ## Copy específico
 - Home label: "Del telón a la galaxia". Botones: El entremés / La ciencia ficción.
 - Personajes temáticos: Rolli (dramaturga) para entremés; Verne (padre de la ciencia ficción) para sci-fi. El niño puede cambiarlos.
-- FIFO key: `edinun_telon_galaxia_recientes_v1`.
+- FIFO key: `edinun_telon_galaxia_recientes_v2`.
 
 ## Decisiones abiertas / riesgos
 - En R3 (detective de fuentes) lo puntuado es el veredicto; el marcado de criterios es la investigación (se revela al verificar). Decisión tomada para mantener una mecánica clara y verificable.

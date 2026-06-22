@@ -376,8 +376,8 @@ function HomeScreen({ app, setApp, go }) {
 
 // ─────────────────────────────────────────────────────────────
 // 2. SELECCIÓN DE PERSONAJE — idéntico al shell. El default es el
-// personaje temático del nivel (Verne para el blog, Rolli para la
-// entrevista); el niño puede cambiarlo.
+// personaje temático del nivel (Rolli para el entremés, Verne para la
+// ciencia ficción); el niño puede cambiarlo.
 // ─────────────────────────────────────────────────────────────
 function CharacterScreen({ app, setApp, go }) {
   const lvCfg = LEVELS_CFG.find((l) => l.id === app.level) || LEVELS_CFG[0];
